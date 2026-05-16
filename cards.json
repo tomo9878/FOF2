@@ -1,0 +1,608 @@
+{
+  "metadata": {
+    "deck": "Action Cards",
+    "card_back": "Card - Keep Up The Fire.jpg"
+  },
+  "cards": [
+  {
+    "card_number": 1,
+    "activated_commands": 6,
+    "initiative_commands": 4,
+    "type": "Cover",
+    "action_attempt": { "icons": ["spot_concentrate", "hq"], "at": 9 },
+    "combat_resolution": {
+      "-4": "MISS", "-3": "MISS", "-2": "MISS", "-1": "MISS", "0": "MISS",
+      "+1": "MISS", "+2": "MISS", "+3": "MISS", "+4": "MISS", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "CC", "line": "CC", "green": "CC" }
+  },
+  {
+    "card_number": 2,
+    "activated_commands": 6,
+    "initiative_commands": 4,
+    "type": "Contact",
+    "action_attempt": { "icons": ["infiltrate"], "at": 9 },
+    "combat_resolution": {
+      "-4": "PIN", "-3": "MISS", "-2": "MISS", "-1": "MISS", "0": "MISS",
+      "+1": "MISS", "+2": "MISS", "+3": "MISS", "+4": "MISS", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "CP", "line": "CP", "green": "CC" }
+  },
+  {
+    "card_number": 3,
+    "activated_commands": 5,
+    "initiative_commands": 4,
+    "type": "Rally",
+    "action_attempt": { "icons": ["grenade"], "at": 9 },
+    "combat_resolution": {
+      "-4": "PIN", "-3": "PIN", "-2": "MISS", "-1": "MISS", "0": "MISS",
+      "+1": "MISS", "+2": "MISS", "+3": "MISS", "+4": "MISS", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "CP", "line": "CP", "green": "CC" }
+  },
+  {
+    "card_number": 4,
+    "activated_commands": 5,
+    "initiative_commands": 4,
+    "type": null,
+    "action_attempt": { "icons": ["call_for_fire"], "at": 9 },
+    "combat_resolution": {
+      "-4": "PIN", "-3": "PIN", "-2": "PIN", "-1": "MISS", "0": "MISS",
+      "+1": "MISS", "+2": "MISS", "+3": "MISS", "+4": "MISS", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "CL", "line": "CL", "green": "CP" }
+  },
+  {
+    "card_number": 5,
+    "activated_commands": 5,
+    "initiative_commands": 3,
+    "type": null,
+    "action_attempt": { "icons": ["spot_concentrate", "hq"], "at": 9 },
+    "combat_resolution": {
+      "-4": "PIN", "-3": "PIN", "-2": "PIN", "-1": "MISS", "0": "MISS",
+      "+1": "MISS", "+2": "MISS", "+3": "MISS", "+4": "MISS", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "CL", "line": "CL", "green": "CP" }
+  },
+  {
+    "card_number": 6,
+    "activated_commands": 5,
+    "initiative_commands": 3,
+    "type": "Rally",
+    "action_attempt": { "icons": ["infiltrate"], "at": 8 },
+    "combat_resolution": {
+      "-4": "PIN", "-3": "PIN", "-2": "PIN", "-1": "PIN", "0": "MISS",
+      "+1": "MISS", "+2": "MISS", "+3": "MISS", "+4": "MISS", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "CF", "line": "CL", "green": "CL" }
+  },
+  {
+    "card_number": 7,
+    "activated_commands": 5,
+    "initiative_commands": 3,
+    "type": "Cover",
+    "action_attempt": { "icons": ["grenade"], "at": 8 },
+    "combat_resolution": {
+      "-4": "PIN", "-3": "PIN", "-2": "PIN", "-1": "PIN", "0": "MISS",
+      "+1": "MISS", "+2": "MISS", "+3": "MISS", "+4": "MISS", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "CF", "line": "CF", "green": "CL" }
+  },
+  {
+    "card_number": 8,
+    "activated_commands": 5,
+    "initiative_commands": 3,
+    "type": null,
+    "action_attempt": { "icons": ["call_for_fire"], "at": 8 },
+    "combat_resolution": {
+      "-4": "PIN", "-3": "PIN", "-2": "PIN", "-1": "PIN", "0": "MISS",
+      "+1": "MISS", "+2": "MISS", "+3": "MISS", "+4": "MISS", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "CF", "line": "CF", "green": "CF" }
+  },
+  {
+    "card_number": 9,
+    "activated_commands": 5,
+    "initiative_commands": 3,
+    "type": "Rally",
+    "action_attempt": { "icons": ["spot_concentrate"], "at": 8 },
+    "combat_resolution": {
+      "-4": "PIN", "-3": "PIN", "-2": "PIN", "-1": "PIN", "0": "MISS",
+      "+1": "MISS", "+2": "MISS", "+3": "MISS", "+4": "MISS", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "PC", "line": "PC", "green": "CF" }
+  },
+  {
+    "card_number": 10,
+    "activated_commands": 5,
+    "initiative_commands": 3,
+    "type": "Cover",
+    "action_attempt": { "icons": ["infiltrate", "hq"], "at": 8 },
+    "combat_resolution": {
+      "-4": "PIN", "-3": "PIN", "-2": "PIN", "-1": "PIN", "0": "MISS",
+      "+1": "MISS", "+2": "MISS", "+3": "MISS", "+4": "MISS", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "PC", "line": "PC", "green": "PC" }
+  },
+  {
+    "card_number": 11,
+    "activated_commands": 4,
+    "initiative_commands": 3,
+    "type": "Contact",
+    "action_attempt": { "icons": ["grenade"], "at": 7 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "PIN", "-2": "PIN", "-1": "PIN", "0": "PIN",
+      "+1": "MISS", "+2": "MISS", "+3": "MISS", "+4": "MISS", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "PC", "line": "PC", "green": "PC" }
+  },
+  {
+    "card_number": 12,
+    "activated_commands": 4,
+    "initiative_commands": 3,
+    "type": "Rally",
+    "action_attempt": { "icons": ["call_for_fire"], "at": 7 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "PIN", "-2": "PIN", "-1": "PIN", "0": "PIN",
+      "+1": "MISS", "+2": "MISS", "+3": "MISS", "+4": "MISS", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "LC", "line": "LC", "green": "PC" }
+  },
+  {
+    "card_number": 13,
+    "activated_commands": 4,
+    "initiative_commands": 3,
+    "type": "Cover",
+    "action_attempt": { "icons": ["spot_concentrate"], "at": 7 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "PIN", "-2": "PIN", "-1": "PIN", "0": "PIN",
+      "+1": "MISS", "+2": "MISS", "+3": "MISS", "+4": "MISS", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "LC", "line": "LC", "green": "PC" }
+  },
+  {
+    "card_number": 14,
+    "activated_commands": 4,
+    "initiative_commands": 3,
+    "type": null,
+    "action_attempt": { "icons": ["infiltrate"], "at": 7 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "PIN", "-2": "PIN", "-1": "PIN", "0": "PIN",
+      "+1": "MISS", "+2": "MISS", "+3": "MISS", "+4": "MISS", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "LC", "line": "LC", "green": "PC" }
+  },
+  {
+    "card_number": 15,
+    "activated_commands": 4,
+    "initiative_commands": 3,
+    "type": "Rally",
+    "action_attempt": { "icons": ["grenade", "hq"], "at": 7 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "PIN", "-2": "PIN", "-1": "PIN", "0": "PIN",
+      "+1": "MISS", "+2": "MISS", "+3": "MISS", "+4": "MISS", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "FC", "line": "LC", "green": "LC" }
+  },
+  {
+    "card_number": 16,
+    "activated_commands": 4,
+    "initiative_commands": 3,
+    "type": null,
+    "action_attempt": { "icons": ["call_for_fire"], "at": 6 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "PIN", "-1": "PIN", "0": "PIN",
+      "+1": "PIN", "+2": "MISS", "+3": "MISS", "+4": "MISS", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "FC", "line": "FC", "green": "LC" }
+  },
+  {
+    "card_number": 17,
+    "activated_commands": 4,
+    "initiative_commands": 2,
+    "type": "Contact",
+    "action_attempt": { "icons": ["spot_concentrate"], "at": 6 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "PIN", "-1": "PIN", "0": "PIN",
+      "+1": "PIN", "+2": "MISS", "+3": "MISS", "+4": "MISS", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "FC", "line": "FC", "green": "LC" }
+  },
+  {
+    "card_number": 18,
+    "activated_commands": 4,
+    "initiative_commands": 2,
+    "type": "Rally",
+    "action_attempt": { "icons": ["infiltrate"], "at": 6 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "PIN", "-1": "PIN", "0": "PIN",
+      "+1": "PIN", "+2": "MISS", "+3": "MISS", "+4": "MISS", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "FC", "line": "FC", "green": "FC" }
+  },
+  {
+    "card_number": 19,
+    "activated_commands": 4,
+    "initiative_commands": 2,
+    "type": "Cover",
+    "action_attempt": { "icons": ["grenade"], "at": 6 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "PIN", "-1": "PIN", "0": "PIN",
+      "+1": "PIN", "+2": "MISS", "+3": "MISS", "+4": "MISS", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "PP", "line": "PP", "green": "FC" }
+  },
+  {
+    "card_number": 20,
+    "activated_commands": 4,
+    "initiative_commands": 2,
+    "type": null,
+    "action_attempt": { "icons": ["call_for_fire", "hq"], "at": 6 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "PIN", "-1": "PIN", "0": "PIN",
+      "+1": "PIN", "+2": "MISS", "+3": "MISS", "+4": "MISS", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "PP", "line": "PP", "green": "FC" }
+  },
+  {
+    "card_number": 21,
+    "activated_commands": 4,
+    "initiative_commands": 2,
+    "type": "Rally",
+    "action_attempt": { "icons": ["spot_concentrate"], "at": 5 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "HIT", "-1": "PIN", "0": "PIN",
+      "+1": "PIN", "+2": "PIN", "+3": "MISS", "+4": "MISS", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "PP", "line": "PP", "green": "PP" }
+  },
+  {
+    "card_number": 22,
+    "activated_commands": 4,
+    "initiative_commands": 2,
+    "type": null,
+    "action_attempt": { "icons": ["infiltrate", "hq"], "at": 5 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "HIT", "-1": "PIN", "0": "PIN",
+      "+1": "PIN", "+2": "PIN", "+3": "MISS", "+4": "MISS", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "PL", "line": "PL", "green": "PP" }
+  },
+  {
+    "card_number": 23,
+    "activated_commands": 4,
+    "initiative_commands": 2,
+    "type": "Cover",
+    "action_attempt": { "icons": ["grenade"], "at": 5 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "HIT", "-1": "PIN", "0": "PIN",
+      "+1": "PIN", "+2": "PIN", "+3": "MISS", "+4": "MISS", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "PL", "line": "PL", "green": "PP" }
+  },
+  {
+    "card_number": 24,
+    "activated_commands": 4,
+    "initiative_commands": 2,
+    "type": "Rally",
+    "action_attempt": { "icons": ["call_for_fire"], "at": 5 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "HIT", "-1": "PIN", "0": "PIN",
+      "+1": "PIN", "+2": "PIN", "+3": "MISS", "+4": "MISS", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "PL", "line": "PL", "green": "PP" }
+  },
+  {
+    "card_number": 25,
+    "activated_commands": 3,
+    "initiative_commands": 2,
+    "type": null,
+    "action_attempt": { "icons": ["spot_concentrate", "hq"], "at": 5 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "HIT", "-1": "PIN", "0": "PIN",
+      "+1": "PIN", "+2": "PIN", "+3": "MISS", "+4": "MISS", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "PF", "line": "PF", "green": "PP" }
+  },
+  {
+    "card_number": 26,
+    "activated_commands": 3,
+    "initiative_commands": 2,
+    "type": "Contact",
+    "action_attempt": { "icons": ["infiltrate"], "at": 4 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "HIT", "-1": "HIT", "0": "PIN",
+      "+1": "PIN", "+2": "PIN", "+3": "PIN", "+4": "MISS", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "PF", "line": "PF", "green": "PL" }
+  },
+  {
+    "card_number": 27,
+    "activated_commands": 3,
+    "initiative_commands": 2,
+    "type": "Rally",
+    "action_attempt": { "icons": ["grenade"], "at": 4 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "HIT", "-1": "HIT", "0": "PIN",
+      "+1": "PIN", "+2": "PIN", "+3": "PIN", "+4": "MISS", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "PF", "line": "PF", "green": "PL" }
+  },
+  {
+    "card_number": 28,
+    "activated_commands": 3,
+    "initiative_commands": 2,
+    "type": "Cover",
+    "action_attempt": { "icons": ["call_for_fire"], "at": 4 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "HIT", "-1": "HIT", "0": "PIN",
+      "+1": "PIN", "+2": "PIN", "+3": "PIN", "+4": "MISS", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "PF", "line": "PF", "green": "PL" }
+  },
+  {
+    "card_number": 29,
+    "activated_commands": 3,
+    "initiative_commands": 2,
+    "type": null,
+    "action_attempt": { "icons": ["spot_concentrate"], "at": 4 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "HIT", "-1": "HIT", "0": "PIN",
+      "+1": "PIN", "+2": "PIN", "+3": "PIN", "+4": "MISS", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "C", "line": "C", "green": "PL" }
+  },
+  {
+    "card_number": 30,
+    "activated_commands": 3,
+    "initiative_commands": 2,
+    "type": "Rally",
+    "action_attempt": { "icons": ["infiltrate"], "at": 4 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "HIT", "-1": "HIT", "0": "PIN",
+      "+1": "PIN", "+2": "PIN", "+3": "PIN", "+4": "MISS", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "C", "line": "C", "green": "PF" }
+  },
+  {
+    "card_number": 31,
+    "activated_commands": 3,
+    "initiative_commands": 2,
+    "type": "Cover",
+    "action_attempt": { "icons": ["grenade"], "at": 3 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "HIT", "-1": "HIT", "0": "HIT",
+      "+1": "PIN", "+2": "PIN", "+3": "PIN", "+4": "PIN", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "C", "line": "C", "green": "PF" }
+  },
+  {
+    "card_number": 32,
+    "activated_commands": 3,
+    "initiative_commands": 2,
+    "type": null,
+    "action_attempt": { "icons": ["call_for_fire", "hq"], "at": 3 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "HIT", "-1": "HIT", "0": "HIT",
+      "+1": "PIN", "+2": "PIN", "+3": "PIN", "+4": "PIN", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "C", "line": "C", "green": "PF" }
+  },
+  {
+    "card_number": 33,
+    "activated_commands": 3,
+    "initiative_commands": 2,
+    "type": "Rally",
+    "action_attempt": { "icons": ["spot_concentrate"], "at": 3 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "HIT", "-1": "HIT", "0": "HIT",
+      "+1": "PIN", "+2": "PIN", "+3": "PIN", "+4": "PIN", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "C", "line": "C", "green": "C" }
+  },
+  {
+    "card_number": 34,
+    "activated_commands": 3,
+    "initiative_commands": 2,
+    "type": "Cover",
+    "action_attempt": { "icons": ["infiltrate"], "at": 3 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "HIT", "-1": "HIT", "0": "HIT",
+      "+1": "PIN", "+2": "PIN", "+3": "PIN", "+4": "PIN", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "P", "line": "C", "green": "C" }
+  },
+  {
+    "card_number": 35,
+    "activated_commands": 3,
+    "initiative_commands": 1,
+    "type": "Cover",
+    "action_attempt": { "icons": ["grenade", "hq"], "at": 3 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "HIT", "-1": "HIT", "0": "HIT",
+      "+1": "PIN", "+2": "PIN", "+3": "PIN", "+4": "PIN", "+5": "MISS", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "P", "line": "P", "green": "C" }
+  },
+  {
+    "card_number": 36,
+    "activated_commands": 3,
+    "initiative_commands": 1,
+    "type": "Rally",
+    "action_attempt": { "icons": ["call_for_fire"], "at": 2 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "HIT", "-1": "HIT", "0": "HIT",
+      "+1": "HIT", "+2": "PIN", "+3": "PIN", "+4": "PIN", "+5": "PIN", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "P", "line": "P", "green": "C" }
+  },
+  {
+    "card_number": 37,
+    "activated_commands": 2,
+    "initiative_commands": 1,
+    "type": "Cover",
+    "action_attempt": { "icons": ["spot_concentrate"], "at": 2 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "HIT", "-1": "HIT", "0": "HIT",
+      "+1": "HIT", "+2": "PIN", "+3": "PIN", "+4": "PIN", "+5": "PIN", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "P", "line": "P", "green": "C" }
+  },
+  {
+    "card_number": 38,
+    "activated_commands": 2,
+    "initiative_commands": 1,
+    "type": null,
+    "action_attempt": { "icons": ["infiltrate", "hq"], "at": 2 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "HIT", "-1": "HIT", "0": "HIT",
+      "+1": "HIT", "+2": "PIN", "+3": "PIN", "+4": "PIN", "+5": "PIN", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "P", "line": "P", "green": "C" }
+  },
+  {
+    "card_number": 39,
+    "activated_commands": 2,
+    "initiative_commands": 1,
+    "type": "Rally",
+    "action_attempt": { "icons": ["grenade"], "at": 2 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "HIT", "-1": "HIT", "0": "HIT",
+      "+1": "HIT", "+2": "PIN", "+3": "PIN", "+4": "PIN", "+5": "PIN", "+6": "MISS"
+    },
+    "hit_effect": { "vet": "L", "line": "P", "green": "C" }
+  },
+  {
+    "card_number": 40,
+    "activated_commands": 2,
+    "initiative_commands": 1,
+    "type": "Contact",
+    "action_attempt": { "icons": ["call_for_fire"], "at": 2 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "HIT", "-1": "HIT", "0": "HIT",
+      "+1": "HIT", "+2": "PIN", "+3": "PIN", "+4": "PIN", "+5": "PIN", "+6": "PIN"
+    },
+    "hit_effect": { "vet": "L", "line": "P", "green": "C" }
+  },
+  {
+    "card_number": 41,
+    "activated_commands": 2,
+    "initiative_commands": 1,
+    "type": "Contact",
+    "action_attempt": { "icons": ["spot_concentrate"], "at": 1 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "HIT", "-1": "HIT", "0": "HIT",
+      "+1": "HIT", "+2": "HIT", "+3": "PIN", "+4": "PIN", "+5": "PIN", "+6": "PIN"
+    },
+    "hit_effect": { "vet": "L", "line": "L", "green": "C" }
+  },
+  {
+    "card_number": 42,
+    "activated_commands": 2,
+    "initiative_commands": 1,
+    "type": "Rally",
+    "action_attempt": { "icons": ["call_for_fire_battalion"], "at": 1 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "HIT", "-1": "HIT", "0": "HIT",
+      "+1": "HIT", "+2": "HIT", "+3": "PIN", "+4": "PIN", "+5": "PIN", "+6": "PIN"
+    },
+    "hit_effect": { "vet": "L", "line": "L", "green": "C" }
+  },
+  {
+    "card_number": 43,
+    "activated_commands": 2,
+    "initiative_commands": 1,
+    "type": "Cover",
+    "action_attempt": { "icons": ["spot_concentrate", "hq"], "at": 1 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "HIT", "-1": "HIT", "0": "HIT",
+      "+1": "HIT", "+2": "HIT", "+3": "PIN", "+4": "PIN", "+5": "PIN", "+6": "PIN"
+    },
+    "hit_effect": { "vet": "F", "line": "L", "green": "C" }
+  },
+  {
+    "card_number": 44,
+    "activated_commands": 2,
+    "initiative_commands": 1,
+    "type": null,
+    "action_attempt": { "icons": ["call_for_fire_battalion"], "at": 1 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "HIT", "-1": "HIT", "0": "HIT",
+      "+1": "HIT", "+2": "HIT", "+3": "PIN", "+4": "PIN", "+5": "PIN", "+6": "PIN"
+    },
+    "hit_effect": { "vet": "F", "line": "L", "green": "C" }
+  },
+  {
+    "card_number": 45,
+    "activated_commands": 2,
+    "initiative_commands": 1,
+    "type": "Rally",
+    "action_attempt": { "icons": ["spot_concentrate"], "at": 1 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "HIT", "-1": "HIT", "0": "HIT",
+      "+1": "HIT", "+2": "HIT", "+3": "PIN", "+4": "PIN", "+5": "PIN", "+6": "PIN"
+    },
+    "hit_effect": { "vet": "F", "line": "F", "green": "L" }
+  },
+  {
+    "card_number": 46,
+    "activated_commands": 2,
+    "initiative_commands": 1,
+    "type": null,
+    "action_attempt": { "icons": ["call_for_fire_battalion"], "at": 0 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "HIT", "-1": "HIT", "0": "HIT",
+      "+1": "HIT", "+2": "HIT", "+3": "HIT", "+4": "PIN", "+5": "PIN", "+6": "PIN"
+    },
+    "hit_effect": { "vet": "F", "line": "F", "green": "F" }
+  },
+  {
+    "card_number": 47,
+    "activated_commands": 1,
+    "initiative_commands": 0,
+    "type": "Contact",
+    "action_attempt": { "icons": ["spot_concentrate", "hq"], "at": 0 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "HIT", "-1": "HIT", "0": "HIT",
+      "+1": "HIT", "+2": "HIT", "+3": "HIT", "+4": "PIN", "+5": "PIN", "+6": "PIN"
+    },
+    "hit_effect": { "vet": "F", "line": "F", "green": "F" }
+  },
+  {
+    "card_number": 48,
+    "activated_commands": 1,
+    "initiative_commands": 0,
+    "type": null,
+    "action_attempt": { "icons": ["call_for_fire_battalion"], "at": 0 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "HIT", "-1": "HIT", "0": "HIT",
+      "+1": "HIT", "+2": "HIT", "+3": "HIT", "+4": "PIN", "+5": "PIN", "+6": "PIN"
+    },
+    "hit_effect": { "vet": "A", "line": "F", "green": "F" }
+  },
+  {
+    "card_number": 49,
+    "activated_commands": 1,
+    "initiative_commands": 0,
+    "type": null,
+    "action_attempt": { "icons": ["jam"], "at": 0 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "HIT", "-1": "HIT", "0": "HIT",
+      "+1": "HIT", "+2": "HIT", "+3": "HIT", "+4": "HIT", "+5": "PIN", "+6": "PIN"
+    },
+    "hit_effect": { "vet": "A", "line": "A", "green": "F" }
+  },
+  {
+    "card_number": 50,
+    "activated_commands": 1,
+    "initiative_commands": 0,
+    "type": null,
+    "action_attempt": { "icons": ["short"], "at": 0 },
+    "combat_resolution": {
+      "-4": "HIT", "-3": "HIT", "-2": "HIT", "-1": "HIT", "0": "HIT",
+      "+1": "HIT", "+2": "HIT", "+3": "HIT", "+4": "HIT", "+5": "HIT", "+6": "HIT"
+    },
+    "hit_effect": { "vet": "A", "line": "A", "green": "A" }
+  }
+  ]
+}

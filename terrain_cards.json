@@ -1,0 +1,962 @@
+{
+  "metadata": {
+    "campaign": "Normandy",
+    "card_back": "Card Back - Normandy.jpg"
+  },
+  "cards": [
+  {
+    "card_id": "N01",
+    "terrain_type": "Hill",
+    "defense_value_blocked": 0,
+    "defense_value_open": null,
+    "elevation": 1,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": null,
+    "cover_draw": null,
+    "slow": false,
+    "special": "place_card_on_top",
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N02",
+    "terrain_type": "Hill",
+    "defense_value_blocked": 0,
+    "defense_value_open": null,
+    "elevation": 1,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": null,
+    "cover_draw": null,
+    "slow": false,
+    "special": "place_card_on_top",
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N03",
+    "terrain_type": "Hill",
+    "defense_value_blocked": 0,
+    "defense_value_open": null,
+    "elevation": 1,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": null,
+    "cover_draw": null,
+    "slow": false,
+    "special": "place_card_on_top",
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N04",
+    "terrain_type": "Hill",
+    "defense_value_blocked": 0,
+    "defense_value_open": null,
+    "elevation": 1,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": null,
+    "cover_draw": null,
+    "slow": false,
+    "special": "place_card_on_top",
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N05",
+    "terrain_type": "Hill",
+    "defense_value_blocked": 0,
+    "defense_value_open": null,
+    "elevation": 1,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": null,
+    "cover_draw": null,
+    "slow": false,
+    "special": "place_card_on_top",
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N06",
+    "terrain_type": "Hill",
+    "defense_value_blocked": 0,
+    "defense_value_open": null,
+    "elevation": 1,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": null,
+    "cover_draw": null,
+    "slow": false,
+    "special": "place_card_on_top",
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N07",
+    "terrain_type": "Marsh",
+    "defense_value_blocked": 1,
+    "defense_value_open": null,
+    "elevation": 0,
+    "explosion_modifier": 1,
+    "no_indirect_fire": true,
+    "cover_positions": 1,
+    "cover_draw": 2,
+    "slow": false,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N08",
+    "terrain_type": "Marsh",
+    "defense_value_blocked": 1,
+    "defense_value_open": null,
+    "elevation": 0,
+    "explosion_modifier": 1,
+    "no_indirect_fire": true,
+    "cover_positions": 1,
+    "cover_draw": 2,
+    "slow": false,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N09",
+    "terrain_type": "Orchard/Grove",
+    "defense_value_blocked": 1,
+    "defense_value_open": null,
+    "elevation": 0,
+    "explosion_modifier": -1,
+    "no_indirect_fire": false,
+    "cover_positions": 2,
+    "cover_draw": 3,
+    "slow": false,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N10",
+    "terrain_type": "Orchard/Grove",
+    "defense_value_blocked": 1,
+    "defense_value_open": null,
+    "elevation": 0,
+    "explosion_modifier": -1,
+    "no_indirect_fire": false,
+    "cover_positions": 2,
+    "cover_draw": 3,
+    "slow": false,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N11",
+    "terrain_type": "Orchard/Grove",
+    "defense_value_blocked": 1,
+    "defense_value_open": null,
+    "elevation": 0,
+    "explosion_modifier": -1,
+    "no_indirect_fire": false,
+    "cover_positions": 2,
+    "cover_draw": 3,
+    "slow": false,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N12",
+    "terrain_type": "Orchard/Grove",
+    "defense_value_blocked": 1,
+    "defense_value_open": null,
+    "elevation": 0,
+    "explosion_modifier": -1,
+    "no_indirect_fire": false,
+    "cover_positions": 2,
+    "cover_draw": 3,
+    "slow": false,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N13",
+    "terrain_type": "Orchard/Grove",
+    "defense_value_blocked": 1,
+    "defense_value_open": null,
+    "elevation": 0,
+    "explosion_modifier": -1,
+    "no_indirect_fire": false,
+    "cover_positions": 2,
+    "cover_draw": 3,
+    "slow": false,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N14",
+    "terrain_type": "Orchard/Grove",
+    "defense_value_blocked": 1,
+    "defense_value_open": null,
+    "elevation": 0,
+    "explosion_modifier": -1,
+    "no_indirect_fire": false,
+    "cover_positions": 2,
+    "cover_draw": 3,
+    "slow": false,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N15",
+    "terrain_type": "Orchard/Grove",
+    "defense_value_blocked": 1,
+    "defense_value_open": null,
+    "elevation": 0,
+    "explosion_modifier": -1,
+    "no_indirect_fire": false,
+    "cover_positions": 2,
+    "cover_draw": 3,
+    "slow": false,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N16",
+    "terrain_type": "Orchard/Grove",
+    "defense_value_blocked": 1,
+    "defense_value_open": null,
+    "elevation": 0,
+    "explosion_modifier": -1,
+    "no_indirect_fire": false,
+    "cover_positions": 2,
+    "cover_draw": 3,
+    "slow": false,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N17",
+    "terrain_type": "Woods",
+    "defense_value_blocked": 2,
+    "defense_value_open": null,
+    "elevation": 0,
+    "explosion_modifier": -1,
+    "no_indirect_fire": true,
+    "cover_positions": 3,
+    "cover_draw": 4,
+    "slow": false,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N18",
+    "terrain_type": "Woods",
+    "defense_value_blocked": 2,
+    "defense_value_open": null,
+    "elevation": 0,
+    "explosion_modifier": -1,
+    "no_indirect_fire": true,
+    "cover_positions": 3,
+    "cover_draw": 4,
+    "slow": false,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N19",
+    "terrain_type": "Woods",
+    "defense_value_blocked": 2,
+    "defense_value_open": null,
+    "elevation": 0,
+    "explosion_modifier": -1,
+    "no_indirect_fire": true,
+    "cover_positions": 3,
+    "cover_draw": 4,
+    "slow": false,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N20",
+    "terrain_type": "Woods",
+    "defense_value_blocked": 2,
+    "defense_value_open": null,
+    "elevation": 0,
+    "explosion_modifier": -1,
+    "no_indirect_fire": true,
+    "cover_positions": 3,
+    "cover_draw": 4,
+    "slow": false,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N21",
+    "terrain_type": "Woods",
+    "defense_value_blocked": 2,
+    "defense_value_open": null,
+    "elevation": 0,
+    "explosion_modifier": -1,
+    "no_indirect_fire": true,
+    "cover_positions": 3,
+    "cover_draw": 4,
+    "slow": false,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N22",
+    "terrain_type": "Woods",
+    "defense_value_blocked": 2,
+    "defense_value_open": null,
+    "elevation": 0,
+    "explosion_modifier": -1,
+    "no_indirect_fire": true,
+    "cover_positions": 3,
+    "cover_draw": 4,
+    "slow": false,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N23",
+    "terrain_type": "Woods",
+    "defense_value_blocked": 2,
+    "defense_value_open": null,
+    "elevation": 0,
+    "explosion_modifier": -1,
+    "no_indirect_fire": true,
+    "cover_positions": 3,
+    "cover_draw": 4,
+    "slow": false,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N24",
+    "terrain_type": "Woods",
+    "defense_value_blocked": 2,
+    "defense_value_open": null,
+    "elevation": 0,
+    "explosion_modifier": -1,
+    "no_indirect_fire": true,
+    "cover_positions": 3,
+    "cover_draw": 4,
+    "slow": false,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N25",
+    "terrain_type": "Hedgerow/Bocage",
+    "defense_value_blocked": 2,
+    "defense_value_open": null,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": 2,
+    "cover_draw": 4,
+    "slow": true,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N26",
+    "terrain_type": "Hedgerow/Bocage",
+    "defense_value_blocked": 2,
+    "defense_value_open": null,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": 2,
+    "cover_draw": 4,
+    "slow": true,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N27",
+    "terrain_type": "Hedgerow/Bocage",
+    "defense_value_blocked": 2,
+    "defense_value_open": 1,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": 2,
+    "cover_draw": 4,
+    "slow": true,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": true, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": true, "top_left": false
+    }
+  },
+  {
+    "card_id": "N28",
+    "terrain_type": "Hedgerow/Bocage",
+    "defense_value_blocked": 2,
+    "defense_value_open": 1,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": 2,
+    "cover_draw": 4,
+    "slow": true,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": true, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": true, "top_left": false
+    }
+  },
+  {
+    "card_id": "N29",
+    "terrain_type": "Hedgerow/Bocage",
+    "defense_value_blocked": 2,
+    "defense_value_open": 1,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": 2,
+    "cover_draw": 4,
+    "slow": true,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": true, "bottom_right": true,
+      "bottom": true, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N30",
+    "terrain_type": "Hedgerow/Bocage",
+    "defense_value_blocked": 2,
+    "defense_value_open": 1,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": 2,
+    "cover_draw": 4,
+    "slow": true,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": true, "bottom_right": true,
+      "bottom": true, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N31",
+    "terrain_type": "Hedgerow/Bocage",
+    "defense_value_blocked": 2,
+    "defense_value_open": 1,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": 2,
+    "cover_draw": 4,
+    "slow": true,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": true, "bottom_left": true, "left": true, "top_left": false
+    }
+  },
+  {
+    "card_id": "N32",
+    "terrain_type": "Hedgerow/Bocage",
+    "defense_value_blocked": 2,
+    "defense_value_open": 1,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": 2,
+    "cover_draw": 4,
+    "slow": true,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": true, "bottom_left": true, "left": true, "top_left": false
+    }
+  },
+  {
+    "card_id": "N33",
+    "terrain_type": "Hedgerow/Bocage",
+    "defense_value_blocked": 2,
+    "defense_value_open": 1,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": 2,
+    "cover_draw": 4,
+    "slow": true,
+    "special": null,
+    "los": {
+      "top": true, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": true, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N34",
+    "terrain_type": "Hedgerow/Bocage",
+    "defense_value_blocked": 2,
+    "defense_value_open": 1,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": 2,
+    "cover_draw": 4,
+    "slow": true,
+    "special": null,
+    "los": {
+      "top": true, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": true, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N35",
+    "terrain_type": "Hedgerow/Bocage",
+    "defense_value_blocked": 2,
+    "defense_value_open": 1,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": 2,
+    "cover_draw": 4,
+    "slow": true,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": true, "bottom_right": true,
+      "bottom": true, "bottom_left": true, "left": true, "top_left": false
+    }
+  },
+  {
+    "card_id": "N36",
+    "terrain_type": "Hedgerow/Bocage",
+    "defense_value_blocked": 2,
+    "defense_value_open": 1,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": 2,
+    "cover_draw": 4,
+    "slow": true,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": true, "bottom_right": true,
+      "bottom": true, "bottom_left": true, "left": true, "top_left": false
+    }
+  },
+  {
+    "card_id": "N37",
+    "terrain_type": "Village",
+    "defense_value_blocked": 3,
+    "defense_value_open": null,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": 3,
+    "cover_draw": 4,
+    "slow": true,
+    "multi_story": true,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N38",
+    "terrain_type": "Village",
+    "defense_value_blocked": 3,
+    "defense_value_open": null,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": 3,
+    "cover_draw": 4,
+    "slow": true,
+    "multi_story": false,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N39",
+    "terrain_type": "Village",
+    "defense_value_blocked": 3,
+    "defense_value_open": null,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": 3,
+    "cover_draw": 4,
+    "slow": true,
+    "multi_story": true,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N40",
+    "terrain_type": "Village",
+    "defense_value_blocked": 3,
+    "defense_value_open": null,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": 3,
+    "cover_draw": 4,
+    "slow": true,
+    "multi_story": false,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N41",
+    "terrain_type": "Open Fields",
+    "defense_value_blocked": null,
+    "defense_value_open": 0,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": 1,
+    "cover_draw": 2,
+    "slow": false,
+    "multi_story": false,
+    "special": null,
+    "los": {
+      "top": true, "top_right": true, "right": true, "bottom_right": true,
+      "bottom": true, "bottom_left": true, "left": true, "top_left": true
+    }
+  },
+  {
+    "card_id": "N42",
+    "terrain_type": "Open Fields",
+    "defense_value_blocked": null,
+    "defense_value_open": 0,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": 1,
+    "cover_draw": 2,
+    "slow": false,
+    "multi_story": false,
+    "special": null,
+    "los": {
+      "top": true, "top_right": true, "right": true, "bottom_right": true,
+      "bottom": true, "bottom_left": true, "left": true, "top_left": true
+    }
+  },
+  {
+    "card_id": "N43",
+    "terrain_type": "Open Fields",
+    "defense_value_blocked": null,
+    "defense_value_open": 0,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": 1,
+    "cover_draw": 2,
+    "slow": false,
+    "multi_story": false,
+    "special": null,
+    "los": {
+      "top": true, "top_right": true, "right": true, "bottom_right": true,
+      "bottom": true, "bottom_left": true, "left": true, "top_left": true
+    }
+  },
+  {
+    "card_id": "N44",
+    "terrain_type": "Open Fields",
+    "defense_value_blocked": null,
+    "defense_value_open": 0,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": 1,
+    "cover_draw": 2,
+    "slow": false,
+    "multi_story": false,
+    "special": null,
+    "los": {
+      "top": true, "top_right": true, "right": true, "bottom_right": true,
+      "bottom": true, "bottom_left": true, "left": true, "top_left": true
+    }
+  },
+  {
+    "card_id": "N45",
+    "terrain_type": "Gully/Draw",
+    "defense_value_blocked": 2,
+    "defense_value_open": 1,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": true,
+    "cover_positions": 1,
+    "cover_draw": 3,
+    "slow": false,
+    "multi_story": false,
+    "special": null,
+    "los": {
+      "top": true, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": true, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N46",
+    "terrain_type": "Gully/Draw",
+    "defense_value_blocked": 2,
+    "defense_value_open": 1,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": true,
+    "cover_positions": 1,
+    "cover_draw": 3,
+    "slow": false,
+    "multi_story": false,
+    "special": null,
+    "los": {
+      "top": true, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": true, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N47",
+    "terrain_type": "Gully/Draw",
+    "defense_value_blocked": 2,
+    "defense_value_open": 1,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": true,
+    "cover_positions": 1,
+    "cover_draw": 3,
+    "slow": false,
+    "multi_story": false,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": true, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": true, "top_left": false
+    }
+  },
+  {
+    "card_id": "N48",
+    "terrain_type": "Gully/Draw",
+    "defense_value_blocked": 2,
+    "defense_value_open": 1,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": true,
+    "cover_positions": 1,
+    "cover_draw": 3,
+    "slow": false,
+    "multi_story": false,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": true, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": true, "top_left": false
+    }
+  },
+  {
+    "card_id": "N49",
+    "terrain_type": "Farm",
+    "defense_value_blocked": 2,
+    "defense_value_open": null,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": 1,
+    "cover_draw": 3,
+    "slow": true,
+    "multi_story": false,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N50",
+    "terrain_type": "Farm",
+    "defense_value_blocked": 2,
+    "defense_value_open": null,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": 1,
+    "cover_draw": 3,
+    "slow": true,
+    "multi_story": false,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N51",
+    "terrain_type": "Farm",
+    "defense_value_blocked": 2,
+    "defense_value_open": null,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": 1,
+    "cover_draw": 3,
+    "slow": true,
+    "multi_story": false,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N52",
+    "terrain_type": "Farm",
+    "defense_value_blocked": 2,
+    "defense_value_open": null,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": 1,
+    "cover_draw": 3,
+    "slow": true,
+    "multi_story": false,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N53",
+    "terrain_type": "Farm",
+    "defense_value_blocked": 2,
+    "defense_value_open": null,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": 1,
+    "cover_draw": 3,
+    "slow": true,
+    "multi_story": true,
+    "special": null,
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N54",
+    "terrain_type": "Church",
+    "defense_value_blocked": 3,
+    "defense_value_open": null,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": 1,
+    "cover_draw": 3,
+    "slow": true,
+    "multi_story": true,
+    "special": "observation_post",
+    "los": {
+      "top": false, "top_right": false, "right": false, "bottom_right": false,
+      "bottom": false, "bottom_left": false, "left": false, "top_left": false
+    }
+  },
+  {
+    "card_id": "N55",
+    "terrain_type": "Cemetery",
+    "defense_value_blocked": null,
+    "defense_value_open": 1,
+    "elevation": 0,
+    "explosion_modifier": null,
+    "no_indirect_fire": false,
+    "cover_positions": 1,
+    "cover_draw": 3,
+    "slow": true,
+    "multi_story": false,
+    "special": null,
+    "los": {
+      "top": true, "top_right": true, "right": true, "bottom_right": true,
+      "bottom": true, "bottom_left": true, "left": true, "top_left": true
+    }
+  }
+  ]
+}
