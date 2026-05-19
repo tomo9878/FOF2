@@ -81,32 +81,127 @@ export const UNITS = {
       src:'images/3_Mtr 60mm.png',     srcReduced:'images/3_Mtr 60mm b.png',  label:'3/60mm Tm' },
   ],
 
-  // ──────────────────────────────────────────────────────────
-  // 敵ユニット（北朝鮮軍・北ベトナム軍等、faction を変えるだけで使い回し可）
-  // src / srcReduced は実際の画像パスに差し替えること
-  // ──────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────────────────────────────────────
+  // ドイツ軍ユニット（ノルマンディーキャンペーン）
+  // Hit / Pin / Exposed はアメリカ軍と同一ロジック（faction:'german' のみ異なる）
+  // LAT画像はドイツ軍専用を使用：
+  //   ・歩兵分隊 (GR)  … fireteam: GE_LAT_Fireteam_SC  / assaultteam: GE_LAT_Assault Team
+  //   ・落下傘猟兵(FJ)  … fireteam: GE_LAT_Fireteam_ASC / assaultteam: GE_LAT_Assault Team_FG42
+  // ──────────────────────────────────────────────────────────────────────────────
+
+  // ── Heer Grenadier 分隊（擲弾兵）──
   'B3': [
     {
-      id: 'NK_1SQ', type: 'squad', faction: 'nk',
-      src: 'images/NK_squad_A.png', srcReduced: 'images/NK_squad_B.png',
-      label: '北朝鮮軍 第1分隊',
-      fireteam:    { id:'NK_1SQ_FT', src:'images/LAT_Fire Team-W.png',    label:'北朝鮮 ファイアチーム', type:'lat', faction:'nk' },
-      assaultteam: { id:'NK_1SQ_AT', src:'images/LAT_Assault Team-W.png', label:'北朝鮮 突撃チーム',     type:'lat', faction:'nk' },
+      id: 'GE_GR_1', type: 'squad', faction: 'german',
+      src: 'images/GE_GR_1Gp.png', srcReduced: 'images/GE_GR_1Gp b.png',
+      label: '擲弾兵 第1分隊',
+      fireteam:    { id:'GE_GR_1_FT', src:'images/GE_LAT_Fireteam_SC.png',        label:'GR ファイアチーム',  type:'lat', faction:'german' },
+      assaultteam: { id:'GE_GR_1_AT', src:'images/GE_LAT_Assault Team.png',        label:'GR 突撃チーム',      type:'lat', faction:'german' },
     },
     {
-      id: 'NK_1WPN', type: 'weapon_team', faction: 'nk',
-      src: 'images/NK_weapon_A.png', srcReduced: 'images/NK_weapon_B.png',
-      label: '北朝鮮軍 武器チーム',
+      id: 'GE_GR_2', type: 'squad', faction: 'german',
+      src: 'images/GE_GR_2Gp.png', srcReduced: 'images/GE_GR_2Gp b.png',
+      label: '擲弾兵 第2分隊',
+      fireteam:    { id:'GE_GR_2_FT', src:'images/GE_LAT_Fireteam_SC.png',        label:'GR ファイアチーム',  type:'lat', faction:'german' },
+      assaultteam: { id:'GE_GR_2_AT', src:'images/GE_LAT_Assault Team.png',        label:'GR 突撃チーム',      type:'lat', faction:'german' },
+    },
+    {
+      id: 'GE_GR_3', type: 'squad', faction: 'german',
+      src: 'images/GE_GR_3Gp.png', srcReduced: 'images/GE_GR_3Gp b.png',
+      label: '擲弾兵 第3分隊',
+      fireteam:    { id:'GE_GR_3_FT', src:'images/GE_LAT_Fireteam_SC.png',        label:'GR ファイアチーム',  type:'lat', faction:'german' },
+      assaultteam: { id:'GE_GR_3_AT', src:'images/GE_LAT_Assault Team.png',        label:'GR 突撃チーム',      type:'lat', faction:'german' },
+    },
+    {
+      id: 'GE_GR_4', type: 'squad', faction: 'german',
+      src: 'images/GE_GR_4Gp.png', srcReduced: 'images/GE_GR_4Gp b.png',
+      label: '擲弾兵 第4分隊',
+      fireteam:    { id:'GE_GR_4_FT', src:'images/GE_LAT_Fireteam_SC.png',        label:'GR ファイアチーム',  type:'lat', faction:'german' },
+      assaultteam: { id:'GE_GR_4_AT', src:'images/GE_LAT_Assault Team.png',        label:'GR 突撃チーム',      type:'lat', faction:'german' },
     },
   ],
+
+  // ── Fallschirmjäger 分隊（落下傘猟兵）──
   'C3': [
     {
-      id: 'NVA_1SQ', type: 'squad', faction: 'nva',
-      src: 'images/NVA_squad_A.png', srcReduced: 'images/NVA_squad_B.png',
-      label: '北ベトナム軍 第1分隊',
-      fireteam:    { id:'NVA_1SQ_FT', src:'images/LAT_Fire Team-W.png',    label:'NVA ファイアチーム', type:'lat', faction:'nva' },
-      assaultteam: { id:'NVA_1SQ_AT', src:'images/LAT_Assault Team-W.png', label:'NVA 突撃チーム',     type:'lat', faction:'nva' },
+      id: 'GE_FJ_1', type: 'squad', faction: 'german',
+      src: 'images/GE_FJ_1Gp.png', srcReduced: 'images/GE_FJ_1Gp b.png',
+      label: '落下傘猟兵 第1分隊',
+      fireteam:    { id:'GE_FJ_1_FT', src:'images/GE_LAT_Fireteam_ASC.png',       label:'FJ ファイアチーム',  type:'lat', faction:'german' },
+      assaultteam: { id:'GE_FJ_1_AT', src:'images/GE_LAT_Assault Team_FG42.png',  label:'FJ 突撃チーム(FG42)',type:'lat', faction:'german' },
     },
+    {
+      id: 'GE_FJ_2', type: 'squad', faction: 'german',
+      src: 'images/GE_FJ_2Gp.png', srcReduced: 'images/GE_FJ_2Gp b.png',
+      label: '落下傘猟兵 第2分隊',
+      fireteam:    { id:'GE_FJ_2_FT', src:'images/GE_LAT_Fireteam_ASC.png',       label:'FJ ファイアチーム',  type:'lat', faction:'german' },
+      assaultteam: { id:'GE_FJ_2_AT', src:'images/GE_LAT_Assault Team_FG42.png',  label:'FJ 突撃チーム(FG42)',type:'lat', faction:'german' },
+    },
+    {
+      id: 'GE_FJ_3', type: 'squad', faction: 'german',
+      src: 'images/GE_FJ_3Gp.png', srcReduced: 'images/GE_FJ_3Gp b.png',
+      label: '落下傘猟兵 第3分隊',
+      fireteam:    { id:'GE_FJ_3_FT', src:'images/GE_LAT_Fireteam_ASC.png',       label:'FJ ファイアチーム',  type:'lat', faction:'german' },
+      assaultteam: { id:'GE_FJ_3_AT', src:'images/GE_LAT_Assault Team_FG42.png',  label:'FJ 突撃チーム(FG42)',type:'lat', faction:'german' },
+    },
+    {
+      id: 'GE_FJ_4', type: 'squad', faction: 'german',
+      src: 'images/GE_FJ_4Gp.png', srcReduced: 'images/GE_FJ_4Gp b.png',
+      label: '落下傘猟兵 第4分隊',
+      fireteam:    { id:'GE_FJ_4_FT', src:'images/GE_LAT_Fireteam_ASC.png',       label:'FJ ファイアチーム',  type:'lat', faction:'german' },
+      assaultteam: { id:'GE_FJ_4_AT', src:'images/GE_LAT_Assault Team_FG42.png',  label:'FJ 突撃チーム(FG42)',type:'lat', faction:'german' },
+    },
+    {
+      id: 'GE_FJ_5', type: 'squad', faction: 'german',
+      src: 'images/GE_FJ_5Gp.png', srcReduced: 'images/GE_FJ_5Gp b.png',
+      label: '落下傘猟兵 第5分隊',
+      fireteam:    { id:'GE_FJ_5_FT', src:'images/GE_LAT_Fireteam_ASC.png',       label:'FJ ファイアチーム',  type:'lat', faction:'german' },
+      assaultteam: { id:'GE_FJ_5_AT', src:'images/GE_LAT_Assault Team_FG42.png',  label:'FJ 突撃チーム(FG42)',type:'lat', faction:'german' },
+    },
+    {
+      id: 'GE_FJ_6', type: 'squad', faction: 'german',
+      src: 'images/GE_FJ_6Gp.png', srcReduced: 'images/GE_FJ_6Gp b.png',
+      label: '落下傘猟兵 第6分隊',
+      fireteam:    { id:'GE_FJ_6_FT', src:'images/GE_LAT_Fireteam_ASC.png',       label:'FJ ファイアチーム',  type:'lat', faction:'german' },
+      assaultteam: { id:'GE_FJ_6_AT', src:'images/GE_LAT_Assault Team_FG42.png',  label:'FJ 突撃チーム(FG42)',type:'lat', faction:'german' },
+    },
+  ],
+
+  // ── ドイツ軍 支援ユニット（namedFireTeam:true）──
+  // Hit: A / F → Pin のみ（B面 = Fire Team 面）/ Hit: L/P/C → 除去 ＋ LAT
+  'D3': [
+    { id:'GE_Leader_1', type:'weapon_team', faction:'german', namedFireTeam:true,
+      src:'images/GE_Leader-1.png',    srcReduced:'images/GE_Leader-1b.png',  label:'ドイツ軍指揮官 1' },
+    { id:'GE_Leader_2', type:'weapon_team', faction:'german', namedFireTeam:true,
+      src:'images/GE_Leader-2.png',    srcReduced:'images/GE_Leader-2b.png',  label:'ドイツ軍指揮官 2' },
+    { id:'GE_Leader_3', type:'weapon_team', faction:'german', namedFireTeam:true,
+      src:'images/GE_Leader-3.png',    srcReduced:'images/GE_Leader-3b.png',  label:'ドイツ軍指揮官 3' },
+    { id:'GE_LMG_1',   type:'weapon_team', faction:'german', namedFireTeam:true,
+      src:'images/GE_LMG_1.png',       srcReduced:'images/GE_LMG_1 b.png',   label:'LMG チーム 1' },
+    { id:'GE_LMG_2',   type:'weapon_team', faction:'german', namedFireTeam:true,
+      src:'images/GE_LMG_2.png',       srcReduced:'images/GE_LMG_2 b.png',   label:'LMG チーム 2' },
+    { id:'GE_LMG_3',   type:'weapon_team', faction:'german', namedFireTeam:true,
+      src:'images/GE_LMG_3.png',       srcReduced:'images/GE_LMG_3 b.png',   label:'LMG チーム 3' },
+    { id:'GE_LMG_4',   type:'weapon_team', faction:'german', namedFireTeam:true,
+      src:'images/GE_LMG_4.png',       srcReduced:'images/GE_LMG_4 b.png',   label:'LMG チーム 4' },
+    { id:'GE_LMG_5',   type:'weapon_team', faction:'german', namedFireTeam:true,
+      src:'images/GE_LMG_5.png',       srcReduced:'images/GE_LMG_5 b.png',   label:'LMG チーム 5' },
+    { id:'GE_HMG_3',   type:'weapon_team', faction:'german', namedFireTeam:true,
+      src:'images/GE_HMG_3.png',       srcReduced:'images/GE_HMG_3 b.png',   label:'HMG チーム 3' },
+    { id:'GE_HMG_4',   type:'weapon_team', faction:'german', namedFireTeam:true,
+      src:'images/GE_HMG_4.png',       srcReduced:'images/GE_HMG_4 b.png',   label:'HMG チーム 4' },
+    { id:'GE_PzSchrk_1', type:'weapon_team', faction:'german', namedFireTeam:true,
+      src:'images/GE_PzSchrk 1.png',   srcReduced:'images/GE_PzSchrk 1 b.png', label:'パンツァーシュレック 1' },
+    { id:'GE_Mtr81_1', type:'weapon_team', faction:'german', namedFireTeam:true,
+      src:'images/GE_81mm Mtr 1.png',  srcReduced:'images/GE_81mm Mtr 1 b.png', label:'81mm 迫撃砲 1' },
+    { id:'GE_AT75_1',  type:'weapon_team', faction:'german', namedFireTeam:true,
+      src:'images/GE_75mmAT 1.png',    srcReduced:'images/GE_75mmAT 1 b.png', label:'75mm 対戦車砲 1' },
+    { id:'GE_IG75_2',  type:'weapon_team', faction:'german', namedFireTeam:true,
+      src:'images/GE_75mmIG 2.png',    srcReduced:'images/GE_75mmIG 1 b.png', label:'75mm 歩兵砲' },
+    { id:'GE_Spotter_Mtr2', type:'weapon_team', faction:'german', namedFireTeam:true,
+      src:'images/GE_Spotter_Mtr2.png', srcReduced:'images/GE_Spotter_Mtr1 b.png', label:'迫撃砲スポッター 1' },
+    { id:'GE_Spotter_Arty1', type:'weapon_team', faction:'german', namedFireTeam:true,
+      src:'images/GE_Spotter_Arty1.png', srcReduced:'images/GE_Spotter_Arty2 b.png', label:'砲兵スポッター 1' },
   ],
 };
 
