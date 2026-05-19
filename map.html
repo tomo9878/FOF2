@@ -1,0 +1,641 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Fields of Fire - マップ</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #111108;
+    color: #d4c89a;
+    font-family: 'Courier New', monospace;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ===== ヘッダー ===== */
+  .header {
+    background: #1e1e14;
+    border-bottom: 2px solid #4a4a2a;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-shrink: 0;
+  }
+
+  .header-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #e8d87a;
+    letter-spacing: 3px;
+  }
+
+  .header-info {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+  }
+
+  .info-chip {
+    background: #2a2a1e;
+    border: 1px solid #4a4a2a;
+    border-radius: 4px;
+    padding: 3px 12px;
+    font-size: 12px;
+    color: #a4a47a;
+  }
+
+  .info-chip span { color: #e8d87a; font-weight: bold; margin-left: 6px; }
+
+  .phase-indicator {
+    background: #1e3a1e;
+    border: 1px solid #3a6a3a;
+    border-radius: 4px;
+    padding: 3px 14px;
+    font-size: 12px;
+    color: #7ad47a;
+    letter-spacing: 1px;
+  }
+
+  .header-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+  }
+
+  .btn {
+    background: #2a2a1e;
+    border: 1px solid #6a6a3a;
+    border-radius: 4px;
+    padding: 5px 14px;
+    font-size: 12px;
+    color: #d4c89a;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+    transition: all 0.15s;
+  }
+  .btn:hover { background: #3a3a2a; color: #e8d87a; border-color: #e8d87a; }
+  .btn.primary { background: #2a3a2a; border-color: #5a8a5a; color: #7ad47a; }
+  .btn.primary:hover { background: #3a4a3a; }
+
+  /* ===== マップエリア ===== */
+  .map-area {
+    flex: 1;
+    overflow: auto;
+    position: relative;
+    background: radial-gradient(ellipse at center, #1a1a10 0%, #0e0e08 100%);
+    /* グリッド線 */
+    background-image:
+      radial-gradient(ellipse at center, #1a1a10 0%, #0e0e08 100%),
+      linear-gradient(rgba(74,74,42,0.12) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(74,74,42,0.12) 1px, transparent 1px);
+    background-size: 100% 100%, 50px 50px, 50px 50px;
+  }
+
+  /* スクロール領域（ズームに合わせてサイズが変わる） */
+  .map-scroll-content {
+    position: relative;
+    min-width: 100%;
+    min-height: 100%;
+  }
+
+  /* ズームコンテナ */
+  .map-zoom-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: top left;
+    transition: transform 0.15s ease;
+  }
+
+  /* ===== カードグリッド ===== */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 210px);
+    /* テレイン3行 + 区切り行28px + スタートエリア1行 */
+    grid-template-rows: repeat(3, 276px) 28px 276px;
+    gap: 28px;
+    padding: 32px;
+  }
+
+  /* ステージングエリア行の区切り線 */
+  .staging-row-divider {
+    grid-column: 1 / -1;
+    grid-row: 4;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #7a6a2a;
+    font-size: 11px;
+    letter-spacing: 2px;
+  }
+  .staging-row-divider::before,
+  .staging-row-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    border-top: 2px dashed #4a3a1a;
+  }
+
+  /* ステージングエリアカード（5行目に配置） */
+  .terrain-card.staging-area {
+    grid-row: 5;
+  }
+  .terrain-card.staging-area .card-img {
+    border: 2px solid #7a6a2a;
+    border-radius: 10px;
+  }
+  .terrain-card.staging-area .card-coord {
+    color: rgba(255, 220, 100, 0.7);
+  }
+
+  /* ===== 地形カード ===== */
+  .terrain-card {
+    position: relative;
+    width: 210px;
+    height: 276px;
+    border-radius: 10px;
+    overflow: visible;
+    cursor: pointer;
+    transition: transform 0.15s, filter 0.15s;
+    filter: drop-shadow(0 6px 14px rgba(0,0,0,0.7));
+  }
+
+  .terrain-card:hover {
+    z-index: 10;
+  }
+
+  .terrain-card.selected {
+    filter: drop-shadow(0 0 16px rgba(232,216,122,0.9));
+    transform: translateY(-3px);
+    z-index: 10;
+  }
+
+  .card-img {
+    width: 210px;
+    height: 276px;
+    object-fit: cover;
+    border-radius: 10px;
+    display: block;
+  }
+
+  /* カードオーバーレイ情報 */
+  .card-overlay {
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    pointer-events: none;
+  }
+
+  /* 座標ラベル */
+  .card-coord {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    font-size: 10px;
+    color: rgba(255,255,255,0.5);
+    font-family: 'Courier New', monospace;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    letter-spacing: 1px;
+  }
+
+  /* ユニットマーカー置き場 */
+  /* card-overlay が pointer-events:none のため unit-layer は明示的に auto */
+  .unit-layer {
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-end;
+    gap: 3px;
+    padding: 4px;
+    pointer-events: auto;
+  }
+
+  .unit-marker {
+    width: 48px;
+    height: 48px;
+    border-radius: 4px;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+  }
+
+  /* VOFマーカー */
+  .vof-marker {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    background: rgba(180,30,30,0.85);
+    border: 1px solid #d45a5a;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+    color: #fff;
+  }
+
+  /* PCマーカー（Potential Contact） */
+  .pc-marker {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    background: rgba(180,100,20,0.85);
+    border: 1px solid #d4a05a;
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 9px;
+    font-weight: bold;
+    color: #fff;
+  }
+
+  /* 空きスロット（カード未配置） */
+  /* ===== ズームコントロール ===== */
+  .zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #1e1e14;
+    border: 1px solid #4a4a2a;
+    border-radius: 6px;
+    padding: 4px 10px;
+  }
+  .zoom-btn {
+    width: 28px;
+    padding: 3px 0;
+    text-align: center;
+    font-size: 16px;
+    line-height: 1;
+  }
+  .zoom-label {
+    font-size: 13px;
+    color: #e8d87a;
+    width: 42px;
+    text-align: center;
+    font-weight: bold;
+  }
+  .zoom-slider {
+    width: 100px;
+    accent-color: #e8d87a;
+    cursor: pointer;
+  }
+
+  .terrain-card.empty {
+    width: 160px;
+    height: 210px;
+    border: 2px dashed #3a3a22;
+    border-radius: 8px;
+    background: rgba(20,20,12,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #3a3a22;
+    font-size: 11px;
+    cursor: default;
+  }
+  .terrain-card.empty:hover { transform: none; filter: none; }
+
+  /* ===== ユニットスロット（バッジ対応ラッパー） ===== */
+  .unit-slot {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    cursor: grab;
+    pointer-events: auto;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .unit-slot:active { cursor: grabbing; }
+  .unit-slot.dragging { opacity: 0.35; }
+  .unit-slot img {
+    -webkit-user-drag: none;
+    user-drag: none;
+    pointer-events: none; /* クリックはslot側で受け取る */
+  }
+  .terrain-card.drag-over {
+    outline: 3px solid #4af;
+    filter: brightness(1.25);
+  }
+
+  /* ===== ファクション別インジケーター ===== */
+  /* ユニット下部に 3px のカラーバーを表示 */
+  .unit-slot::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 2px; right: 2px;
+    height: 3px;
+    border-radius: 0 0 3px 3px;
+    z-index: 6;
+    pointer-events: none;
+  }
+  .unit-slot[data-faction="friendly"]::after { background: #3aaa3a; }
+  .unit-slot[data-faction="enemy"]::after    { background: #cc3333; }
+  .unit-slot[data-faction="nk"]::after       { background: #dd6600; } /* 北朝鮮軍: オレンジ */
+  .unit-slot[data-faction="nva"]::after      { background: #ccaa00; } /* 北ベトナム軍: 黄 */
+  .unit-slot[data-faction="vc"]::after       { background: #aa7700; } /* ベトコン: 茶 */
+  .unit-slot[data-faction="lat"]::after      { background: transparent; } /* LAT は非表示 */
+
+  /* 状態オーバーレイ（EXPOSED / PINNED 帯） */
+  .state-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    display: none;
+    pointer-events: none;
+    z-index: 4;
+    image-rendering: pixelated;
+  }
+  .state-overlay.active {
+    display: block;
+  }
+
+  /* 状態バッジコンテナ */
+  .state-badges {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1px;
+    max-width: 26px;
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  /* 個別バッジ */
+  .state-badge {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    font-size: 7px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    letter-spacing: -0.5px;
+    border: 1px solid rgba(0,0,0,0.5);
+    line-height: 1;
+  }
+  .state-badge.exposed    { background: #d06010; }
+  .state-badge.pinned     { background: #cc2222; }
+  .state-badge.finished   { background: #505050; }
+  .state-badge.unspotted  { background: #2244bb; }
+  .state-badge.unaware    { background: #0088aa; }
+  .state-badge.fanatic    { background: #990099; }
+  .state-badge.human_wave { background: #bb6600; }
+
+  /* ===== 右クリック コンテキストメニュー ===== */
+  .context-menu {
+    position: fixed;
+    background: #161610;
+    border: 1px solid #5a5a30;
+    border-radius: 5px;
+    min-width: 196px;
+    z-index: 9999;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.9);
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: #d4c89a;
+    overflow: visible;
+    user-select: none;
+  }
+  .cm-header {
+    background: #222218;
+    border-bottom: 1px solid #4a4a28;
+    padding: 6px 12px;
+    font-size: 11px;
+    color: #e8d87a;
+    font-weight: bold;
+    letter-spacing: 1px;
+    border-radius: 4px 4px 0 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 194px;
+  }
+  .cm-item {
+    padding: 5px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background 0.1s;
+  }
+  .cm-item:hover { background: #2a2a1c; color: #e8d87a; }
+  .cm-item.danger { color: #e08080; }
+  .cm-item.danger:hover { background: #2e1a1a; color: #e87a7a; }
+  .cm-separator { height: 1px; background: #3a3a20; margin: 2px 0; }
+
+  /* サブメニュー */
+  .cm-submenu { position: relative; }
+  .cm-submenu > .cm-item .cm-arrow { margin-left: auto; font-size: 9px; opacity: 0.55; }
+  .cm-sub {
+    display: none;
+    position: absolute;
+    left: 100%;
+    top: -2px;
+    background: #161610;
+    border: 1px solid #5a5a30;
+    border-radius: 5px;
+    min-width: 186px;
+    box-shadow: 4px 4px 16px rgba(0,0,0,0.85);
+    z-index: 10000;
+  }
+  .cm-submenu:hover > .cm-sub { display: block; }
+
+  /* トグル行 */
+  .cm-toggle {
+    padding: 5px 12px 5px 30px;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.1s;
+  }
+  .cm-toggle:hover { background: #2a2a1c; color: #e8d87a; }
+  .toggle-indicator {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    border: 1px solid #5a5a30;
+    background: transparent;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .cm-toggle.is-on .toggle-indicator { border: none; }
+  .cm-toggle.is-on.exposed    .toggle-indicator { background: #d06010; }
+  .cm-toggle.is-on.pinned     .toggle-indicator { background: #cc2222; }
+  .cm-toggle.is-on.finished   .toggle-indicator { background: #505050; }
+  .cm-toggle.is-on.unspotted  .toggle-indicator { background: #2244bb; }
+  .cm-toggle.is-on.unaware    .toggle-indicator { background: #0088aa; }
+  .cm-toggle.is-on.fanatic    .toggle-indicator { background: #990099; }
+  .cm-toggle.is-on.human_wave .toggle-indicator { background: #bb6600; }
+
+  /* ===== フッター（フェーズ・アクション） ===== */
+  .footer {
+    background: #1a1a12;
+    border-top: 2px solid #3a3a22;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .footer-label {
+    font-size: 11px;
+    color: #6a6a4a;
+    letter-spacing: 1px;
+  }
+
+  .drawn-card-area {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .drawn-card-mini {
+    width: 48px;
+    height: 64px;
+    border-radius: 4px;
+    border: 1px solid #6a6a3a;
+    object-fit: cover;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+  .drawn-card-mini:hover { transform: scale(1.1); }
+
+  .drawn-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .drawn-card-stat {
+    font-size: 11px;
+    color: #a4a47a;
+  }
+  .drawn-card-stat span { color: #e8d87a; font-weight: bold; }
+
+  .footer-right {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== ヘッダー ===== -->
+<div class="header">
+  <span class="header-title">⚑ マップ</span>
+  <div class="header-info">
+    <div class="info-chip">ターン <span>3</span></div>
+    <div class="info-chip">活動レベル <span>2</span></div>
+    <div class="info-chip">視界 <span>通常</span></div>
+    <div class="phase-indicator">▶ 友軍コマンドフェーズ</div>
+  </div>
+  <div class="header-actions">
+    <div class="zoom-controls">
+      <button class="btn zoom-btn" onclick="changeZoom(-0.1)">－</button>
+      <span class="zoom-label" id="zoomLabel">100%</span>
+      <button class="btn zoom-btn" onclick="changeZoom(+0.1)">＋</button>
+      <button class="btn" onclick="resetZoom()" style="font-size:11px">リセット</button>
+      <input type="range" id="zoomSlider" min="40" max="180" value="100" step="5"
+        oninput="setZoom(this.value/100)" class="zoom-slider">
+    </div>
+    <button class="btn primary" onclick="drawCard()">🃏 カードを引く</button>
+    <button class="btn" onclick="nextPhase()">次フェーズ ▶</button>
+  </div>
+</div>
+
+<!-- ===== マップエリア ===== -->
+<div class="map-area" id="mapArea">
+  <div class="map-scroll-content" id="scrollContent">
+    <div class="map-zoom-wrapper" id="zoomWrapper">
+      <div class="card-grid" id="cardGrid">
+        <!-- JSで生成 -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== コンテキストメニュー ===== -->
+<div id="contextMenu" class="context-menu" style="display:none">
+  <div class="cm-header" id="cmUnitName">―</div>
+
+  <!-- Detach Step（分隊・武器チームのみ表示） -->
+  <div class="cm-submenu" id="cmDetachContainer" style="display:none">
+    <div class="cm-item">
+      <span>⚔ Detach Step</span>
+      <span class="cm-arrow">▶</span>
+    </div>
+    <div class="cm-sub" id="cmDetachSub">
+      <!-- JS で動的生成 -->
+    </div>
+  </div>
+
+  <!-- Hit Results サブメニュー -->
+  <div class="cm-submenu" id="cmHitContainer">
+    <div class="cm-item">
+      <span>💥 Hit Results</span>
+      <span class="cm-arrow">▶</span>
+    </div>
+    <div class="cm-sub" id="cmHitSub">
+      <!-- JS で動的生成 -->
+    </div>
+  </div>
+
+  <!-- Mark as -->
+  <div class="cm-submenu">
+    <div class="cm-item">
+      <span>⚑ Mark as:</span>
+      <span class="cm-arrow">▶</span>
+    </div>
+    <div class="cm-sub" id="cmMarkAsSub">
+      <!-- toggles are injected by JS -->
+    </div>
+  </div>
+
+  <div class="cm-separator"></div>
+  <div class="cm-item" onclick="clearAllUnitStatesCM()">✕ 全状態をクリア</div>
+</div>
+
+<!-- ===== フッター（引いたカード表示） ===== -->
+<div class="footer">
+  <span class="footer-label">最後に引いたカード</span>
+  <div class="drawn-card-area">
+    <img class="drawn-card-mini" id="drawnCardImg" src="images/Card - Keep Up The Fire.jpg" title="クリックで拡大">
+    <div class="drawn-card-info">
+      <div class="drawn-card-stat">起動コマンド <span id="statActivated">4</span></div>
+      <div class="drawn-card-stat">自発コマンド <span id="statInitiative">2</span></div>
+      <div class="drawn-card-stat">カード種別 <span id="statType">Contact</span></div>
+    </div>
+  </div>
+  <div class="footer-right">
+    <button class="btn">カード山 残り <span style="color:#e8d87a">47</span></button>
+    <button class="btn">コマンド画面 →</button>
+  </div>
+</div>
+
+<script type="module" src="js/map.js"></script>
+</body>
+</html>
