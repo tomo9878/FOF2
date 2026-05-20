@@ -1,7 +1,7 @@
 import {
   unitCoordMap,
   getUnitStrength,
-  setUnitStrength,
+  setUnitSteps,
   pinUnit,
   _trackLAT,
 } from './state.js';
@@ -44,16 +44,16 @@ export function hitA(unit) {
 
   const s = getUnitStrength(unit.id);
 
-  // ── named Fire Team 持ち（1戦力ユニット）──
+  // ── named Fire Team 持ち ──
   if (s?.namedFireTeam) {
-    if (s.strength === 'full') setUnitStrength(unit.id, 'reduced');
+    if (s.steps === s.maxSteps) setUnitSteps(unit.id, s.steps - 1);
     pinUnit(unit.id);
     return;
   }
 
-  // ── 戦力3（フル）：reduced化 ＋ Assault Team LAT を追加 ──
-  if (!s || s.strength === 'full') {
-    setUnitStrength(unit.id, 'reduced');
+  // ── steps > 2：1ステップ消費 ＋ Assault Team LAT を追加 ──
+  if (!s || s.steps > 2) {
+    setUnitSteps(unit.id, (s?.steps ?? 3) - 1);
     const atId  = unit.id + '_HIT_AT';
     const atDef = unit.assaultteam
       ? { ...unit.assaultteam, id: atId }
@@ -65,8 +65,8 @@ export function hitA(unit) {
     return;
   }
 
-  // ── 戦力2（reduced）：分隊除去 → Fire Team LAT ＋ Assault Team LAT ──
-  if (s.strength === 'reduced') {
+  // ── steps === 2（消滅閾値）：除去 → Fire Team LAT ＋ Assault Team LAT ──
+  if (s.steps === 2) {
     const ftId  = unit.id + '_HIT_FT';
     const atId  = unit.id + '_HIT_AT';
     const ftDef = unit.fireteam
@@ -109,16 +109,16 @@ export function hitF(unit) {
 
   const s = getUnitStrength(unit.id);
 
-  // ── named Fire Team 持ち（1戦力ユニット）──
+  // ── named Fire Team 持ち ──
   if (s?.namedFireTeam) {
-    if (s.strength === 'full') setUnitStrength(unit.id, 'reduced');
+    if (s.steps === s.maxSteps) setUnitSteps(unit.id, s.steps - 1);
     pinUnit(unit.id);
     return;
   }
 
-  // ── 戦力3（フル）：reduced化 ＋ Fire Team LAT を追加 ──
-  if (!s || s.strength === 'full') {
-    setUnitStrength(unit.id, 'reduced');
+  // ── steps > 2：1ステップ消費 ＋ Fire Team LAT を追加 ──
+  if (!s || s.steps > 2) {
+    setUnitSteps(unit.id, (s?.steps ?? 3) - 1);
     const ftId  = unit.id + '_HIT_FT';
     const ftDef = unit.fireteam
       ? { ...unit.fireteam, id: ftId }
@@ -130,8 +130,8 @@ export function hitF(unit) {
     return;
   }
 
-  // ── 戦力2（reduced）：分隊除去 → Fire Team LAT ×2 ──
-  if (s.strength === 'reduced') {
+  // ── steps === 2（消滅閾値）：除去 → Fire Team LAT ×2 ──
+  if (s.steps === 2) {
     const ft1Id  = unit.id + '_HIT_FT1';
     const ft2Id  = unit.id + '_HIT_FT2';
     const ft1Def = unit.fireteam
@@ -175,7 +175,7 @@ export function hitL(unit) {
 
   const s = getUnitStrength(unit.id);
 
-  // ── named Fire Team 持ち（1戦力ユニット）──
+  // ── named Fire Team 持ち ──
   if (s?.namedFireTeam) {
     const ltId  = unit.id + '_HIT_LT';
     const ltDef = { id: ltId, src: LITTER_SRC, label: LITTER_LABEL, type: 'lat', faction: unit.faction };
@@ -185,9 +185,9 @@ export function hitL(unit) {
     return;
   }
 
-  // ── 戦力3（フル）：reduced化 ＋ Litter LAT を追加 ──
-  if (!s || s.strength === 'full') {
-    setUnitStrength(unit.id, 'reduced');
+  // ── steps > 2：1ステップ消費 ＋ Litter LAT を追加 ──
+  if (!s || s.steps > 2) {
+    setUnitSteps(unit.id, (s?.steps ?? 3) - 1);
     const ltId  = unit.id + '_HIT_LT';
     const ltDef = { id: ltId, src: LITTER_SRC, label: LITTER_LABEL, type: 'lat', faction: unit.faction };
     addUnitToCard(coord, ltDef);
@@ -197,8 +197,8 @@ export function hitL(unit) {
     return;
   }
 
-  // ── 戦力2（reduced）：分隊除去 → Litter LAT ＋ Fire Team LAT ──
-  if (s.strength === 'reduced') {
+  // ── steps === 2（消滅閾値）：除去 → Litter LAT ＋ Fire Team LAT ──
+  if (s.steps === 2) {
     const ltId  = unit.id + '_HIT_LT';
     const ftId  = unit.id + '_HIT_FT';
     const ltDef = { id: ltId, src: LITTER_SRC, label: LITTER_LABEL, type: 'lat', faction: unit.faction };
@@ -242,7 +242,7 @@ export function hitP(unit) {
 
   const s = getUnitStrength(unit.id);
 
-  // ── named Fire Team 持ち（1戦力ユニット）──
+  // ── named Fire Team 持ち ──
   if (s?.namedFireTeam) {
     const ptId  = unit.id + '_HIT_PT';
     const ptDef = { id: ptId, src: PARALYZE_SRC, label: PARALYZE_LABEL, type: 'lat', faction: unit.faction };
@@ -252,9 +252,9 @@ export function hitP(unit) {
     return;
   }
 
-  // ── 戦力3（フル）：reduced化 ＋ Paralyze LAT を追加 ──
-  if (!s || s.strength === 'full') {
-    setUnitStrength(unit.id, 'reduced');
+  // ── steps > 2：1ステップ消費 ＋ Paralyze LAT を追加 ──
+  if (!s || s.steps > 2) {
+    setUnitSteps(unit.id, (s?.steps ?? 3) - 1);
     const ptId  = unit.id + '_HIT_PT';
     const ptDef = { id: ptId, src: PARALYZE_SRC, label: PARALYZE_LABEL, type: 'lat', faction: unit.faction };
     addUnitToCard(coord, ptDef);
@@ -264,8 +264,8 @@ export function hitP(unit) {
     return;
   }
 
-  // ── 戦力2（reduced）：分隊除去 → Paralyze LAT ＋ Fire Team LAT ──
-  if (s.strength === 'reduced') {
+  // ── steps === 2（消滅閾値）：除去 → Paralyze LAT ＋ Fire Team LAT ──
+  if (s.steps === 2) {
     const ptId  = unit.id + '_HIT_PT';
     const ftId  = unit.id + '_HIT_FT';
     const ptDef = { id: ptId, src: PARALYZE_SRC, label: PARALYZE_LABEL, type: 'lat', faction: unit.faction };
@@ -309,7 +309,7 @@ export function hitC(unit) {
 
   const s = getUnitStrength(unit.id);
 
-  // ── named Fire Team 持ち（1戦力ユニット）──
+  // ── named Fire Team 持ち ──
   if (s?.namedFireTeam) {
     const ctId  = unit.id + '_HIT_CT';
     const ctDef = { id: ctId, src: CASUALTY_SRC, label: CASUALTY_LABEL, type: 'lat', faction: unit.faction };
@@ -319,9 +319,9 @@ export function hitC(unit) {
     return;
   }
 
-  // ── 戦力3（フル）：reduced化 ＋ Casualty LAT を追加 ──
-  if (!s || s.strength === 'full') {
-    setUnitStrength(unit.id, 'reduced');
+  // ── steps > 2：1ステップ消費 ＋ Casualty LAT を追加 ──
+  if (!s || s.steps > 2) {
+    setUnitSteps(unit.id, (s?.steps ?? 3) - 1);
     const ctId  = unit.id + '_HIT_CT';
     const ctDef = { id: ctId, src: CASUALTY_SRC, label: CASUALTY_LABEL, type: 'lat', faction: unit.faction };
     addUnitToCard(coord, ctDef);
@@ -331,8 +331,8 @@ export function hitC(unit) {
     return;
   }
 
-  // ── 戦力2（reduced）：分隊除去 → Casualty LAT ＋ Fire Team LAT ──
-  if (s.strength === 'reduced') {
+  // ── steps === 2（消滅閾値）：除去 → Casualty LAT ＋ Fire Team LAT ──
+  if (s.steps === 2) {
     const ctId  = unit.id + '_HIT_CT';
     const ftId  = unit.id + '_HIT_FT';
     const ctDef = { id: ctId, src: CASUALTY_SRC, label: CASUALTY_LABEL, type: 'lat', faction: unit.faction };
@@ -347,11 +347,12 @@ export function hitC(unit) {
   }
 }
 
-// letter を full ユニットに適用: reduced 化 + LAT 配置
-function _comboApplyFull(unit, coord, letter) {
+// 1ステップ消費 + LAT 配置（steps > 2 のユニットに適用）
+// s はミュータブルな参照なので、呼び出し後 s.steps が更新されている
+function _comboApplyStep(unit, coord, s, letter) {
   const info = _HIT_INFO[letter];
   if (!info) return;
-  setUnitStrength(unit.id, 'reduced');
+  setUnitSteps(unit.id, s.steps - 1); // s.steps が in-place で更新される
   const latId = _cid(unit.id, info.tag);
   const latDef = { id: latId, src: info.src, label: info.label, type: 'lat', faction: unit.faction };
   addUnitToCard(coord, latDef);
@@ -412,7 +413,7 @@ export function hitCombo(unit, l1, l2) {
   // ── named Fire Team 持ち：l1 のみ ──
   if (s?.namedFireTeam) {
     if (l1 === 'A' || l1 === 'F') {
-      if (s.strength === 'full') setUnitStrength(unit.id, 'reduced');
+      if (s.steps === s.maxSteps) setUnitSteps(unit.id, s.steps - 1);
       pinUnit(unit.id);
     } else {
       const info = _HIT_INFO[l1];
@@ -424,10 +425,16 @@ export function hitCombo(unit, l1, l2) {
     return;
   }
 
-  if (!s || s.strength === 'full') {
-    _comboApplyFull(unit, coord, l1);     // l1 → reduced
-    _comboApplyReduced(unit, coord, l2);  // l2 → 除去 + 2枚
-  } else {
-    _comboApplyReduced(unit, coord, l1);  // reduced → l1 のみ
+  if (!s || s.steps > 2) {
+    // 1発目: 1ステップ消費（s.steps が in-place 更新される）
+    _comboApplyStep(unit, coord, s ?? { steps: 3 }, l1);
+    // 更新後の steps で 2発目の分岐を決定
+    if (s && s.steps === 2) {
+      _comboApplyReduced(unit, coord, l2); // 消滅閾値に達した → 除去 + LAT×2
+    } else if (s && s.steps > 2) {
+      _comboApplyStep(unit, coord, s, l2); // まだステップが残る → 再度1ステップ消費
+    }
+  } else if (s.steps === 2) {
+    _comboApplyReduced(unit, coord, l1);   // 消滅閾値 → l1 で除去 + LAT×2
   }
 }

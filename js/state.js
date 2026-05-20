@@ -25,14 +25,18 @@ export const unitStateMap = new Map();
 export const detachedLATsMap = new Map();
 
 // ===== ユニット強度ゲッター/セッター =====
+// steps: 残りステップ数（整数）。消滅閾値は steps===2（maxSteps 問わず共通）。
+// 4戦力以上のユニットは unit 定義に steps:4 を指定する（省略時は 3）。
 export function getUnitStrength(unitId) {
   if (!unitStrengthMap.has(unitId)) {
     // UNITS からデフォルト値を探す
     for (const units of Object.values(UNITS)) {
       const u = units.find(u => u.id === unitId);
       if (u) {
+        const maxSteps = u.steps ?? 3;
         unitStrengthMap.set(unitId, {
-          strength:      'full',
+          steps:         maxSteps,
+          maxSteps:      maxSteps,
           fullSrc:       u.src,
           reducedSrc:    u.srcReduced || u.src,
           namedFireTeam: !!u.namedFireTeam,
@@ -44,14 +48,17 @@ export function getUnitStrength(unitId) {
   return unitStrengthMap.get(unitId);
 }
 
-export function setUnitStrength(unitId, strength) {
+// steps を更新し、画像を切り替える。
+// steps === maxSteps → fullSrc、それ以外 → reducedSrc
+export function setUnitSteps(unitId, newSteps) {
   const s = getUnitStrength(unitId);
   if (!s) return;
-  s.strength = strength;
+  s.steps = Math.max(0, newSteps);
+  const src = (s.steps === s.maxSteps) ? s.fullSrc : s.reducedSrc;
   const slot = document.querySelector(`.unit-slot[data-unit-id="${unitId}"]`);
   if (slot) {
     const img = slot.querySelector('.unit-marker');
-    if (img) img.src = strength === 'full' ? s.fullSrc : s.reducedSrc;
+    if (img) img.src = src;
   }
 }
 
