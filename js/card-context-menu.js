@@ -1,5 +1,6 @@
-// ===== カード右クリック コンテキストメニュー（PDF配置）=====
-import { togglePDF, hasPDF, clearAllPDFs, PDF_LABELS } from './pdf.js';
+// ===== カード右クリック コンテキストメニュー（VOF + PDF配置）=====
+import { togglePDF, hasPDF, clearAllPDFs } from './pdf.js';
+import { setVOFType, clearVOF, toggleCrossfire, getVOF } from './vof.js';
 
 let _currentCoord = null;
 
@@ -7,6 +8,7 @@ export function showCardContextMenu(e, coord) {
   _currentCoord = coord;
   const menu = document.getElementById('cardContextMenu');
   document.getElementById('cardCmCoord').textContent = `カード ${coord}`;
+  _refreshVOFButtons(coord);
   _refreshPDFButtons(coord);
 
   menu.style.display = 'block';
@@ -24,15 +26,69 @@ export function hideCardContextMenu() {
   _currentCoord = null;
 }
 
+// ===== VOF ボタン状態更新 =====
+function _refreshVOFButtons(coord) {
+  const vof = getVOF(coord);
+
+  // タイプボタン（現在のタイプをハイライト）
+  document.querySelectorAll('.vof-type-btn').forEach(btn => {
+    btn.classList.toggle('active', vof?.type === btn.dataset.vof);
+  });
+
+  // Crossfire ボタン
+  const xfireBtn = document.getElementById('cardCmXfire');
+  if (xfireBtn) {
+    xfireBtn.classList.toggle('active', !!vof?.crossfire);
+    xfireBtn.disabled = !vof; // VOF なしは操作不可
+  }
+
+  // VOF 除去ボタン
+  const clearVofBtn = document.getElementById('cardCmClearVOF');
+  if (clearVofBtn) clearVofBtn.disabled = !vof;
+}
+
+// ===== PDF ボタン状態更新 =====
 function _refreshPDFButtons(coord) {
   document.querySelectorAll('.pdf-dir-btn').forEach(btn => {
-    const dir = btn.dataset.dir;
-    btn.classList.toggle('active', hasPDF(coord, dir));
+    btn.classList.toggle('active', hasPDF(coord, btn.dataset.dir));
   });
 }
 
+// ===== 初期化（イベントリスナー登録）=====
 export function initCardContextMenu() {
-  // 方向ボタン：クリックでトグル（メニューは閉じない→複数方向を連続配置可能）
+  // ── VOF タイプボタン（同じタイプを再クリックで除去）──
+  document.querySelectorAll('.vof-type-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!_currentCoord) return;
+      const type = btn.dataset.vof;
+      const vof = getVOF(_currentCoord);
+      if (vof?.type === type) {
+        clearVOF(_currentCoord);     // 同タイプをクリック → 除去
+      } else {
+        setVOFType(_currentCoord, type); // 新タイプをセット
+      }
+      _refreshVOFButtons(_currentCoord);
+    });
+  });
+
+  // ── Crossfire トグル ──
+  document.getElementById('cardCmXfire')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!_currentCoord || !getVOF(_currentCoord)) return;
+    toggleCrossfire(_currentCoord);
+    _refreshVOFButtons(_currentCoord);
+  });
+
+  // ── VOF 除去 ──
+  document.getElementById('cardCmClearVOF')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!_currentCoord) return;
+    clearVOF(_currentCoord);
+    _refreshVOFButtons(_currentCoord);
+  });
+
+  // ── PDF 方向ボタン（メニューを閉じずに連続配置可能）──
   document.querySelectorAll('.pdf-dir-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -42,17 +98,19 @@ export function initCardContextMenu() {
     });
   });
 
-  // 全除去
-  document.getElementById('cardCmClearPDF').addEventListener('click', (e) => {
+  // ── VOF / PDF すべて除去 ──
+  document.getElementById('cardCmClearAll')?.addEventListener('click', (e) => {
     e.stopPropagation();
     if (_currentCoord) {
+      clearVOF(_currentCoord);
       clearAllPDFs(_currentCoord);
+      _refreshVOFButtons(_currentCoord);
       _refreshPDFButtons(_currentCoord);
       hideCardContextMenu();
     }
   });
 
-  // 外クリックで閉じる
+  // ── 外クリックで閉じる ──
   document.addEventListener('click', (e) => {
     const menu = document.getElementById('cardContextMenu');
     if (menu && menu.style.display !== 'none' && !menu.contains(e.target)) {

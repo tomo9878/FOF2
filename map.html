@@ -296,6 +296,86 @@
     transform: rotate(var(--pdf-rot));
   }
 
+  /* ===== VOF マーカー画像（カード上に表示）===== */
+  .vof-marker-img {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    width: 42px;
+    height: 42px;
+    object-fit: contain;
+    z-index: 7;
+    pointer-events: none;
+    filter: drop-shadow(0 1px 4px rgba(0,0,0,0.9));
+  }
+  .xfire-marker-img {
+    position: absolute;
+    top: 6px;
+    left: 52px; /* VOF画像の右隣 */
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    z-index: 7;
+    pointer-events: none;
+    filter: drop-shadow(0 1px 4px rgba(0,0,0,0.9));
+  }
+
+  /* ===== カードコンテキストメニュー VOF ボタン ===== */
+  .vof-type-grid {
+    display: flex;
+    gap: 3px;
+    padding: 6px 8px 2px;
+  }
+  .vof-type-btn {
+    flex: 1;
+    height: 32px;
+    background: #222218;
+    border: 1px solid #4a4a28;
+    border-radius: 4px;
+    color: #c8c880;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.1s, border-color 0.1s;
+    font-family: 'Courier New', monospace;
+  }
+  .vof-type-btn:hover { background: #2a2a1c; border-color: #c8c880; }
+  .vof-type-btn.active {
+    background: #4a1e00;
+    border-color: #e87a40;
+    color: #ff9a50;
+    box-shadow: 0 0 6px rgba(232,122,64,0.4);
+  }
+  .vof-type-btn:disabled { opacity: 0.4; cursor: default; }
+
+  .vof-sub-row {
+    display: flex;
+    gap: 3px;
+    padding: 2px 8px 4px;
+  }
+  .vof-xfire-btn, .vof-clear-btn {
+    flex: 1;
+    height: 24px;
+    background: #222218;
+    border: 1px solid #4a4a28;
+    border-radius: 4px;
+    color: #a0a070;
+    font-size: 10px;
+    cursor: pointer;
+    transition: background 0.1s;
+    font-family: 'Courier New', monospace;
+  }
+  .vof-xfire-btn:hover:not(:disabled), .vof-clear-btn:hover:not(:disabled) {
+    background: #2a2a1c; color: #e8d87a;
+  }
+  .vof-xfire-btn.active {
+    background: #001e3a;
+    border-color: #4af;
+    color: #7af;
+    box-shadow: 0 0 4px rgba(74,170,255,0.4);
+  }
+  .vof-xfire-btn:disabled, .vof-clear-btn:disabled { opacity: 0.3; cursor: default; }
+
   /* ===== カードコンテキストメニュー（PDF配置）===== */
   #cardContextMenu .pdf-dir-grid {
     display: grid;
@@ -706,13 +786,28 @@
   <div class="cm-item" onclick="clearAllUnitStatesCM()">✕ 全状態をクリア</div>
 </div>
 
-<!-- ===== カード右クリックメニュー（PDF配置）===== -->
+<!-- ===== カード右クリックメニュー（VOF + PDF配置）===== -->
 <div id="cardContextMenu" class="context-menu" style="display:none">
   <div class="cm-header" id="cardCmCoord">―</div>
 
-  <div style="padding:4px 12px 0; font-size:10px; color:#aaa;">🧭 Primary Direction of Fire</div>
+  <!-- VOF タイプ選択 -->
+  <div style="padding:4px 12px 0; font-size:10px; color:#aaa;">🔥 Volume of Fire</div>
+  <div class="vof-type-grid">
+    <button class="vof-type-btn" data-vof="S"  title="Small Arms  NCM +0">S</button>
+    <button class="vof-type-btn" data-vof="A"  title="Automatic  NCM -1">A</button>
+    <button class="vof-type-btn" data-vof="H"  title="Heavy  NCM -3">H</button>
+    <button class="vof-type-btn" data-vof="P"  title="All Pinned  NCM +2">P</button>
+    <button class="vof-type-btn" data-vof="S!" title="Sniper  NCM -3">S!</button>
+  </div>
+  <div class="vof-sub-row">
+    <button class="vof-xfire-btn" id="cardCmXfire" title="Crossfire  NCM -1追加">⚡ Crossfire</button>
+    <button class="vof-clear-btn" id="cardCmClearVOF">VOF 除去</button>
+  </div>
 
-  <!-- 3×3 方向グリッド -->
+  <div class="cm-separator"></div>
+
+  <!-- PDF 方向 -->
+  <div style="padding:4px 12px 0; font-size:10px; color:#aaa;">🧭 Primary Direction of Fire</div>
   <div class="pdf-dir-grid">
     <button class="pdf-dir-btn" data-dir="top-left">↖</button>
     <button class="pdf-dir-btn" data-dir="top">↑</button>
@@ -726,7 +821,7 @@
   </div>
 
   <div class="cm-separator"></div>
-  <div class="cm-item" id="cardCmClearPDF">✕ PDF をすべて除去</div>
+  <div class="cm-item" id="cardCmClearAll">✕ VOF / PDF をすべて除去</div>
 </div>
 
 <!-- ===== フッター（引いたカード表示） ===== -->
