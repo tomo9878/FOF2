@@ -1,6 +1,7 @@
 import {
   UNIT_STATES_DEF,
   getUnitState,
+  getUnitStrength,
   toggleUnitState,
   clearAllUnitStates,
 } from './state.js';
@@ -44,8 +45,13 @@ export function refreshDetachSubmenu(unit) {
 
   // squad / weapon_team のみ表示
   const show = unit.type === 'squad' || unit.type === 'weapon_team';
-  container.style.display = show ? 'block' : 'none';
-  if (!show) return;
+  if (!show) { container.style.display = 'none'; return; }
+
+  // ルール: 戦力低下済み（reduced）は自発的な分割操作不可 → サブメニュー非表示
+  const s = getUnitStrength(unit.id);
+  const isReduced = s && s.steps < s.maxSteps;
+  container.style.display = isReduced ? 'none' : 'block';
+  if (isReduced) return;
 
   sub.innerHTML = '';
 
