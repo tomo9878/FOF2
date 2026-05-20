@@ -101,7 +101,7 @@ export function refreshHitSubmenu(unit) {
     ['LC', 'L','C'], ['FC', 'F','C'],
   ];
   COMBOS.forEach(([code, l1, l2]) => {
-    addDetachMenuItem(sub, `${code} Hit: ${code}`, () => { hideContextMenu(); hitCombo(unit, l1, l2); });
+    addDetachMenuItem(sub, `Hit: ${code}`, () => { hideContextMenu(); hitCombo(unit, l1, l2); });
   });
 }
 

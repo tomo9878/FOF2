@@ -9,16 +9,16 @@
 
 export const cardPDFMap = new Map(); // coord → Set<direction>
 
-// エッジ位置と回転角度（0°=上向き、時計回り）
+// 回転角度（0°=上向き、時計回り）。位置は CSS data-direction で制御。
 const PDF_DIRS = {
-  'top-left':     { edge: 'top',    deg: 315 },
-  'top':          { edge: 'top',    deg: 0   },
-  'top-right':    { edge: 'top',    deg: 45  },
-  'left':         { edge: 'left',   deg: 270 },
-  'right':        { edge: 'right',  deg: 90  },
-  'bottom-left':  { edge: 'bottom', deg: 225 },
-  'bottom':       { edge: 'bottom', deg: 180 },
-  'bottom-right': { edge: 'bottom', deg: 135 },
+  'top-left':     { deg: 315 },
+  'top':          { deg: 0   },
+  'top-right':    { deg: 45  },
+  'left':         { deg: 270 },
+  'right':        { deg: 90  },
+  'bottom-left':  { deg: 225 },
+  'bottom':       { deg: 180 },
+  'bottom-right': { deg: 135 },
 };
 
 export const PDF_LABELS = {
