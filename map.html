@@ -215,6 +215,7 @@
     align-content: flex-end;
     gap: 3px;
     padding: 4px;
+    padding-bottom: 52px; /* マーカー1枚分(48px)+gap分 押し上げ */
     pointer-events: auto;
   }
 
@@ -242,6 +243,92 @@
     font-size: 10px;
     font-weight: bold;
     color: #fff;
+  }
+
+  /* ===== PDF マーカー（Primary Direction of Fire）===== */
+  .pdf-marker {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+    z-index: 8;
+    pointer-events: none;
+    filter: drop-shadow(0 1px 3px rgba(0,0,0,0.8));
+  }
+  /* 上: 上辺中央 */
+  .pdf-marker[data-direction="top"] {
+    top: 4px; left: 50%;
+    transform: translateX(-50%) rotate(var(--pdf-rot));
+  }
+  /* 左上: 左上コーナー */
+  .pdf-marker[data-direction="top-left"] {
+    top: 4px; left: 4px;
+    transform: rotate(var(--pdf-rot));
+  }
+  /* 右上: 右上コーナー */
+  .pdf-marker[data-direction="top-right"] {
+    top: 4px; right: 4px;
+    transform: rotate(var(--pdf-rot));
+  }
+  /* 左: 左辺中央 */
+  .pdf-marker[data-direction="left"] {
+    top: 50%; left: 4px;
+    transform: translateY(-50%) rotate(var(--pdf-rot));
+  }
+  /* 右: 右辺中央 */
+  .pdf-marker[data-direction="right"] {
+    top: 50%; right: 4px;
+    transform: translateY(-50%) rotate(var(--pdf-rot));
+  }
+  /* 下: 下辺中央（unit-layerのpadding-bottomを考慮して上げる）*/
+  .pdf-marker[data-direction="bottom"] {
+    bottom: 56px; left: 50%;
+    transform: translateX(-50%) rotate(var(--pdf-rot));
+  }
+  /* 左下: 左下コーナー */
+  .pdf-marker[data-direction="bottom-left"] {
+    bottom: 56px; left: 4px;
+    transform: rotate(var(--pdf-rot));
+  }
+  /* 右下: 右下コーナー */
+  .pdf-marker[data-direction="bottom-right"] {
+    bottom: 56px; right: 4px;
+    transform: rotate(var(--pdf-rot));
+  }
+
+  /* ===== カードコンテキストメニュー（PDF配置）===== */
+  #cardContextMenu .pdf-dir-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 36px);
+    grid-template-rows: repeat(3, 36px);
+    gap: 3px;
+    padding: 8px;
+    justify-content: center;
+  }
+  .pdf-dir-btn {
+    width: 36px;
+    height: 36px;
+    background: #222218;
+    border: 1px solid #4a4a28;
+    border-radius: 4px;
+    color: #c8c880;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.1s, border-color 0.1s;
+  }
+  .pdf-dir-btn:hover { background: #2a2a1c; border-color: #c8c880; }
+  .pdf-dir-btn.active {
+    background: #3a3a00;
+    border-color: #e8d87a;
+    color: #e8d87a;
+    box-shadow: 0 0 6px rgba(232,216,122,0.4);
+  }
+  .pdf-dir-center {
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; color: #666; font-weight: bold;
   }
 
   /* PCマーカー（Potential Contact） */
@@ -618,6 +705,29 @@
 
   <div class="cm-separator"></div>
   <div class="cm-item" onclick="clearAllUnitStatesCM()">✕ 全状態をクリア</div>
+</div>
+
+<!-- ===== カード右クリックメニュー（PDF配置）===== -->
+<div id="cardContextMenu" class="context-menu" style="display:none">
+  <div class="cm-header" id="cardCmCoord">―</div>
+
+  <div style="padding:4px 12px 0; font-size:10px; color:#aaa;">🧭 Primary Direction of Fire</div>
+
+  <!-- 3×3 方向グリッド -->
+  <div class="pdf-dir-grid">
+    <button class="pdf-dir-btn" data-dir="top-left">↖</button>
+    <button class="pdf-dir-btn" data-dir="top">↑</button>
+    <button class="pdf-dir-btn" data-dir="top-right">↗</button>
+    <button class="pdf-dir-btn" data-dir="left">←</button>
+    <div class="pdf-dir-center">PDF</div>
+    <button class="pdf-dir-btn" data-dir="right">→</button>
+    <button class="pdf-dir-btn" data-dir="bottom-left">↙</button>
+    <button class="pdf-dir-btn" data-dir="bottom">↓</button>
+    <button class="pdf-dir-btn" data-dir="bottom-right">↘</button>
+  </div>
+
+  <div class="cm-separator"></div>
+  <div class="cm-item" id="cardCmClearPDF">✕ PDF をすべて除去</div>
 </div>
 
 <!-- ===== フッター（引いたカード表示） ===== -->

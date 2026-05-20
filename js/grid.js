@@ -3,6 +3,7 @@ import {
   unitStrengthMap,
 } from './state.js';
 import { showContextMenu, hideContextMenu } from './context-menu.js';
+import { showCardContextMenu, hideCardContextMenu } from './card-context-menu.js';
 
 // 座標ラベル（列A〜D、行1〜3）
 export const COLS = ['A','B','C','D'];
@@ -206,6 +207,14 @@ function _buildGridWithPlaced(placed, units, markers) {
     div.appendChild(overlay);
 
     div.addEventListener('click', () => selectCard(div, card, coord));
+    div.addEventListener('contextmenu', (e) => {
+      // unit-slot の contextmenu は stopPropagation 済みなので
+      // ここに来るのはカード地面への右クリックのみ
+      e.preventDefault();
+      e.stopPropagation();
+      hideContextMenu();
+      showCardContextMenu(e, coord);
+    });
     _addDropHandlers(div, coord);
     grid.appendChild(div);
   });
@@ -241,6 +250,12 @@ function _buildGridWithPlaced(placed, units, markers) {
 
     div.appendChild(overlay);
     div.addEventListener('click', () => selectCard(div, { id: 'STAGING', name: 'スタートエリア' }, coord));
+    div.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      hideContextMenu();
+      showCardContextMenu(e, coord);
+    });
     _addDropHandlers(div, coord);
     grid.appendChild(div);
   });

@@ -89,6 +89,8 @@ export function renderUnitBadges(unitId) {
     container.innerHTML = '';
     UNIT_STATES_DEF.forEach(d => {
       if (!s[d.key]) return;
+      // exposed / pinned はオーバーレイ帯で表示するのでバッジ不要
+      if (d.key === 'exposed' || d.key === 'pinned') return;
       const b = document.createElement('div');
       b.className = `state-badge ${d.key}`;
       b.title = d.label;

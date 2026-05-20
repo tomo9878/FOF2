@@ -3,6 +3,7 @@ import { UNITS, MARKERS } from './data/units-normandy.js';
 import { buildGrid } from './grid.js';
 import { initZoom, calcFitZoom, applyZoom, changeZoom, setZoom, resetZoom } from './zoom.js';
 import { hideContextMenu, clearAllUnitStatesCM } from './context-menu.js';
+import { initCardContextMenu, hideCardContextMenu } from './card-context-menu.js';
 
 // ===== window へ公開（HTML の onclick から呼ぶため） =====
 window.changeZoom = changeZoom;
@@ -40,7 +41,7 @@ window.nextPhase = nextPhase;
 // ===== ブラウザ標準右クリックを全面抑制（キャプチャフェーズ最優先） =====
 document.addEventListener('contextmenu', (e) => e.preventDefault(), true);
 
-// 外クリックで閉じる
+// 外クリックで閉じる（ユニットメニュー）
 document.addEventListener('click', (e) => {
   const menu = document.getElementById('contextMenu');
   if (menu.style.display !== 'none' && !menu.contains(e.target)) {
@@ -53,6 +54,7 @@ document.addEventListener('keydown', (e) => {
 
 // ===== 初期化 =====
 buildGrid(TERRAIN_CARDS, UNITS, MARKERS, shuffle);
+initCardContextMenu();
 initZoom();
 
 // 画面フィットズームで開始→中央スクロール
