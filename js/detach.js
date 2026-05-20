@@ -13,7 +13,8 @@ export function detachFireTeam(unit) {
   const coord = unitCoordMap.get(unit.id);
   if (!coord || !unit.fireteam) return;
   setUnitStrength(unit.id, 'reduced');
-  addUnitToCard(coord, unit.fireteam);
+  // シャローコピーして元の fireteam 定義を保護する
+  addUnitToCard(coord, { ...unit.fireteam });
   _trackLAT(unit.id, unit.fireteam.id);
 }
 
@@ -21,7 +22,8 @@ export function detachAssaultTeam(unit) {
   const coord = unitCoordMap.get(unit.id);
   if (!coord || !unit.assaultteam) return;
   setUnitStrength(unit.id, 'reduced');
-  addUnitToCard(coord, unit.assaultteam);
+  // シャローコピーして元の assaultteam 定義を保護する
+  addUnitToCard(coord, { ...unit.assaultteam });
   _trackLAT(unit.id, unit.assaultteam.id);
 }
 

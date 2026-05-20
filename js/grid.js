@@ -16,16 +16,20 @@ let _dragUnitId = null;
 
 // ===== ユニットスロット生成（buildGrid・動的追加共用） =====
 export function createUnitSlot(u) {
+  // シャローコピーして元の UNITS 定義を保護する。
+  // hit.js が unit.src / unit.label を書き換えても UNITS 定義は汚染されない。
+  const unit = { ...u };
+
   const slot = document.createElement('div');
   slot.className = 'unit-slot';
-  slot.dataset.unitId  = u.id;
-  slot.dataset.faction = u.faction || 'neutral';
+  slot.dataset.unitId  = unit.id;
+  slot.dataset.faction = unit.faction || 'neutral';
 
   const uImg = document.createElement('img');
   uImg.className = 'unit-marker';
-  uImg.src = u.src;
-  uImg.alt = u.label;
-  uImg.title = u.label;
+  uImg.src = unit.src;
+  uImg.alt = unit.label;
+  uImg.title = unit.label;
   uImg.draggable = false;
   slot.appendChild(uImg);
 
@@ -33,7 +37,7 @@ export function createUnitSlot(u) {
   ['exposed', 'pinned'].forEach(key => {
     const ov = document.createElement('img');
     ov.className = 'state-overlay';
-    ov.dataset.overlayUnit = u.id;
+    ov.dataset.overlayUnit = unit.id;
     ov.dataset.overlayKey  = key;
     ov.src = `images/Layer_${key.toUpperCase()}_new.png`;
     slot.appendChild(ov);
@@ -41,12 +45,12 @@ export function createUnitSlot(u) {
 
   const badges = document.createElement('div');
   badges.className = 'state-badges';
-  badges.dataset.unit = u.id;
+  badges.dataset.unit = unit.id;
   slot.appendChild(badges);
 
   slot.draggable = true;
   slot.addEventListener('dragstart', (e) => {
-    _dragUnitId = u.id;
+    _dragUnitId = unit.id;
     hideContextMenu();
     e.dataTransfer.effectAllowed = 'move';
     requestAnimationFrame(() => slot.classList.add('dragging'));
@@ -60,7 +64,7 @@ export function createUnitSlot(u) {
   slot.addEventListener('contextmenu', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    showContextMenu(e, u);
+    showContextMenu(e, unit); // コピー側を渡す（hit.js の mutation がここに留まる）
   });
   slot.addEventListener('click', (e) => e.stopPropagation());
 
