@@ -1,15 +1,17 @@
 // ===== VOF（Volume of Fire）マーカー管理 =====
 //
-// cardVOFMap: coord → { type: 'S'|'A'|'H'|'P'|'S!', crossfire: boolean }
+// cardVOFMap: coord → { type: 'S'|'A'|'H'|'P', crossfire: boolean }
 //
-// 消滅閾値・表示ルール:
+// カード単位で配置できる VOF タイプ:
 //   type  NCM修正値  画像
 //   S      +0       VOF - S.png
 //   A      -1       VOF - A.png
 //   H      -3       VOF - H.png
 //   P      +2       VOF - P.png  ← 攻撃側が全員Pinned（最弱）
-//   S!     -3       VOF - S!.png ← 狙撃。カード全体に+0も同時適用
 //   Crossfire      VOF - Crossfire.png（-1追加）
+//
+// ※ S!（Sniper）はユニット駒単位で処理するためカードメニューには含まない。
+//    VOF_NCM には定義済み（将来のユニット単位処理で使用）。
 
 export const cardVOFMap = new Map();
 
