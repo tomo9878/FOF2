@@ -1,9 +1,10 @@
-import { TERRAIN_CARDS, ACTION_CARDS, shuffle } from './data/cards.js';
+import { TERRAIN_CARDS, shuffle } from './data/cards.js';
 import { UNITS, MARKERS } from './data/units-normandy.js';
 import { buildGrid } from './grid.js';
 import { initZoom, calcFitZoom, applyZoom, changeZoom, setZoom, resetZoom } from './zoom.js';
-import { hideContextMenu, clearAllUnitStatesCM } from './context-menu.js';
+import { hideContextMenu, clearAllUnitStatesCM, initContextMenu } from './context-menu.js';
 import { initCardContextMenu, hideCardContextMenu } from './card-context-menu.js';
+import { drawActionCard, getDeckCount } from './deck.js';
 
 // ===== window へ公開（HTML の onclick から呼ぶため） =====
 window.changeZoom = changeZoom;
@@ -11,21 +12,19 @@ window.setZoom = setZoom;
 window.resetZoom = resetZoom;
 window.clearAllUnitStatesCM = clearAllUnitStatesCM;
 
-// ===== アクションカード =====
-let actionDeck = shuffle(ACTION_CARDS);
-let deckIdx = 0;
+// ===== アクションカード（UIボタン用） =====
+// デッキ管理は deck.js に移管。ここは UI 更新のみ担当。
 
 function drawCard() {
-  if (deckIdx >= actionDeck.length) { deckIdx = 0; actionDeck = shuffle(ACTION_CARDS); }
-  const c = actionDeck[deckIdx++];
+  const c = drawActionCard();
   document.getElementById('drawnCardImg').src = `images/${c.file}`;
   document.getElementById('statActivated').textContent = c.activated;
   document.getElementById('statInitiative').textContent = c.initiative;
   document.getElementById('statType').textContent = c.type;
 
   // カード枚数更新
-  document.querySelector('.footer-right .btn').innerHTML =
-    `カード山 残り <span style="color:#e8d87a">${50 - deckIdx}</span>`;
+  document.getElementById('deckCountBtn').innerHTML =
+    `山残り <span style="color:#e8d87a">${getDeckCount()}</span>`;
 }
 window.drawCard = drawCard;
 
@@ -54,13 +53,13 @@ document.addEventListener('keydown', (e) => {
 
 // ===== 初期化 =====
 buildGrid(TERRAIN_CARDS, UNITS, MARKERS, shuffle);
+initContextMenu();
 initCardContextMenu();
 initZoom();
 
-// 画面フィットズームで開始→中央スクロール
+// 初期ズーム 115% で開始→中央スクロール
 setTimeout(() => {
-  const fit = calcFitZoom();
-  applyZoom(fit);
+  applyZoom(1.15);
   const area = document.getElementById('mapArea');
   area.scrollLeft = (area.scrollWidth - area.clientWidth) / 2;
   area.scrollTop  = (area.scrollHeight - area.clientHeight) / 2;

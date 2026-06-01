@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "fields-of-fire-mock",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "C:/Users/7600144/ミニ作業", "-p", "3333", "--no-clipboard"],
+      "port": 3333
+    }
+  ]
+}

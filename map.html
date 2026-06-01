@@ -117,9 +117,10 @@
   .card-grid {
     display: grid;
     grid-template-columns: repeat(4, 210px);
-    /* テレイン3行 + 区切り行28px + スタートエリア1行 */
-    grid-template-rows: repeat(3, 276px) 28px 276px;
-    gap: 28px;
+    /* テレイン3行 + 区切り行64px + スタートエリア1行 */
+    /* gap: 64px = PDF マーカー(36px)が2枚並んでも余裕のある隙間 */
+    grid-template-rows: repeat(3, 276px) 64px 276px;
+    gap: 64px;
     padding: 32px;
   }
 
@@ -246,53 +247,55 @@
   }
 
   /* ===== PDF マーカー（Primary Direction of Fire）===== */
+  /* gap: 64px に2枚収まるサイズで設計                                       */
+  /* 26px × 2 + 余白12px = 64px → 両側カードから各4px クリアランス          */
   .pdf-marker {
     position: absolute;
-    width: 30px;
-    height: 30px;
+    width: 26px;
+    height: 26px;
     object-fit: contain;
-    z-index: 8;
+    z-index: 20;
     pointer-events: none;
-    filter: drop-shadow(0 1px 3px rgba(0,0,0,0.8));
+    filter: drop-shadow(0 1px 4px rgba(0,0,0,0.9));
   }
-  /* 上: 上辺中央 */
+  /* 上辺：カードから4pxクリアランス（-30px = 26px + 4px）*/
   .pdf-marker[data-direction="top"] {
-    top: 4px; left: 50%;
+    top: -30px; left: 50%;
     transform: translateX(-50%) rotate(var(--pdf-rot));
   }
-  /* 左上: 左上コーナー */
+  /* 左上コーナー */
   .pdf-marker[data-direction="top-left"] {
-    top: 4px; left: 4px;
+    top: -30px; left: -30px;
     transform: rotate(var(--pdf-rot));
   }
-  /* 右上: 右上コーナー */
+  /* 右上コーナー */
   .pdf-marker[data-direction="top-right"] {
-    top: 4px; right: 4px;
+    top: -30px; right: -30px;
     transform: rotate(var(--pdf-rot));
   }
-  /* 左: 左辺中央 */
+  /* 左辺 */
   .pdf-marker[data-direction="left"] {
-    top: 50%; left: 4px;
+    top: 50%; left: -30px;
     transform: translateY(-50%) rotate(var(--pdf-rot));
   }
-  /* 右: 右辺中央 */
+  /* 右辺 */
   .pdf-marker[data-direction="right"] {
-    top: 50%; right: 4px;
+    top: 50%; right: -30px;
     transform: translateY(-50%) rotate(var(--pdf-rot));
   }
-  /* 下: 下辺中央（unit-layerのpadding-bottomを考慮して上げる）*/
+  /* 下辺 */
   .pdf-marker[data-direction="bottom"] {
-    bottom: 56px; left: 50%;
+    bottom: -30px; left: 50%;
     transform: translateX(-50%) rotate(var(--pdf-rot));
   }
-  /* 左下: 左下コーナー */
+  /* 左下コーナー */
   .pdf-marker[data-direction="bottom-left"] {
-    bottom: 56px; left: 4px;
+    bottom: -30px; left: -30px;
     transform: rotate(var(--pdf-rot));
   }
-  /* 右下: 右下コーナー */
+  /* 右下コーナー */
   .pdf-marker[data-direction="bottom-right"] {
-    bottom: 56px; right: 4px;
+    bottom: -30px; right: -30px;
     transform: rotate(var(--pdf-rot));
   }
 
@@ -309,6 +312,17 @@
     filter: drop-shadow(0 1px 4px rgba(0,0,0,0.9));
   }
   .xfire-marker-img {
+    position: absolute;
+    top: 6px;
+    left: 96px; /* Concentrate の右隣 */
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    z-index: 7;
+    pointer-events: none;
+    filter: drop-shadow(0 1px 4px rgba(0,0,0,0.9));
+  }
+  .concentrate-marker-img {
     position: absolute;
     top: 6px;
     left: 52px; /* VOF画像の右隣 */
@@ -348,6 +362,60 @@
   }
   .vof-type-btn:disabled { opacity: 0.4; cursor: default; }
 
+  /* ===== エリアファイア VOF ボタン ===== */
+  .vof-area-btn {
+    background: #1a1218;
+    border-color: #5a3060;
+    color: #c090d0;
+  }
+  .vof-area-btn:hover  { background: #221828; border-color: #c880e8; }
+  .vof-area-btn.active {
+    background: #3a1050;
+    border-color: #c060e0;
+    color: #e890ff;
+    box-shadow: 0 0 6px rgba(192,80,224,0.4);
+  }
+
+  /* Pending → Incoming フリップボタン */
+  .vof-flip-btn {
+    flex: 1;
+    height: 26px;
+    background: #1a1a10;
+    border: 1px solid #4a4a20;
+    border-radius: 4px;
+    color: #a0a060;
+    font-size: 10px;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    transition: background 0.1s, border-color 0.1s;
+  }
+  .vof-flip-btn:not(:disabled):hover {
+    background: #2a2a18;
+    border-color: #d0d060;
+    color: #f0f080;
+  }
+  .vof-flip-btn:disabled { opacity: 0.3; cursor: default; }
+
+  /* ===== カードオーバーレイ エリアファイアバッジ ===== */
+  .vof-area-badge {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    min-width: 36px;
+    height: 26px;
+    border: 1px solid;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.5px;
+    z-index: 10;
+    pointer-events: none;
+  }
+
   .vof-sub-row {
     display: flex;
     gap: 3px;
@@ -375,6 +443,164 @@
     box-shadow: 0 0 4px rgba(74,170,255,0.4);
   }
   .vof-xfire-btn:disabled, .vof-clear-btn:disabled { opacity: 0.3; cursor: default; }
+
+  /* ===== NCM 表示エリア ===== */
+  .ncm-display-row {
+    margin: 4px 8px 2px;
+    padding: 5px 8px;
+    background: #0c1a0c;
+    border: 1px solid #2a5020;
+    border-radius: 5px;
+  }
+  .ncm-value-label {
+    font-size: 15px;
+    font-weight: bold;
+    color: #7de87d;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.04em;
+  }
+  .ncm-detail-label {
+    font-size: 9px;
+    color: #6a8a60;
+    margin-top: 2px;
+    font-family: 'Courier New', monospace;
+  }
+
+  /* ===== NCM 手動調整 ===== */
+  .ncm-adjust-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px 4px;
+  }
+  .ncm-adjust-label {
+    font-size: 9px;
+    color: #6a8a60;
+    flex: 1;
+    font-family: 'Courier New', monospace;
+  }
+  .ncm-adj-btn {
+    width: 22px; height: 22px;
+    background: #1a2a1a;
+    border: 1px solid #3a5a3a;
+    border-radius: 3px;
+    color: #7de87d;
+    font-size: 14px;
+    cursor: pointer;
+    line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    font-family: sans-serif;
+  }
+  .ncm-adj-btn:hover { background: #2a3a2a; }
+  .ncm-adj-val {
+    min-width: 28px;
+    text-align: center;
+    font-size: 12px;
+    color: #a0d090;
+    font-family: 'Courier New', monospace;
+  }
+
+  /* ===== カバーマーカー（カード上・右側に積み上げ）===== */
+  /* VOF マーカーは左側（left:6）、カバーは右側（right:6）で区別 */
+  .cover-marker-img {
+    position: absolute;
+    width: 38px; height: 38px;
+    object-fit: contain;
+    top: 6px;
+    right: calc(6px + var(--cover-idx, 0) * 42px);
+    pointer-events: none;
+    filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.7));
+    z-index: 6;
+  }
+
+  /* ===== カバーバッジ（ユニットスロット上）===== */
+  .cover-badge {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    padding: 0 3px;
+    height: 12px;
+    border-radius: 2px;
+    font-size: 8px;
+    font-weight: bold;
+    color: #fff;
+    line-height: 12px;
+    white-space: nowrap;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  /* ===== カバースロット UI（カード右クリック）===== */
+  .cover-slot-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 0;
+    font-size: 10px;
+  }
+  .cover-slot-label {
+    flex: 1;
+    padding: 1px 4px;
+    border-left: 3px solid #555;
+    color: #c0c090;
+  }
+  .cover-slot-count {
+    color: #888;
+    font-size: 9px;
+  }
+  .cover-slot-remove {
+    background: none;
+    border: none;
+    color: #885544;
+    cursor: pointer;
+    font-size: 10px;
+    padding: 0 2px;
+  }
+  .cover-slot-remove:hover { color: #dd7755; }
+
+  .cover-add-row {
+    display: flex;
+    gap: 4px;
+    padding: 4px 12px;
+    align-items: center;
+  }
+  .cover-type-select {
+    flex: 1;
+    height: 24px;
+    background: #1a1a10;
+    border: 1px solid #4a4a28;
+    border-radius: 4px;
+    color: #a0a070;
+    font-size: 9px;
+    cursor: pointer;
+    padding: 0 4px;
+  }
+  .cover-type-select option, .cover-type-select optgroup {
+    background: #1a1a10;
+    color: #a0a070;
+  }
+  .cover-add-confirm-btn {
+    height: 24px;
+    padding: 0 6px;
+    background: #1a2a1a;
+    border: 1px solid #3a5a3a;
+    border-radius: 4px;
+    color: #7de87d;
+    font-size: 10px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .cover-add-confirm-btn:hover { background: #2a3a2a; }
+
+  /* ===== カバーサブメニュー（ユニット右クリック）===== */
+  .cm-cover-opt {
+    padding: 4px 12px;
+    font-size: 10px;
+  }
+  .cm-cover-opt.active {
+    background: rgba(74,170,74,0.15);
+    color: #9de87d;
+  }
 
   /* ===== カードコンテキストメニュー（PDF配置）===== */
   #cardContextMenu .pdf-dir-grid {
@@ -526,6 +752,17 @@
   }
   .state-overlay.active {
     display: block;
+  }
+
+  /* EXPOSED + PINNED 同時 ON:
+     上半分に EXPOSED、下半分に PINNED を分割表示 */
+  .unit-slot.both-exposed-pinned
+    .state-overlay[data-overlay-key="exposed"] {
+    clip-path: inset(0 0 50% 0);   /* 上半分のみ表示 */
+  }
+  .unit-slot.both-exposed-pinned
+    .state-overlay[data-overlay-key="pinned"] {
+    clip-path: inset(50% 0 0 0);   /* 下半分のみ表示 */
   }
 
   /* 状態バッジコンテナ */
@@ -707,6 +944,172 @@
     display: flex;
     gap: 8px;
   }
+
+  /* ===== コンテンツ行（マップ + 右パネル）===== */
+  .content-row {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  /* ===== 右パネル ===== */
+  .right-panel {
+    width: 300px;
+    flex-shrink: 0;
+    background: #1a1a12;
+    border-left: 2px solid #3a3a22;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .rp-section {
+    border-bottom: 1px solid #2e2e1e;
+    padding: 10px 12px;
+    flex-shrink: 0;
+  }
+
+  .rp-section-title {
+    font-size: 10px;
+    color: #6a6a4a;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    font-weight: bold;
+  }
+
+  .rp-phase-label {
+    background: #1e3a1e;
+    border: 1px solid #3a6a3a;
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-size: 12px;
+    color: #7ad47a;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  .rp-card-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin-bottom: 8px;
+  }
+
+  .rp-card-img {
+    width: 68px;
+    height: 90px;
+    border-radius: 5px;
+    border: 1px solid #6a6a3a;
+    object-fit: cover;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.7));
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform 0.1s;
+  }
+  .rp-card-img:hover { transform: scale(1.08); }
+
+  .rp-card-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    padding-top: 2px;
+  }
+
+  .rp-btn-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .rp-btn-row .btn {
+    flex: 1;
+    font-size: 11px;
+    padding: 5px 8px;
+  }
+
+  .rp-unit-section {
+    flex: 1;
+    min-height: 80px;
+  }
+
+  .rp-unit-empty {
+    font-size: 10px;
+    color: #3a3a20;
+    text-align: center;
+    padding: 24px 0;
+    font-style: italic;
+    letter-spacing: 1px;
+  }
+
+  /* 右パネル ユニット詳細 */
+  .rp-unit-name {
+    font-size: 12px;
+    font-weight: bold;
+    color: #e8d87a;
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+  .rp-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+  .rp-detail-key { color: #6a6a4a; }
+  .rp-detail-val { color: #c8c8a0; font-weight: bold; }
+
+  /* 経験レベル色 */
+  .rp-exp-vet   { color: #e8c050; }
+  .rp-exp-line  { color: #c8c8a0; }
+  .rp-exp-green { color: #70d870; }
+
+  /* NCM 行 */
+  .rp-ncm-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 6px 0 4px;
+    padding: 4px 6px;
+    background: #111108;
+    border-radius: 4px;
+    border: 1px solid #2e2e1e;
+  }
+  .rp-ncm-label { font-size: 10px; color: #6a6a4a; letter-spacing: 1px; }
+  .rp-ncm-val   { font-size: 14px; font-weight: bold; }
+  .rp-ncm-coord { font-size: 10px; color: #4a4a30; margin-left: auto; }
+  .rp-ncm-danger { color: #ee5522; }  /* 低NCM = 命中しやすい */
+  .rp-ncm-warn   { color: #e8c050; }
+  .rp-ncm-safe   { color: #88aa66; }
+
+  /* 状態バッジ行 */
+  .rp-badges-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+  .rp-badge {
+    font-size: 9px; font-weight: bold; color: #fff;
+    padding: 2px 5px; border-radius: 3px; letter-spacing: 0.5px;
+  }
+
+  /* 戦闘解決結果 */
+  .combat-result-entry {
+    border-left: 3px solid #3a3a22;
+    padding: 5px 6px;
+    margin-bottom: 6px;
+    background: #0e0e08;
+    border-radius: 0 4px 4px 0;
+  }
+  .combat-result-entry.hit  { border-left-color: #cc3322; }
+  .combat-result-entry.pin  { border-left-color: #cc8822; }
+  .combat-result-entry.miss { border-left-color: #446644; }
+  .cr-unit-name { font-size: 11px; color: #e8d87a; font-weight: bold; margin-bottom: 2px; }
+  .cr-ncm       { font-size: 10px; color: #6a6a4a; }
+  .cr-card      { font-size: 10px; color: #a8a880; margin: 2px 0; }
+  .cr-detail    { font-size: 10px; color: #888866; }
+  .cr-result-hit  { color: #ee4422; font-weight: bold; }
+  .cr-result-pin  { color: #cc8822; font-weight: bold; }
+  .cr-result-miss { color: #66aa66; font-weight: bold; }
 </style>
 </head>
 <body>
@@ -718,21 +1121,21 @@
     <div class="info-chip">ターン <span>3</span></div>
     <div class="info-chip">活動レベル <span>2</span></div>
     <div class="info-chip">視界 <span>通常</span></div>
-    <div class="phase-indicator">▶ 友軍コマンドフェーズ</div>
   </div>
   <div class="header-actions">
     <div class="zoom-controls">
       <button class="btn zoom-btn" onclick="changeZoom(-0.1)">－</button>
-      <span class="zoom-label" id="zoomLabel">100%</span>
+      <span class="zoom-label" id="zoomLabel">115%</span>
       <button class="btn zoom-btn" onclick="changeZoom(+0.1)">＋</button>
       <button class="btn" onclick="resetZoom()" style="font-size:11px">リセット</button>
-      <input type="range" id="zoomSlider" min="40" max="180" value="100" step="5"
+      <input type="range" id="zoomSlider" min="40" max="180" value="115" step="5"
         oninput="setZoom(this.value/100)" class="zoom-slider">
     </div>
-    <button class="btn primary" onclick="drawCard()">🃏 カードを引く</button>
-    <button class="btn" onclick="nextPhase()">次フェーズ ▶</button>
   </div>
 </div>
+
+<!-- ===== コンテンツ行（マップ + 右パネル）===== -->
+<div class="content-row">
 
 <!-- ===== マップエリア ===== -->
 <div class="map-area" id="mapArea">
@@ -745,9 +1148,73 @@
   </div>
 </div>
 
+<!-- ===== 右パネル ===== -->
+<div class="right-panel">
+
+  <!-- フェーズ制御 -->
+  <div class="rp-section">
+    <div class="rp-section-title">⚡ フェーズ</div>
+    <div class="phase-indicator rp-phase-label">▶ 友軍コマンドフェーズ</div>
+    <div class="rp-btn-row">
+      <button class="btn" onclick="nextPhase()">次フェーズ ▶</button>
+    </div>
+  </div>
+
+  <!-- アクションカード -->
+  <div class="rp-section">
+    <div class="rp-section-title">🃏 アクションカード</div>
+    <div class="rp-card-row">
+      <img class="rp-card-img" id="drawnCardImg" src="images/Card - Keep Up The Fire.jpg" title="クリックで拡大">
+      <div class="rp-card-stats">
+        <div class="drawn-card-stat">起動コマンド <span id="statActivated">4</span></div>
+        <div class="drawn-card-stat">自発コマンド <span id="statInitiative">2</span></div>
+        <div class="drawn-card-stat">カード種別 <span id="statType">Contact</span></div>
+      </div>
+    </div>
+    <div class="rp-btn-row">
+      <button class="btn primary" onclick="drawCard()">🃏 引く</button>
+      <button class="btn" id="deckCountBtn">山残り <span style="color:#e8d87a">50</span></button>
+    </div>
+  </div>
+
+  <!-- ユニット詳細（将来実装）-->
+  <div class="rp-section rp-unit-section">
+    <div class="rp-section-title">🎖 選択ユニット</div>
+    <div class="rp-unit-empty" id="rpUnitInfo">ユニットを右クリックで選択</div>
+  </div>
+
+</div><!-- /.right-panel -->
+
+</div><!-- /.content-row -->
+
 <!-- ===== コンテキストメニュー ===== -->
 <div id="contextMenu" class="context-menu" style="display:none">
   <div class="cm-header" id="cmUnitName">―</div>
+
+  <!-- NCM 表示 + 手動調整 -->
+  <div id="cmNCMDisplay" class="ncm-display-row" style="display:none">
+    <div class="ncm-value-label" id="cmNCMValue">NCM —</div>
+    <div class="ncm-detail-label" id="cmNCMDetail"></div>
+  </div>
+  <div id="cmNCMAdjustRow" class="ncm-adjust-row">
+    <span class="ncm-adjust-label">手動調整</span>
+    <button class="ncm-adj-btn" id="cmNCMAdjMinus">－</button>
+    <span class="ncm-adj-val" id="cmNCMAdjustVal">+0</span>
+    <button class="ncm-adj-btn" id="cmNCMAdjPlus">＋</button>
+  </div>
+
+  <!-- カバー設定サブメニュー -->
+  <div class="cm-submenu">
+    <div class="cm-item">
+      <span>🛡 カバー設定</span>
+      <span class="cm-arrow">▶</span>
+    </div>
+    <div class="cm-sub" id="cmCoverSub">
+      <!-- JS で動的生成 -->
+    </div>
+  </div>
+
+  <div class="cm-separator"></div>
 
   <!-- Detach Step（分隊・武器チームのみ表示） -->
   <div class="cm-submenu" id="cmDetachContainer" style="display:none">
@@ -790,17 +1257,122 @@
 <div id="cardContextMenu" class="context-menu" style="display:none">
   <div class="cm-header" id="cardCmCoord">―</div>
 
-  <!-- VOF タイプ選択 -->
-  <div style="padding:4px 12px 0; font-size:10px; color:#aaa;">🔥 Volume of Fire</div>
+  <!-- 直接射撃 -->
+  <div style="padding:4px 12px 0; font-size:10px; color:#aaa;">🔥 直接射撃</div>
   <div class="vof-type-grid">
-    <button class="vof-type-btn" data-vof="S" title="Small Arms  NCM +0">S</button>
-    <button class="vof-type-btn" data-vof="A" title="Automatic  NCM -1">A</button>
-    <button class="vof-type-btn" data-vof="H" title="Heavy  NCM -3">H</button>
-    <button class="vof-type-btn" data-vof="P" title="All Pinned  NCM +2">P</button>
+    <button class="vof-type-btn" data-vof="S"  title="Small Arms  NCM +0">S</button>
+    <button class="vof-type-btn" data-vof="A"  title="Automatic  NCM -1">A</button>
+    <button class="vof-type-btn" data-vof="H"  title="Heavy  NCM -3">H</button>
+    <button class="vof-type-btn" data-vof="P"  title="All Pinned  NCM +2">P</button>
   </div>
+
+  <!-- 爆発物・地雷 -->
+  <div style="padding:2px 12px 0; font-size:10px; color:#c09040;">💥 爆発物・地雷</div>
+  <div class="vof-type-grid">
+    <button class="vof-type-btn vof-area-btn" data-vof="Grenade"   title="手榴弾  NCM -4">Grnd</button>
+    <button class="vof-type-btn vof-area-btn" data-vof="Demo"      title="爆破攻撃  NCM -5">Demo</button>
+    <button class="vof-type-btn vof-area-btn" data-vof="Mines"     title="地雷  NCM -3">Mine</button>
+    <button class="vof-type-btn vof-area-btn" data-vof="BoobyTrap" title="ブービートラップ  NCM -4">Bby</button>
+  </div>
+
+  <!-- 航空支援 -->
+  <div style="padding:2px 12px 0; font-size:10px; color:#4080c0;">✈ 航空支援</div>
+  <div class="vof-type-grid">
+    <button class="vof-type-btn vof-area-btn" data-vof="AirStrike"   title="航空支援 NCM -7">Air-7</button>
+    <button class="vof-type-btn vof-area-btn" data-vof="AirStrike-8" title="航空支援 NCM -8">Air-8</button>
+  </div>
+
+  <!-- 砲撃 HE -->
+  <div style="padding:2px 12px 0; font-size:10px; color:#a0a060;">🎯 砲撃 HE　Pending → Incoming</div>
+  <div class="vof-type-grid" style="gap:2px;">
+    <button class="vof-type-btn vof-area-btn" data-vof="Pending-3" title="HE Pending NCM 0" style="font-size:9px;">P-3</button>
+    <button class="vof-type-btn vof-area-btn" data-vof="Pending-4" title="HE Pending NCM 0" style="font-size:9px;">P-4</button>
+    <button class="vof-type-btn vof-area-btn" data-vof="Pending-5" title="HE Pending NCM 0" style="font-size:9px;">P-5</button>
+    <button class="vof-type-btn vof-area-btn" data-vof="Pending-6" title="HE Pending NCM 0" style="font-size:9px;">P-6</button>
+    <button class="vof-type-btn vof-area-btn" data-vof="Pending-7" title="HE Pending NCM 0" style="font-size:9px;">P-7</button>
+  </div>
+  <div class="vof-type-grid" style="gap:2px;">
+    <button class="vof-type-btn vof-area-btn" data-vof="Incoming-3" title="HE Incoming NCM -3" style="font-size:9px;">I-3</button>
+    <button class="vof-type-btn vof-area-btn" data-vof="Incoming-4" title="HE Incoming NCM -4" style="font-size:9px;">I-4</button>
+    <button class="vof-type-btn vof-area-btn" data-vof="Incoming-5" title="HE Incoming NCM -5" style="font-size:9px;">I-5</button>
+    <button class="vof-type-btn vof-area-btn" data-vof="Incoming-6" title="HE Incoming NCM -6" style="font-size:9px;">I-6</button>
+    <button class="vof-type-btn vof-area-btn" data-vof="Incoming-7" title="HE Incoming NCM -7" style="font-size:9px;">I-7</button>
+  </div>
+
+  <!-- 砲撃 WP -->
+  <div style="padding:2px 12px 0; font-size:10px; color:#a0a060;">🌫 砲撃 WP　Pending → Incoming</div>
+  <div class="vof-type-grid" style="gap:2px;">
+    <button class="vof-type-btn vof-area-btn" data-vof="Pending-WP-3" title="WP Pending NCM 0" style="font-size:9px;">WP-P3</button>
+    <button class="vof-type-btn vof-area-btn" data-vof="Pending-WP-4" title="WP Pending NCM 0" style="font-size:9px;">WP-P4</button>
+    <button class="vof-type-btn vof-area-btn" data-vof="WP-3" title="WP Incoming NCM -3" style="font-size:9px;">WP-I3</button>
+    <button class="vof-type-btn vof-area-btn" data-vof="WP-4" title="WP Incoming NCM -4" style="font-size:9px;">WP-I4</button>
+  </div>
+
+  <!-- 照明弾 -->
+  <div style="padding:2px 12px 0; font-size:10px; color:#c0b060;">💡 照明弾</div>
+  <div class="vof-type-grid">
+    <button class="vof-type-btn vof-area-btn" data-vof="Illum-Arty" title="砲兵照明弾（NCM効果なし）" style="font-size:9px;">砲Illm</button>
+    <button class="vof-type-btn vof-area-btn" data-vof="Illum-Mtr"  title="迫撃砲照明弾（NCM効果なし）" style="font-size:9px;">迫Illm</button>
+  </div>
+
+  <!-- 修正トグル -->
   <div class="vof-sub-row">
-    <button class="vof-xfire-btn" id="cardCmXfire" title="Crossfire  NCM -1追加">⚡ Crossfire</button>
+    <button class="vof-xfire-btn" id="cardCmXfire"       title="Crossfire  NCM -1（直接射撃のみ）">⚡ Xfire</button>
+    <button class="vof-xfire-btn" id="cardCmConcentrate" title="Concentrate Fire  NCM -1">🎯 Conc.</button>
     <button class="vof-clear-btn" id="cardCmClearVOF">VOF 除去</button>
+  </div>
+  <!-- Pending フリップ -->
+  <div class="vof-sub-row">
+    <button class="vof-flip-btn" id="cardCmFlipIncoming" disabled
+            title="Pending マーカーを Incoming に変換（着弾）" style="width:100%;">
+      ⟳ Pending → Incoming（着弾）
+    </button>
+  </div>
+
+  <!-- NCM 表示エリア -->
+  <div id="cardCmNCMRow" class="ncm-display-row" style="display:none">
+    <div class="ncm-value-label" id="cardCmNCMValue">NCM —</div>
+    <div class="ncm-detail-label" id="cardCmNCMDetail"></div>
+  </div>
+
+  <!-- 戦闘解決ボタン -->
+  <div class="vof-sub-row">
+    <button id="cardCmCombatResolve" disabled
+            style="width:100%; background:#3a1a1a; border-color:#6a2a2a; color:#cc9988;"
+            title="VOFがあるカード上の全ユニットを一括解決">
+      ⚔ 戦闘解決（カードを引く）
+    </button>
+  </div>
+
+  <div class="cm-separator"></div>
+
+  <!-- カバーマーカー -->
+  <div id="cardCmCoverSection">
+    <div style="padding:4px 12px 0; font-size:10px; color:#aaa;">🛡 カバーマーカー</div>
+    <div id="cardCmCoverSlots" style="padding:2px 12px 0; font-size:10px;"></div>
+    <div id="cardCmCoverAddRow" class="cover-add-row">
+      <select id="cardCmCoverTypeSelect" class="cover-type-select">
+        <optgroup label="基本カバー">
+          <option value="basic">Basic Cover +1</option>
+        </optgroup>
+        <optgroup label="野戦築城">
+          <option value="foxhole">Foxholes +1</option>
+          <option value="trench">Trench +2</option>
+          <option value="bunker">Bunker +3 (4st)</option>
+          <option value="pillbox">Pillbox +4 (2st)</option>
+          <option value="deep_bunker">Deep Bunker +5 (3st)</option>
+        </optgroup>
+        <optgroup label="建物">
+          <option value="light_bldg">Light Building +2</option>
+          <option value="strong_bldg">Strong Building +3</option>
+          <option value="upper_2">Upper Story +2</option>
+          <option value="upper_3">Upper Story +3</option>
+          <option value="church_2">Church Tower +2 (1st)</option>
+          <option value="church_3">Church Tower +3 (1st)</option>
+        </optgroup>
+      </select>
+      <button id="cardCmCoverAddBtn" class="cover-add-confirm-btn">＋追加</button>
+    </div>
   </div>
 
   <div class="cm-separator"></div>
@@ -823,22 +1395,6 @@
   <div class="cm-item" id="cardCmClearAll">✕ VOF / PDF をすべて除去</div>
 </div>
 
-<!-- ===== フッター（引いたカード表示） ===== -->
-<div class="footer">
-  <span class="footer-label">最後に引いたカード</span>
-  <div class="drawn-card-area">
-    <img class="drawn-card-mini" id="drawnCardImg" src="images/Card - Keep Up The Fire.jpg" title="クリックで拡大">
-    <div class="drawn-card-info">
-      <div class="drawn-card-stat">起動コマンド <span id="statActivated">4</span></div>
-      <div class="drawn-card-stat">自発コマンド <span id="statInitiative">2</span></div>
-      <div class="drawn-card-stat">カード種別 <span id="statType">Contact</span></div>
-    </div>
-  </div>
-  <div class="footer-right">
-    <button class="btn">カード山 残り <span style="color:#e8d87a">50</span></button>
-    <button class="btn">コマンド画面 →</button>
-  </div>
-</div>
 
 <script type="module" src="js/map.js"></script>
 </body>

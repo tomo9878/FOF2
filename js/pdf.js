@@ -47,25 +47,27 @@ export function clearAllPDFs(coord) {
   renderCardPDFs(coord);
 }
 
-// カード上の PDF マーカーを再描画
+// カード外縁の PDF マーカーを再描画
+// ※ カード内 (.card-overlay) ではなく .terrain-card 直接の子にすることで
+//    隙間（gap: 28px）エリアに配置できる
 export function renderCardPDFs(coord) {
-  const overlay = document.querySelector(`.terrain-card[data-coord="${coord}"] .card-overlay`);
-  if (!overlay) return;
+  const card = document.querySelector(`.terrain-card[data-coord="${coord}"]`);
+  if (!card) return;
 
   // 既存マーカーを削除
-  overlay.querySelectorAll('.pdf-marker').forEach(el => el.remove());
+  card.querySelectorAll('.pdf-marker').forEach(el => el.remove());
 
   const dirs = cardPDFMap.get(coord);
   if (!dirs || dirs.size === 0) return;
 
   dirs.forEach(dir => {
-    const { edge, deg } = PDF_DIRS[dir];
+    const { deg } = PDF_DIRS[dir];
     const img = document.createElement('img');
     img.className = 'pdf-marker';
     img.src = 'images/VOF - PDF.png';
     img.dataset.direction = dir;
     img.style.setProperty('--pdf-rot', `${deg}deg`);
     img.title = `PDF: ${PDF_LABELS[dir]} (${dir})`;
-    overlay.appendChild(img);
+    card.appendChild(img);
   });
 }

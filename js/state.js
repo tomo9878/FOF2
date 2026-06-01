@@ -24,6 +24,9 @@ export const unitStateMap = new Map();
 // detachedLATs: parentUnitId → [latId, ...]  (Supplement 時に除去する)
 export const detachedLATsMap = new Map();
 
+// NCM手動調整値: unitId → number（+/-の整数、特殊ルール対応の逃げ弁）
+export const unitNCMAdjustMap = new Map();
+
 // ===== ユニット強度ゲッター/セッター =====
 // steps: 残りステップ数（整数）。消滅閾値は steps===2（maxSteps 問わず共通）。
 // 4戦力以上のユニットは unit 定義に steps:4 を指定する（省略時は 3）。
@@ -111,12 +114,33 @@ export function renderUnitBadges(unitId) {
     const key = el.dataset.overlayKey;
     el.classList.toggle('active', !!s[key]);
   });
+
+  // 両方 ON の場合は split クラスで上下に分割表示
+  const slotEl = document.querySelector(`.unit-slot[data-unit-id="${unitId}"]`);
+  if (slotEl) {
+    slotEl.classList.toggle('both-exposed-pinned', !!(s.exposed && s.pinned));
+  }
 }
 
 export function pinUnit(unitId) {
   const s = getUnitState(unitId);
   s.pinned = true;
   renderUnitBadges(unitId);
+}
+
+// ===== NCM 手動調整 =====
+export function getNCMAdjust(unitId) {
+  return unitNCMAdjustMap.get(unitId) ?? 0;
+}
+
+export function changeNCMAdjust(unitId, delta) {
+  const cur = getNCMAdjust(unitId);
+  const next = cur + delta;
+  if (next === 0) {
+    unitNCMAdjustMap.delete(unitId);
+  } else {
+    unitNCMAdjustMap.set(unitId, next);
+  }
 }
 
 export function _trackLAT(parentId, latId) {

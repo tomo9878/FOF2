@@ -1,10 +1,11 @@
 // ===== ズーム =====
-// グリッドの実サイズ（padding含む）：テレイン3行 + 区切り28px + スタートエリア1行、gap×4
-export const GRID_W = 4 * 210 + 3 * 28 + 64;
-export const GRID_H = 3 * 276 + 28 + 276 + 4 * 28 + 64; // = 1308px
+// グリッドの実サイズ（padding 32px × 2 含む）
+// gap: 64px, 列 4×210, 行 3×276 + 64(区切り) + 276, padding 32px
+export const GRID_W = 4 * 210 + 3 * 64 + 64;   // 840 + 192 + 64 = 1096px
+export const GRID_H = 3 * 276 + 64 + 276 + 4 * 64 + 64; // 828+64+276+256+64 = 1488px
 const MIN_ZOOM = 0.3;
 const MAX_ZOOM = 2.0;
-let currentZoom = 1.0;
+let currentZoom = 1.15;
 
 export function applyZoom(z, pivotX, pivotY) {
   const mapArea = document.getElementById('mapArea');

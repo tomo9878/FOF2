@@ -1,0 +1,1200 @@
+{
+  "metadata": {
+    "campaign": "Normandy",
+    "year": "1944",
+    "friendly_force": "US Army - 9th Infantry Regiment, 2nd Battalion, A Company",
+    "enemy_force": "German Army (Wehrmacht / Fallschirmjäger)",
+    "source": "FoF_All_Volumes_v5.0.1.vmod buildFile.xml"
+  },
+
+  "friendly": {
+
+    "higher_hq": [
+      {
+        "id": "US_RGT_CMD",
+        "name": "Rgt/Bde Commander",
+        "name_ja": "連隊／旅団指揮官",
+        "type": "higher_hq",
+        "image": "HQ_01-RegBd.png",
+        "image_reduced": "HQ_01-RegBdb.png",
+        "max_strength": 1,
+        "notes": "上位HQ。連隊長またはその相当"
+      },
+      {
+        "id": "US_BN_CMD",
+        "name": "Bn Commander",
+        "name_ja": "大隊長",
+        "type": "higher_hq",
+        "image": "HQ_02-Bn.png",
+        "image_reduced": "HQ_02-Bnb.png",
+        "max_strength": 1,
+        "notes": "大隊指揮官"
+      },
+      {
+        "id": "US_BN_XO",
+        "name": "Bn XO",
+        "name_ja": "大隊副官",
+        "type": "higher_hq",
+        "image": "HQ_03-Bn XO.png",
+        "image_reduced": "HQ_03-Bn XOb.png",
+        "max_strength": 1,
+        "notes": ""
+      }
+    ],
+
+    "company_hq": [
+      {
+        "id": "US_CO_HQ",
+        "name": "CO HQ",
+        "name_ja": "中隊長",
+        "type": "hq",
+        "image": "HQ_04-CO.png",
+        "image_reduced": "HQ_04-COb.png",
+        "max_strength": 1,
+        "notes": "中隊指揮官"
+      },
+      {
+        "id": "US_CO_XO",
+        "name": "CO XO",
+        "name_ja": "中隊副官",
+        "type": "hq",
+        "image": "HQ_05-XO.png",
+        "image_reduced": "HQ_05-XOb.png",
+        "max_strength": 1,
+        "notes": ""
+      },
+      {
+        "id": "US_CO_1SGT",
+        "name": "CO 1st SGT",
+        "name_ja": "先任曹長",
+        "type": "hq",
+        "image": "HQ_06-1SGT.png",
+        "image_reduced": "HQ_06-1SGTb.png",
+        "max_strength": 1,
+        "notes": ""
+      },
+      {
+        "id": "US_RUNNER_1",
+        "name": "Runner (1)",
+        "name_ja": "伝令1",
+        "type": "hq",
+        "image": "Counter Basic - US.png",
+        "image_reduced": null,
+        "max_strength": 1,
+        "notes": "伝令マーカー"
+      },
+      {
+        "id": "US_RUNNER_2",
+        "name": "Runner (2)",
+        "name_ja": "伝令2",
+        "type": "hq",
+        "image": "Counter Basic - US.png",
+        "image_reduced": null,
+        "max_strength": 1,
+        "notes": "伝令マーカー"
+      }
+    ],
+
+    "platoons": [
+      {
+        "id": "1PLT",
+        "name": "1st Platoon",
+        "name_ja": "第1小隊",
+        "proficiency": "並",
+        "hq": {
+          "id": "US_1PLT_HQ",
+          "name": "1st PLT HQ",
+          "name_ja": "第1小隊司令部",
+          "type": "hq",
+          "image": "HQ_07-1PLT.png",
+          "image_reduced": "HQ_07-1PLTb.png",
+          "max_strength": 1
+        },
+        "squads": [
+          {
+            "id": "US_1PLT_1SQ",
+            "name": "1/1st PLT",
+            "name_ja": "第1小隊 第1分隊",
+            "type": "squad",
+            "image": "2nd_1-1.png",
+            "image_reduced": "2nd_1-1b.png",
+            "max_strength": 3
+          },
+          {
+            "id": "US_1PLT_2SQ",
+            "name": "2/1st PLT",
+            "name_ja": "第1小隊 第2分隊",
+            "type": "squad",
+            "image": "2nd_1-2.png",
+            "image_reduced": "2nd_1-2b.png",
+            "max_strength": 3
+          },
+          {
+            "id": "US_1PLT_3SQ",
+            "name": "3/1st PLT",
+            "name_ja": "第1小隊 第3分隊",
+            "type": "squad",
+            "image": "2nd_1-3.png",
+            "image_reduced": "2nd_1-3b.png",
+            "max_strength": 3
+          }
+        ],
+        "weapon_teams": [
+          {
+            "id": "US_1PLT_W1",
+            "name": "1/W 1st PLT (LMG)",
+            "name_ja": "第1小隊 武器チーム1（LMG）",
+            "type": "weapon_team",
+            "image": "Weapon_1-W-1.png",
+            "image_reduced": "Weapon_1-W-1b.png",
+            "max_strength": 2,
+            "weapon": "LMG (.30 cal)",
+            "notes": "分隊から分離したLMGチーム（LAT展開用）"
+          },
+          {
+            "id": "US_1PLT_W2",
+            "name": "2/W 1st PLT (Bazooka)",
+            "name_ja": "第1小隊 武器チーム2（バズーカ）",
+            "type": "weapon_team",
+            "image": "Weapon_1-W-2Baz.png",
+            "image_reduced": "Weapon_1-W-2Bazb.png",
+            "max_strength": 2,
+            "weapon": "Bazooka (AT)",
+            "notes": "分隊から分離したバズーカチーム（LAT展開用）"
+          }
+        ]
+      },
+      {
+        "id": "2PLT",
+        "name": "2nd Platoon",
+        "name_ja": "第2小隊",
+        "proficiency": "新",
+        "hq": {
+          "id": "US_2PLT_HQ",
+          "name": "2nd PLT HQ",
+          "name_ja": "第2小隊司令部",
+          "type": "hq",
+          "image": "HQ_08-2PLT.png",
+          "image_reduced": "HQ_08-2PLTb.png",
+          "max_strength": 1
+        },
+        "squads": [
+          {
+            "id": "US_2PLT_1SQ",
+            "name": "1/2nd PLT",
+            "name_ja": "第2小隊 第1分隊",
+            "type": "squad",
+            "image": "2nd_2-1.png",
+            "image_reduced": "2nd_2-1b.png",
+            "max_strength": 3
+          },
+          {
+            "id": "US_2PLT_2SQ",
+            "name": "2/2nd PLT",
+            "name_ja": "第2小隊 第2分隊",
+            "type": "squad",
+            "image": "2nd_2-2.png",
+            "image_reduced": "2nd_2-2b.png",
+            "max_strength": 3
+          },
+          {
+            "id": "US_2PLT_3SQ",
+            "name": "3/2nd PLT",
+            "name_ja": "第2小隊 第3分隊",
+            "type": "squad",
+            "image": "2nd_2-3.png",
+            "image_reduced": "2nd_2-3b.png",
+            "max_strength": 3
+          }
+        ],
+        "weapon_teams": [
+          {
+            "id": "US_2PLT_W1",
+            "name": "1/W 2nd PLT (LMG)",
+            "name_ja": "第2小隊 武器チーム1（LMG）",
+            "type": "weapon_team",
+            "image": "Weapon_2-W-1.png",
+            "image_reduced": "Weapon_2-W-1b.png",
+            "max_strength": 2,
+            "weapon": "LMG (.30 cal)",
+            "notes": "LAT展開用"
+          },
+          {
+            "id": "US_2PLT_W2",
+            "name": "2/W 2nd PLT (Bazooka)",
+            "name_ja": "第2小隊 武器チーム2（バズーカ）",
+            "type": "weapon_team",
+            "image": "Weapon_2-W-2Baz.png",
+            "image_reduced": "Weapon_2-W-2Bazb.png",
+            "max_strength": 2,
+            "weapon": "Bazooka (AT)",
+            "notes": "LAT展開用"
+          }
+        ]
+      },
+      {
+        "id": "3PLT",
+        "name": "3rd Platoon",
+        "name_ja": "第3小隊",
+        "proficiency": "練",
+        "hq": {
+          "id": "US_3PLT_HQ",
+          "name": "3rd PLT HQ",
+          "name_ja": "第3小隊司令部",
+          "type": "hq",
+          "image": "HQ_09-3PLT.png",
+          "image_reduced": "HQ_09-3PLTb.png",
+          "max_strength": 1
+        },
+        "squads": [
+          {
+            "id": "US_3PLT_1SQ",
+            "name": "1/3rd PLT",
+            "name_ja": "第3小隊 第1分隊",
+            "type": "squad",
+            "image": "2nd_3-1.png",
+            "image_reduced": "2nd_3-1b.png",
+            "max_strength": 3
+          },
+          {
+            "id": "US_3PLT_2SQ",
+            "name": "2/3rd PLT",
+            "name_ja": "第3小隊 第2分隊",
+            "type": "squad",
+            "image": "2nd_3-2.png",
+            "image_reduced": "2nd_3-2b.png",
+            "max_strength": 3
+          },
+          {
+            "id": "US_3PLT_3SQ",
+            "name": "3/3rd PLT",
+            "name_ja": "第3小隊 第3分隊",
+            "type": "squad",
+            "image": "2nd_3-3.png",
+            "image_reduced": "2nd_3-3b.png",
+            "max_strength": 3
+          }
+        ],
+        "weapon_teams": [
+          {
+            "id": "US_3PLT_W1",
+            "name": "1/W 3rd PLT (LMG)",
+            "name_ja": "第3小隊 武器チーム1（LMG）",
+            "type": "weapon_team",
+            "image": "Weapon_3-W-1.png",
+            "image_reduced": "Weapon_3-W-1b.png",
+            "max_strength": 2,
+            "weapon": "LMG (.30 cal)",
+            "notes": "LAT展開用"
+          },
+          {
+            "id": "US_3PLT_W2",
+            "name": "2/W 3rd PLT (Bazooka)",
+            "name_ja": "第3小隊 武器チーム2（バズーカ）",
+            "type": "weapon_team",
+            "image": "Weapon_3-W-2Baz.png",
+            "image_reduced": "Weapon_3-W-2Bazb.png",
+            "max_strength": 2,
+            "weapon": "Bazooka (AT)",
+            "notes": "LAT展開用"
+          }
+        ]
+      }
+    ],
+
+    "company_weapons": [
+      {
+        "id": "US_LMG_1",
+        "name": "1/LMG TM",
+        "name_ja": "LMGチーム 1",
+        "type": "weapon_team",
+        "image": "Weapon_LMG-1.png",
+        "image_reduced": "Weapon_LMG-1b.png",
+        "max_strength": 2,
+        "weapon": "LMG (.30 cal)",
+        "notes": "中隊レベルLMGチーム"
+      },
+      {
+        "id": "US_LMG_2",
+        "name": "2/LMG TM",
+        "name_ja": "LMGチーム 2",
+        "type": "weapon_team",
+        "image": "Weapon_LMG-2.png",
+        "image_reduced": "Weapon_LMG-2b.png",
+        "max_strength": 2,
+        "weapon": "LMG (.30 cal)",
+        "notes": "中隊レベルLMGチーム"
+      },
+      {
+        "id": "US_AT_1",
+        "name": "1/AT (Bazooka)",
+        "name_ja": "対戦車チーム 1（バズーカ）",
+        "type": "weapon_team",
+        "image": "Weapon_AT-1.png",
+        "image_reduced": "Weapon_AT-1b.png",
+        "max_strength": 2,
+        "weapon": "Bazooka M1A1 (AT)"
+      },
+      {
+        "id": "US_AT_2",
+        "name": "2/AT (Bazooka)",
+        "name_ja": "対戦車チーム 2（バズーカ）",
+        "type": "weapon_team",
+        "image": "Weapon_AT-2.png",
+        "image_reduced": "Weapon_AT-2b.png",
+        "max_strength": 2,
+        "weapon": "Bazooka M1A1 (AT)"
+      },
+      {
+        "id": "US_AT_3",
+        "name": "3/AT (Bazooka)",
+        "name_ja": "対戦車チーム 3（バズーカ）",
+        "type": "weapon_team",
+        "image": "Weapon_AT-3.png",
+        "image_reduced": "Weapon_AT-3b.png",
+        "max_strength": 2,
+        "weapon": "Bazooka M1A1 (AT)"
+      },
+      {
+        "id": "US_MTR_SEC",
+        "name": "60mm Mtr Sec",
+        "name_ja": "60mm迫撃砲小隊本部",
+        "type": "weapon_team",
+        "image": "Weapon_Mtr Sec.png",
+        "image_reduced": "Weapon_Mtr Secb.png",
+        "max_strength": 1,
+        "weapon": "60mm Mortar M2",
+        "notes": "迫撃砲セクション指揮"
+      },
+      {
+        "id": "US_MTR_TM_1",
+        "name": "1/60mm Tm",
+        "name_ja": "60mm迫撃砲チーム 1",
+        "type": "weapon_team",
+        "image": "1_Mtr 60mm.png",
+        "image_reduced": "1_Mtr 60mm b.png",
+        "max_strength": 2,
+        "weapon": "60mm Mortar M2"
+      },
+      {
+        "id": "US_MTR_TM_2",
+        "name": "2/60mm Tm",
+        "name_ja": "60mm迫撃砲チーム 2",
+        "type": "weapon_team",
+        "image": "2_Mtr 60mm.png",
+        "image_reduced": "2_Mtr 60mm b.png",
+        "max_strength": 2,
+        "weapon": "60mm Mortar M2"
+      },
+      {
+        "id": "US_MTR_TM_3",
+        "name": "3/60mm Tm",
+        "name_ja": "60mm迫撃砲チーム 3",
+        "type": "weapon_team",
+        "image": "3_Mtr 60mm.png",
+        "image_reduced": "3_Mtr 60mm b.png",
+        "max_strength": 2,
+        "weapon": "60mm Mortar M2"
+      }
+    ],
+
+    "support_units": [
+      {
+        "id": "US_HMG50",
+        "name": ".50 cal HMG",
+        "name_ja": "重機関銃チーム（.50口径）",
+        "type": "weapon_team",
+        "image": "US HMG 50cal.png",
+        "image_reduced": null,
+        "max_strength": 2,
+        "weapon": "M2 Browning .50 cal HMG"
+      },
+      {
+        "id": "US_HMG_1_1",
+        "name": "1/1 HMG",
+        "name_ja": "重機関銃チーム 1/1",
+        "type": "weapon_team",
+        "image": "US HMG 11.png",
+        "image_reduced": null,
+        "max_strength": 2,
+        "weapon": "M1919 Browning .30 cal HMG"
+      },
+      {
+        "id": "US_HMG_2_1",
+        "name": "2/1 HMG",
+        "name_ja": "重機関銃チーム 2/1",
+        "type": "weapon_team",
+        "image": "US HMG 21.png",
+        "image_reduced": null,
+        "max_strength": 2,
+        "weapon": "M1919 Browning .30 cal HMG"
+      },
+      {
+        "id": "US_ENGINEERS",
+        "name": "Engineers Squad",
+        "name_ja": "工兵分隊",
+        "type": "squad",
+        "image": "2nd_Engineers.png",
+        "image_reduced": "2nd_Engineersb.png",
+        "max_strength": 3,
+        "notes": "工兵作業・爆破能力あり"
+      }
+    ],
+
+    "observers": [
+      {
+        "id": "US_ARTY_FO",
+        "name": "Arty FO",
+        "name_ja": "砲兵観測員",
+        "type": "observer",
+        "image": "Observer_Arty FO.png",
+        "image_reduced": null,
+        "max_strength": 1,
+        "notes": "砲兵支援要請"
+      },
+      {
+        "id": "US_MTR_FO",
+        "name": "Mtr FO",
+        "name_ja": "迫撃砲観測員",
+        "type": "observer",
+        "image": "Observer_Mortar FO.png",
+        "image_reduced": null,
+        "max_strength": 1,
+        "notes": "迫撃砲支援要請"
+      }
+    ],
+
+    "vehicles": [
+      {
+        "id": "US_SHERMAN_HQ",
+        "name": "Sherman HQ 11",
+        "name_ja": "シャーマン戦車 HQ（11号車）",
+        "type": "vehicle",
+        "image": "Veh_Sherman-11.png",
+        "image_reduced": null,
+        "max_strength": 2,
+        "weapon": "75mm M3 gun",
+        "notes": "戦車小隊長車"
+      },
+      {
+        "id": "US_SHERMAN_12",
+        "name": "Sherman 12",
+        "name_ja": "シャーマン戦車 12号車",
+        "type": "vehicle",
+        "image": "Veh_Sherman-12.png",
+        "image_reduced": null,
+        "max_strength": 2,
+        "weapon": "75mm M3 gun"
+      },
+      {
+        "id": "US_SHERMAN_13",
+        "name": "Sherman 13",
+        "name_ja": "シャーマン戦車 13号車",
+        "type": "vehicle",
+        "image": "Veh_Sherman-13.png",
+        "image_reduced": null,
+        "max_strength": 2,
+        "weapon": "75mm M3 gun"
+      },
+      {
+        "id": "US_SHERMAN_14",
+        "name": "Sherman 14",
+        "name_ja": "シャーマン戦車 14号車",
+        "type": "vehicle",
+        "image": "Veh_Sherman-14.png",
+        "image_reduced": null,
+        "max_strength": 2,
+        "weapon": "75mm M3 gun"
+      },
+      {
+        "id": "US_SHERMAN_15",
+        "name": "Sherman 15",
+        "name_ja": "シャーマン戦車 15号車",
+        "type": "vehicle",
+        "image": "Veh_Sherman-15.png",
+        "image_reduced": null,
+        "max_strength": 2,
+        "weapon": "75mm M3 gun"
+      },
+      {
+        "id": "US_M10_HQ",
+        "name": "M10 TD HQ",
+        "name_ja": "M10 駆逐戦車 HQ（21号車）",
+        "type": "vehicle",
+        "image": "Veh_M10 TD-21.png",
+        "image_reduced": null,
+        "max_strength": 2,
+        "weapon": "3-inch M7 gun",
+        "notes": "Tank Destroyer小隊長車"
+      },
+      {
+        "id": "US_M10_22",
+        "name": "M10 TD 22",
+        "name_ja": "M10 駆逐戦車 22号車",
+        "type": "vehicle",
+        "image": "Veh_M10 TD-22.png",
+        "image_reduced": null,
+        "max_strength": 2,
+        "weapon": "3-inch M7 gun"
+      },
+      {
+        "id": "US_M10_23",
+        "name": "M10 TD 23",
+        "name_ja": "M10 駆逐戦車 23号車",
+        "type": "vehicle",
+        "image": "Veh_M10 TD-23.png",
+        "image_reduced": null,
+        "max_strength": 2,
+        "weapon": "3-inch M7 gun"
+      },
+      {
+        "id": "US_M10_24",
+        "name": "M10 TD 24",
+        "name_ja": "M10 駆逐戦車 24号車",
+        "type": "vehicle",
+        "image": "Veh_M10 TD-24.png",
+        "image_reduced": null,
+        "max_strength": 2,
+        "weapon": "3-inch M7 gun"
+      },
+      {
+        "id": "US_M5_HQ",
+        "name": "M5 Stuart HQ",
+        "name_ja": "M5 スチュアート軽戦車 HQ（31号車）",
+        "type": "vehicle",
+        "image": "Veh_M5-31.png",
+        "image_reduced": null,
+        "max_strength": 2,
+        "weapon": "37mm M6 gun",
+        "notes": "軽戦車小隊長車"
+      },
+      {
+        "id": "US_M5_32",
+        "name": "M5 Stuart 32",
+        "name_ja": "M5 スチュアート軽戦車 32号車",
+        "type": "vehicle",
+        "image": "Veh_M5-32.png",
+        "image_reduced": null,
+        "max_strength": 2,
+        "weapon": "37mm M6 gun"
+      },
+      {
+        "id": "US_M5_33",
+        "name": "M5 Stuart 33",
+        "name_ja": "M5 スチュアート軽戦車 33号車",
+        "type": "vehicle",
+        "image": "Veh_M5-33.png",
+        "image_reduced": null,
+        "max_strength": 2,
+        "weapon": "37mm M6 gun"
+      },
+      {
+        "id": "US_M5_34",
+        "name": "M5 Stuart 34",
+        "name_ja": "M5 スチュアート軽戦車 34号車",
+        "type": "vehicle",
+        "image": "Veh_M5-34.png",
+        "image_reduced": null,
+        "max_strength": 2,
+        "weapon": "37mm M6 gun"
+      },
+      {
+        "id": "US_M5_35",
+        "name": "M5 Stuart 35",
+        "name_ja": "M5 スチュアート軽戦車 35号車",
+        "type": "vehicle",
+        "image": "Veh_M5-35.png",
+        "image_reduced": null,
+        "max_strength": 2,
+        "weapon": "37mm M6 gun"
+      },
+      {
+        "id": "US_JEEP",
+        "name": "Jeep",
+        "name_ja": "ジープ",
+        "type": "vehicle",
+        "image": "Veh_Jeep.png",
+        "image_reduced": null,
+        "max_strength": 1,
+        "weapon": null
+      },
+      {
+        "id": "US_ARTY_JEEP",
+        "name": "Arty FO Jeep",
+        "name_ja": "砲兵観測員用ジープ",
+        "type": "vehicle",
+        "image": "Veh_Jeep Arty FD Net SCR610.png",
+        "image_reduced": null,
+        "max_strength": 1,
+        "weapon": null,
+        "notes": "無線機搭載型"
+      },
+      {
+        "id": "US_TRUCK",
+        "name": "Truck",
+        "name_ja": "トラック",
+        "type": "vehicle",
+        "image": "Veh_Truck.png",
+        "image_reduced": null,
+        "max_strength": 1,
+        "weapon": null
+      }
+    ],
+
+    "lats": [
+      {
+        "id": "US_LAT_ASSAULT",
+        "name": "Assault Team",
+        "name_ja": "突撃チーム",
+        "type": "lat",
+        "image": "LAT_Assault Team-W.png",
+        "max_strength": 1
+      },
+      {
+        "id": "US_LAT_FIRETEAM",
+        "name": "Fire Team",
+        "name_ja": "ファイアチーム（ライフル）",
+        "type": "lat",
+        "image": "LAT_Fire Team-W.png",
+        "max_strength": 1
+      },
+      {
+        "id": "US_LAT_FIRETEAM_BAR",
+        "name": "Fire Team (BAR)",
+        "name_ja": "ファイアチーム（BAR）",
+        "type": "lat",
+        "image": "LAT_Fire Team-K.png",
+        "max_strength": 1,
+        "notes": "自動小銃（BAR）装備チーム"
+      },
+      {
+        "id": "US_LAT_LITTER",
+        "name": "Litter Team",
+        "name_ja": "担架チーム",
+        "type": "lat",
+        "image": "LAT_Litter Team.png",
+        "max_strength": 1,
+        "notes": "負傷者搬送"
+      },
+      {
+        "id": "US_LAT_PARALYZED",
+        "name": "Paralyzed",
+        "name_ja": "行動不能",
+        "type": "lat",
+        "image": null,
+        "max_strength": 1
+      },
+      {
+        "id": "US_LAT_CASUALTY",
+        "name": "Casualty",
+        "name_ja": "死傷者",
+        "type": "lat",
+        "image": "LAT_Casualties.jpg",
+        "max_strength": 1
+      }
+    ]
+  },
+
+  "enemy": {
+
+    "squads": {
+      "grenadier": [
+        {
+          "id": "GE_GR_1",
+          "name": "1/Gp Grenadier",
+          "name_ja": "グレナディア 第1グループ",
+          "type": "squad",
+          "image": "GE_GR_1Gp.png",
+          "image_reduced": "GE_GR_1Gp b.png",
+          "max_strength": 2,
+          "notes": "ノルマンディー主力歩兵"
+        },
+        {
+          "id": "GE_GR_2",
+          "name": "2/Gp Grenadier",
+          "name_ja": "グレナディア 第2グループ",
+          "type": "squad",
+          "image": "GE_GR_2Gp.png",
+          "image_reduced": "GE_GR_2Gp b.png",
+          "max_strength": 2
+        },
+        {
+          "id": "GE_GR_3",
+          "name": "3/Gp Grenadier",
+          "name_ja": "グレナディア 第3グループ",
+          "type": "squad",
+          "image": "GE_GR_3Gp.png",
+          "image_reduced": "GE_GR_3Gp b.png",
+          "max_strength": 2
+        },
+        {
+          "id": "GE_GR_4",
+          "name": "4/Gp Grenadier",
+          "name_ja": "グレナディア 第4グループ",
+          "type": "squad",
+          "image": "GE_GR_4Gp.png",
+          "image_reduced": "GE_GR_4Gp b.png",
+          "max_strength": 2
+        }
+      ],
+      "fallschirmjaeger": [
+        {
+          "id": "GE_FJ_1",
+          "name": "1/Gp Fallschirmjaeger",
+          "name_ja": "降下猟兵 第1グループ",
+          "type": "squad",
+          "image": "GE_FJ_1Gp.png",
+          "image_reduced": null,
+          "max_strength": 2,
+          "notes": "ノルマンディー精鋭歩兵。LMG装備"
+        },
+        {
+          "id": "GE_FJ_2",
+          "name": "2/Gp Fallschirmjaeger",
+          "name_ja": "降下猟兵 第2グループ",
+          "type": "squad",
+          "image": "GE_FJ_2Gp.png",
+          "image_reduced": "GE_FJ_2Gp b.png",
+          "max_strength": 2,
+          "notes": "LMG装備"
+        },
+        {
+          "id": "GE_FJ_3",
+          "name": "3/Gp Fallschirmjaeger",
+          "name_ja": "降下猟兵 第3グループ",
+          "type": "squad",
+          "image": "GE_FJ_3Gp.png",
+          "image_reduced": "GE_FJ_3Gp b.png",
+          "max_strength": 2,
+          "notes": "LMG装備"
+        },
+        {
+          "id": "GE_FJ_4",
+          "name": "4/Gp Fallschirmjaeger",
+          "name_ja": "降下猟兵 第4グループ",
+          "type": "squad",
+          "image": "GE_FJ_4Gp.png",
+          "image_reduced": "GE_FJ_4Gp b.png",
+          "max_strength": 2,
+          "notes": "LMG装備"
+        },
+        {
+          "id": "GE_FJ_5",
+          "name": "5/Gp Fallschirmjaeger",
+          "name_ja": "降下猟兵 第5グループ",
+          "type": "squad",
+          "image": "GE_FJ_5Gp.png",
+          "image_reduced": "GE_FJ_5Gp b.png",
+          "max_strength": 2,
+          "notes": "突撃特化型"
+        },
+        {
+          "id": "GE_FJ_6",
+          "name": "6/Gp Fallschirmjaeger",
+          "name_ja": "降下猟兵 第6グループ",
+          "type": "squad",
+          "image": "GE_FJ_6Gp.png",
+          "image_reduced": null,
+          "max_strength": 2,
+          "notes": "突撃特化型"
+        }
+      ]
+    },
+
+    "leaders": [
+      {
+        "id": "GE_LEADER_1",
+        "name": "German Leader (1)",
+        "name_ja": "ドイツ軍指揮官 1",
+        "type": "leader",
+        "image": "GE_Leader-1.png",
+        "image_reduced": "GE_Leader-1b.png",
+        "max_strength": 1
+      },
+      {
+        "id": "GE_LEADER_2",
+        "name": "German Leader (2)",
+        "name_ja": "ドイツ軍指揮官 2",
+        "type": "leader",
+        "image": "GE_Leader-2.png",
+        "image_reduced": "GE_Leader-2b.png",
+        "max_strength": 1
+      },
+      {
+        "id": "GE_LEADER_3",
+        "name": "German Leader (3)",
+        "name_ja": "ドイツ軍指揮官 3",
+        "type": "leader",
+        "image": "GE_Leader-3.png",
+        "image_reduced": "GE_Leader-3b.png",
+        "max_strength": 1
+      }
+    ],
+
+    "observers": [
+      {
+        "id": "GE_ARTY_SPOT_1",
+        "name": "1/Arty Spotter",
+        "name_ja": "砲兵スポッター 1",
+        "type": "observer",
+        "image": "GE_Spotter_Arty1.png",
+        "image_reduced": null,
+        "max_strength": 1
+      },
+      {
+        "id": "GE_ARTY_SPOT_2",
+        "name": "2/Arty Spotter",
+        "name_ja": "砲兵スポッター 2",
+        "type": "observer",
+        "image": "GE_Spotter_Arty2.png",
+        "image_reduced": "GE_Spotter_Arty2 b.png",
+        "max_strength": 1
+      },
+      {
+        "id": "GE_MTR_SPOT_1",
+        "name": "1/Mtr Spotter",
+        "name_ja": "迫撃砲スポッター 1",
+        "type": "observer",
+        "image": "GE_Spotter_Mtr1.png",
+        "image_reduced": "GE_Spotter_Mtr1 b.png",
+        "max_strength": 1
+      },
+      {
+        "id": "GE_MTR_SPOT_2",
+        "name": "2/Mtr Spotter",
+        "name_ja": "迫撃砲スポッター 2",
+        "type": "observer",
+        "image": "GE_Spotter_Mtr2.png",
+        "image_reduced": null,
+        "max_strength": 1
+      },
+      {
+        "id": "GE_MTR_SPOT_3",
+        "name": "3/Mtr Spotter",
+        "name_ja": "迫撃砲スポッター 3",
+        "type": "observer",
+        "image": "GE_Spotter_Mtr3.png",
+        "image_reduced": "GE_Spotter_Mtr3 b.png",
+        "max_strength": 1
+      }
+    ],
+
+    "support_weapons": [
+      {
+        "id": "GE_LMG_1",
+        "name": "1/LMG TM",
+        "name_ja": "軽機関銃チーム 1",
+        "type": "weapon_team",
+        "image": "GE_LMG_1.png",
+        "image_reduced": "GE_LMG_1 b.png",
+        "max_strength": 2,
+        "weapon": "MG42 LMG"
+      },
+      {
+        "id": "GE_LMG_2",
+        "name": "2/LMG TM",
+        "name_ja": "軽機関銃チーム 2",
+        "type": "weapon_team",
+        "image": "GE_LMG_2.png",
+        "image_reduced": "GE_LMG_2 b.png",
+        "max_strength": 2,
+        "weapon": "MG42 LMG"
+      },
+      {
+        "id": "GE_LMG_3",
+        "name": "3/LMG TM",
+        "name_ja": "軽機関銃チーム 3",
+        "type": "weapon_team",
+        "image": "GE_LMG_3.png",
+        "image_reduced": "GE_LMG_3 b.png",
+        "max_strength": 2,
+        "weapon": "MG42 LMG"
+      },
+      {
+        "id": "GE_LMG_4",
+        "name": "4/LMG TM",
+        "name_ja": "軽機関銃チーム 4",
+        "type": "weapon_team",
+        "image": "GE_LMG_4.png",
+        "image_reduced": "GE_LMG_4 b.png",
+        "max_strength": 2,
+        "weapon": "MG42 LMG"
+      },
+      {
+        "id": "GE_LMG_5",
+        "name": "5/LMG TM",
+        "name_ja": "軽機関銃チーム 5",
+        "type": "weapon_team",
+        "image": "GE_LMG_5.png",
+        "image_reduced": "GE_LMG_5 b.png",
+        "max_strength": 2,
+        "weapon": "MG42 LMG"
+      },
+      {
+        "id": "GE_HMG_1",
+        "name": "1/HMG TM",
+        "name_ja": "重機関銃チーム 1",
+        "type": "weapon_team",
+        "image": "GE_HMG_1.png",
+        "image_reduced": "GE_HMG_1 b.png",
+        "max_strength": 2,
+        "weapon": "MG42 HMG（三脚架）"
+      },
+      {
+        "id": "GE_HMG_2",
+        "name": "2/HMG TM",
+        "name_ja": "重機関銃チーム 2",
+        "type": "weapon_team",
+        "image": "GE_HMG_2.png",
+        "image_reduced": null,
+        "max_strength": 2,
+        "weapon": "MG42 HMG（三脚架）"
+      },
+      {
+        "id": "GE_HMG_3",
+        "name": "3/HMG TM",
+        "name_ja": "重機関銃チーム 3",
+        "type": "weapon_team",
+        "image": "GE_HMG_3.png",
+        "image_reduced": "GE_HMG_3 b.png",
+        "max_strength": 2,
+        "weapon": "MG42 HMG（三脚架）"
+      },
+      {
+        "id": "GE_HMG_4",
+        "name": "4/HMG TM",
+        "name_ja": "重機関銃チーム 4",
+        "type": "weapon_team",
+        "image": "GE_HMG_4.png",
+        "image_reduced": "GE_HMG_4 b.png",
+        "max_strength": 2,
+        "weapon": "MG42 HMG（三脚架）"
+      },
+      {
+        "id": "GE_PZSCHRK_1",
+        "name": "1/Panzerschreck TM",
+        "name_ja": "パンツァーシュレック チーム 1",
+        "type": "weapon_team",
+        "image": "GE_PzSchrk 1.png",
+        "image_reduced": "GE_PzSchrk 1 b.png",
+        "max_strength": 2,
+        "weapon": "Panzerschreck RPzB 54 (AT)"
+      },
+      {
+        "id": "GE_PZSCHRK_2",
+        "name": "2/Panzerschreck TM",
+        "name_ja": "パンツァーシュレック チーム 2",
+        "type": "weapon_team",
+        "image": "GE_PzSchrk 2.png",
+        "image_reduced": null,
+        "max_strength": 2,
+        "weapon": "Panzerschreck RPzB 54 (AT)"
+      },
+      {
+        "id": "GE_SNIPER",
+        "name": "Sniper",
+        "name_ja": "狙撃手",
+        "type": "weapon_team",
+        "image": "GE_Sniper.png",
+        "image_reduced": "GE_Sniper b.png",
+        "max_strength": 1,
+        "weapon": "Sniper Rifle"
+      },
+      {
+        "id": "GE_RIFLE_GRN",
+        "name": "Rifle Grenade",
+        "name_ja": "ライフルグレネード",
+        "type": "weapon_team",
+        "image": "GE_Rifle Grenade.png",
+        "image_reduced": null,
+        "max_strength": 1,
+        "weapon": "Rifle Grenade",
+        "notes": "2発撃てるタイプは GE_Rifle Grenade 2 shot.png"
+      },
+      {
+        "id": "GE_PANZERFAUST",
+        "name": "Panzerfaust",
+        "name_ja": "パンツァーファウスト",
+        "type": "weapon_team",
+        "image": "GE_Panzerfaust2.png",
+        "image_reduced": null,
+        "max_strength": 1,
+        "weapon": "Panzerfaust (AT 使い捨て)",
+        "notes": "2発撃てるタイプ"
+      }
+    ],
+
+    "heavy_weapons": [
+      {
+        "id": "GE_75AT_1",
+        "name": "1/75mm AT",
+        "name_ja": "75mm対戦車砲 1門",
+        "type": "heavy_weapon",
+        "image": "GE_75mmAT 1.png",
+        "image_reduced": "GE_75mmAT 1 b.png",
+        "max_strength": 2,
+        "weapon": "7.5cm PaK 40"
+      },
+      {
+        "id": "GE_75AT_2",
+        "name": "2/75mm AT",
+        "name_ja": "75mm対戦車砲 2門",
+        "type": "heavy_weapon",
+        "image": "GE_75mmAT 2.png",
+        "image_reduced": null,
+        "max_strength": 2,
+        "weapon": "7.5cm PaK 40"
+      },
+      {
+        "id": "GE_75IG_1",
+        "name": "1/75mm IG",
+        "name_ja": "75mm歩兵砲 1門",
+        "type": "heavy_weapon",
+        "image": "GE_75mmIG 1.png",
+        "image_reduced": "GE_75mmIG 1 b.png",
+        "max_strength": 2,
+        "weapon": "7.5cm leIG 18"
+      },
+      {
+        "id": "GE_75IG_2",
+        "name": "2/75mm IG",
+        "name_ja": "75mm歩兵砲 2門",
+        "type": "heavy_weapon",
+        "image": "GE_75mmIG 2.png",
+        "image_reduced": null,
+        "max_strength": 2,
+        "weapon": "7.5cm leIG 18"
+      },
+      {
+        "id": "GE_81MTR_SEC",
+        "name": "81mm Mtr Sqd",
+        "name_ja": "81mm迫撃砲小隊本部",
+        "type": "heavy_weapon",
+        "image": "GE_81mm Mtr Sec.png",
+        "image_reduced": null,
+        "max_strength": 1,
+        "weapon": "8cm Granatwerfer 34"
+      },
+      {
+        "id": "GE_81MTR_1",
+        "name": "1/81mm Mtr TM",
+        "name_ja": "81mm迫撃砲チーム 1",
+        "type": "heavy_weapon",
+        "image": "GE_81mm Mtr 1.png",
+        "image_reduced": "GE_81mm Mtr 1 b.png",
+        "max_strength": 2,
+        "weapon": "8cm Granatwerfer 34"
+      },
+      {
+        "id": "GE_81MTR_2",
+        "name": "2/81mm Mtr TM",
+        "name_ja": "81mm迫撃砲チーム 2",
+        "type": "heavy_weapon",
+        "image": "GE_81mm Mtr 2.png",
+        "image_reduced": null,
+        "max_strength": 2,
+        "weapon": "8cm Granatwerfer 34"
+      },
+      {
+        "id": "GE_88MM_1",
+        "name": "1/88mm",
+        "name_ja": "88mm砲 1門",
+        "type": "heavy_weapon",
+        "image": "1_88mm 2-step.png",
+        "image_reduced": null,
+        "max_strength": 2,
+        "weapon": "8.8cm FlaK 36/37（対戦車・対空兼用）",
+        "notes": "強力な対戦車・対空砲"
+      },
+      {
+        "id": "GE_88MM_2",
+        "name": "2/88mm",
+        "name_ja": "88mm砲 2門",
+        "type": "heavy_weapon",
+        "image": "2_88mm 2-step.png",
+        "image_reduced": null,
+        "max_strength": 2,
+        "weapon": "8.8cm FlaK 36/37"
+      },
+      {
+        "id": "GE_FLAK38",
+        "name": "FLAK38 20mm",
+        "name_ja": "20mm対空機関砲",
+        "type": "heavy_weapon",
+        "image": "Flak 38 2cm.png",
+        "image_reduced": null,
+        "max_strength": 2,
+        "weapon": "2cm FlaK 38"
+      }
+    ],
+
+    "lats": [
+      {
+        "id": "GE_LAT_ASSAULT",
+        "name": "Assault Team",
+        "name_ja": "突撃チーム",
+        "type": "lat",
+        "image": "GE_LAT_Assault Team.png",
+        "max_strength": 1
+      },
+      {
+        "id": "GE_LAT_FIRETEAM_SC",
+        "name": "Fire Team (Rifle)",
+        "name_ja": "ファイアチーム（ライフル）",
+        "type": "lat",
+        "image": "GE_LAT_Fireteam_SC.png",
+        "max_strength": 1
+      },
+      {
+        "id": "GE_LAT_FIRETEAM_AC",
+        "name": "Fire Team LMG (A)",
+        "name_ja": "ファイアチーム（LMG 突撃）",
+        "type": "lat",
+        "image": "GE_LAT_Fireteam_AC.png",
+        "max_strength": 1
+      },
+      {
+        "id": "GE_LAT_LITTER",
+        "name": "Litter Team",
+        "name_ja": "担架チーム",
+        "type": "lat",
+        "image": "GE_LAT_Litter Team.png",
+        "max_strength": 1
+      },
+      {
+        "id": "GE_LAT_PARALYZED",
+        "name": "Paralyzed",
+        "name_ja": "行動不能",
+        "type": "lat",
+        "image": "GE_LAT_Paralyzed.png",
+        "max_strength": 1
+      },
+      {
+        "id": "GE_LAT_CASUALTY",
+        "name": "Casualty",
+        "name_ja": "死傷者",
+        "type": "lat",
+        "image": "GE_LAT_Casualty 1.png",
+        "max_strength": 1
+      }
+    ],
+
+    "vehicles": {
+      "note": "ドイツ軍車両はbuildFileでは全キャンペーン共通（Bulge Vehicles）として管理。ノルマンディーで実際に登場するのはミッションシートによる。",
+      "list": [
+        { "id": "GE_PZIV_201", "name": "Panzer IV 201", "name_ja": "IV号戦車 201号車", "image": "Panzer IV 201.png", "weapon": "7.5cm KwK 40", "max_strength": 2 },
+        { "id": "GE_PZIV_202", "name": "Panzer IV 202", "name_ja": "IV号戦車 202号車", "image": "Panzer IV 202.png", "weapon": "7.5cm KwK 40", "max_strength": 2 },
+        { "id": "GE_PZIV_203", "name": "Panzer IV 203", "name_ja": "IV号戦車 203号車", "image": "Panzer IV 203.png", "weapon": "7.5cm KwK 40", "max_strength": 2 },
+        { "id": "GE_PZIV_204", "name": "Panzer IV 204", "name_ja": "IV号戦車 204号車", "image": "Panzer IV 204.png", "weapon": "7.5cm KwK 40", "max_strength": 2 },
+        { "id": "GE_PZIV_205", "name": "Panzer IV 205", "name_ja": "IV号戦車 205号車", "image": "Panzer IV 205.png", "weapon": "7.5cm KwK 40", "max_strength": 2 },
+        { "id": "GE_STUG_301", "name": "StuG 301", "name_ja": "三号突撃砲 301号車", "image": "StuG 301.png", "weapon": "7.5cm StuK 40", "max_strength": 2 },
+        { "id": "GE_STUG_302", "name": "StuG 302", "name_ja": "三号突撃砲 302号車", "image": "StuG 302.png", "weapon": "7.5cm StuK 40", "max_strength": 2 },
+        { "id": "GE_STUG_303", "name": "StuG 303", "name_ja": "三号突撃砲 303号車", "image": "StuG 303.png", "weapon": "7.5cm StuK 40", "max_strength": 2 },
+        { "id": "GE_STUG_304", "name": "StuG 304", "name_ja": "三号突撃砲 304号車", "image": "StuG 304.png", "weapon": "7.5cm StuK 40", "max_strength": 2 },
+        { "id": "GE_SPW251_401", "name": "SPW251 401", "name_ja": "Sd.Kfz.251 半装軌車 401", "image": "SPW 251 401.png", "weapon": "MG42", "max_strength": 2 },
+        { "id": "GE_SPW251_402", "name": "SPW251 402", "name_ja": "Sd.Kfz.251 半装軌車 402", "image": "SPW 251 402.png", "weapon": "MG42", "max_strength": 2 },
+        { "id": "GE_SPW251_403", "name": "SPW251 403", "name_ja": "Sd.Kfz.251 半装軌車 403", "image": "SPW 251 403.png", "weapon": "MG42", "max_strength": 2 }
+      ]
+    }
+  }
+}

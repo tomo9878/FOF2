@@ -1,0 +1,54 @@
+# Fields of Fire デジタルボードゲーム
+
+## 現在の状態
+- マップ描画・ユニット配置・ドラッグ移動：完成
+- VOF マーカー（直接射撃 S/A/H/P）：完成
+- VOF マーカー（エリアファイア Grenade/Incoming-3〜7/AirStrike）：完成
+- PDF（Primary Direction of Fire）マーカー：完成
+- NCM 計算モジュール：完成（地形防御・カバー・Burst・スタックペナルティ込み）
+- カバーマーカーシステム（スロット管理・ユニット割り当て・収容上限）：完成
+- 12種カバータイプ（Basic/Foxhole/Trench/Bunker/Pillbox/DeepBunker/Building×2/UpperStory×2/ChurchTower×2）：完成
+- ユニット状態（Exposed/Pinned/Finished 等 7種）：完成
+- Exposed+Pinned 同時表示（clip-path 分割）：完成
+- Hit Results メニュー（A/F/L/P/C + 10コンボ）：完成
+- Detach Step / Fire Team / Assault Team 分離：完成
+- NCM 手動調整（+/-）：完成
+- 右パネルレイアウト（フェーズ制御・アクションカード・選択ユニット枠）：完成
+- アクションカードデータ整備（全50枚: activated/initiative/type/combat/hit）：完成
+- deck.js デッキ管理モジュール（map.js と combat.js で共有）：完成
+- combat.js 戦闘解決エンジン（NCM→HIT/PIN/MISS→Hit Effect適用）：完成
+- 右パネル「選択ユニット」詳細表示（右クリック連動）：完成
+- カード右クリック「⚔ 戦闘解決」ボタン → 一括解決 + 右パネル結果表示：完成
+
+## 次やること
+- [ ] Visibility UI（シナリオヘッダーエリアに Daylight/Night/Fog トグル）
+- [ ] Crossfire 自動検出（同一カード2方向以上 PDF → 自動 ON）
+- [ ] Concentrate Fire / Grenade Miss / Demo Miss フラグ（cardVOFMap 拡張）
+- [ ] コマンドシステム簡略版（HQ コマンド残数トラッキング）
+
+## 既知の課題・ブロッカー
+- Visibility は setVisibility()/getVisibility() 実装済みだが UI なし（シナリオヘッダーと合わせて実装予定）
+- Best VOF 自動選択（複数 VOF）は Phase 2 以降
+
+## ファイル構成
+```
+ミニ作業/
+├── map.html          メインHTML（CSS込み）
+└── js/
+    ├── map.js        初期化・フェーズ制御
+    ├── deck.js       アクションカードデッキ管理（共有）
+    ├── combat.js     戦闘解決エンジン（NCM→HIT/PIN/MISS→Hit適用）
+    ├── state.js      ユニット状態管理
+    ├── vof.js        VOF マーカー管理（直接射撃＋エリアファイア）
+    ├── pdf.js        PDF マーカー管理
+    ├── ncm.js        NCM 計算
+    ├── cover.js      カバーマーカー管理
+    ├── context-menu.js      ユニット右クリックメニュー（右パネル連動）
+    ├── card-context-menu.js カード右クリックメニュー（戦闘解決ボタン）
+    ├── hit.js        ヒット処理
+    ├── detach.js     分離処理
+    └── data/
+        ├── cards.js         アクションカードデータ（全50枚・combat/hit込み）
+        ├── terrain-data.js  地形防御データ（全55カード）
+        └── units-normandy.js ユニット定義
+```

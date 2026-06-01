@@ -4,9 +4,21 @@ import {
   getUnitStrength,
   toggleUnitState,
   clearAllUnitStates,
+  getNCMAdjust,
+  changeNCMAdjust,
+  unitCoordMap,
 } from './state.js';
 import { hitA, hitF, hitL, hitP, hitC, hitCombo } from './hit.js';
 import { detachFireTeam, detachAssaultTeam, detachStep, supplementUnit } from './detach.js';
+import { calcNCM } from './ncm.js';
+import { UNITS } from './data/units-normandy.js';
+import {
+  COVER_TYPES,
+  getCoverSlots,
+  getUnitCoverSlot,
+  assignUnitToCover,
+  removeUnitFromCover,
+} from './cover.js';
 
 // ===== コンテキストメニュー制御 =====
 export let cmCurrentUnit = null;
@@ -19,6 +31,10 @@ export function showContextMenu(e, unit) {
   refreshDetachSubmenu(unit);
   refreshHitSubmenu(unit);
   refreshCmToggles(unit.id);
+  refreshCoverSubmenu(unit.id);
+  refreshNCMDisplay(unit.id);
+  refreshNCMAdjustDisplay(unit.id);
+  updateRightPanelUnit(unit);
 
   // 一旦表示してサイズ取得
   menu.style.display = 'block';
@@ -151,4 +167,204 @@ export function clearAllUnitStatesCM() {
     clearAllUnitStates(cmCurrentUnit.id);
     refreshCmToggles(cmCurrentUnit.id);
   }
+}
+
+// ===== 初期化（NCM 調整ボタン等）=====
+export function initContextMenu() {
+  document.getElementById('cmNCMAdjMinus')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!cmCurrentUnit) return;
+    changeNCMAdjust(cmCurrentUnit.id, -1);
+    refreshNCMAdjustDisplay(cmCurrentUnit.id);
+    refreshNCMDisplay(cmCurrentUnit.id);
+  });
+
+  document.getElementById('cmNCMAdjPlus')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!cmCurrentUnit) return;
+    changeNCMAdjust(cmCurrentUnit.id, +1);
+    refreshNCMAdjustDisplay(cmCurrentUnit.id);
+    refreshNCMDisplay(cmCurrentUnit.id);
+  });
+}
+
+// ===== NCM 表示 =====
+export function refreshNCMDisplay(unitId) {
+  const el = document.getElementById('cmNCMDisplay');
+  if (!el) return;
+
+  const coord = unitCoordMap.get(unitId);
+  if (!coord) { el.style.display = 'none'; return; }
+
+  const result = calcNCM(coord, unitId, false);
+  if (!result) { el.style.display = 'none'; return; }
+
+  el.style.display = 'block';
+  const v = result.value;
+  const sign = v >= 0 ? '+' : '';
+  const b = result.breakdown;
+
+  const _s = n => (n >= 0 ? '+' : '') + n;
+  const parts = [`VOF${_s(b.bestVOF)}`];
+  if (b.crossfire)     parts.push(`Xfire${_s(b.crossfire)}`);
+  if (b.concentrate)   parts.push(`Conc${_s(b.concentrate)}`);
+  if (b.targetStatus)  parts.push(`状態${_s(b.targetStatus)}`);
+  if (b.terrainDef)    parts.push(`地形${_s(b.terrainDef)}`);
+  if (b.coverDef)      parts.push(`カバー${_s(b.coverDef)}`);
+  if (b.burstPenalty)  parts.push(`曳火${_s(-b.burstPenalty)}`);
+  if (b.stackPenalty)  parts.push(`スタック${_s(-b.stackPenalty)}`);
+  if (b.manualAdj)     parts.push(`手動${_s(b.manualAdj)}`);
+
+  document.getElementById('cmNCMValue').textContent  = `NCM ${sign}${v}`;
+  document.getElementById('cmNCMDetail').textContent = parts.join(' ');
+}
+
+// ===== NCM 手動調整 =====
+export function refreshNCMAdjustDisplay(unitId) {
+  const el = document.getElementById('cmNCMAdjustRow');
+  if (!el) return;
+  const val = getNCMAdjust(unitId);
+  const sign = val >= 0 ? '+' : '';
+  document.getElementById('cmNCMAdjustVal').textContent = `${sign}${val}`;
+}
+
+// ===== カバーサブメニュー =====
+export function refreshCoverSubmenu(unitId) {
+  const sub = document.getElementById('cmCoverSub');
+  if (!sub) return;
+  sub.innerHTML = '';
+
+  const coord = unitCoordMap.get(unitId);
+  const slots = coord ? getCoverSlots(coord) : [];
+  const currentSlot = getUnitCoverSlot(unitId);
+
+  // 「カバー外」オプション
+  const nocover = document.createElement('div');
+  nocover.className = `cm-item cm-cover-opt${!currentSlot ? ' active' : ''}`;
+  nocover.textContent = '— カバー外';
+  nocover.addEventListener('click', (e) => {
+    e.stopPropagation();
+    removeUnitFromCover(unitId);
+    refreshCoverSubmenu(unitId);
+    refreshNCMDisplay(unitId);
+  });
+  sub.appendChild(nocover);
+
+  if (slots.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'cm-item';
+    empty.style.cssText = 'opacity:0.4;font-size:10px;';
+    empty.textContent = 'このカードにカバーマーカーなし';
+    sub.appendChild(empty);
+    return;
+  }
+
+  slots.forEach(slot => {
+    const ct = COVER_TYPES[slot.type];
+    if (!ct) return;
+    const isActive = currentSlot?.slotId === slot.slotId;
+    const row = document.createElement('div');
+    row.className = `cm-item cm-cover-opt${isActive ? ' active' : ''}`;
+    const steps = [...slot.unitIds].reduce((sum, uid) => {
+      const s = getUnitStrength(uid);
+      return sum + (s?.steps ?? 1);
+    }, 0);
+    const cap = ct.capacity ?? 3;
+    const capLabel = `${steps}/${cap}st`;
+    const noFireMark = ct.noFire ? ' 🚫射撃不可' : '';
+    row.textContent = `${ct.label} +${ct.value}  (${capLabel})${noFireMark}`;
+    row.style.borderLeft = `3px solid ${ct.color}`;
+    if (steps >= cap) row.style.opacity = '0.5'; // 満員は薄く
+    row.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (coord) {
+        const ok = assignUnitToCover(unitId, coord, slot.slotId);
+        if (!ok) {
+          // 収容上限超え → 行を一時的に赤くフィードバック
+          row.style.color = '#ee6644';
+          row.textContent += ' ← 収容上限';
+          return; // サブメニューは閉じない
+        }
+      }
+      refreshCoverSubmenu(unitId);
+      refreshNCMDisplay(unitId);
+    });
+    sub.appendChild(row);
+  });
+}
+
+// ===== 右パネル：選択ユニット表示 =====
+
+/** ユニット定義から経験レベルを返す（UNITS に experience フィールドがあれば）。 */
+function _getExpLabel(unitId) {
+  for (const units of Object.values(UNITS)) {
+    const u = units.find(u => u.id === unitId);
+    if (u) {
+      const exp = u.experience ?? 'line';
+      return { key: exp, label: { vet: 'ベテラン', line: 'ライン', green: '新兵' }[exp] ?? exp };
+    }
+  }
+  return { key: 'line', label: 'ライン' };
+}
+
+/** ユニット種別を日本語ラベルに変換 */
+const TYPE_LABELS = {
+  squad:       '分隊',
+  weapon_team: '火器チーム',
+  hq:          'HQ',
+  lat:         'LAT',
+};
+
+/**
+ * 右パネルの「選択ユニット」セクションを更新する。
+ * showContextMenu() から自動で呼ばれる。
+ * @param {object} unit - context-menu.js の cmCurrentUnit と同じオブジェクト
+ */
+export function updateRightPanelUnit(unit) {
+  const el = document.getElementById('rpUnitInfo');
+  if (!el) return;
+
+  const s      = getUnitStrength(unit.id);
+  const state  = getUnitState(unit.id);
+  const coord  = unitCoordMap.get(unit.id);
+  const exp    = _getExpLabel(unit.id);
+  const typeLabel = TYPE_LABELS[unit.type] ?? unit.type;
+
+  // 状態バッジ HTML
+  const activeBadges = UNIT_STATES_DEF
+    .filter(d => state[d.key])
+    .map(d => `<span class="rp-badge" style="background:${d.color}">${d.badge} ${d.label}</span>`)
+    .join('');
+
+  // NCM（VOFがある場合のみ）
+  let ncmHtml = '';
+  if (coord) {
+    const ncmResult = calcNCM(coord, unit.id, false);
+    if (ncmResult) {
+      const v    = ncmResult.value;
+      const sign = v >= 0 ? '+' : '';
+      const cls  = v <= -2 ? 'rp-ncm-danger' : v <= 1 ? 'rp-ncm-warn' : 'rp-ncm-safe';
+      ncmHtml = `<div class="rp-ncm-row"><span class="rp-ncm-label">NCM</span><span class="rp-ncm-val ${cls}">${sign}${v}</span><span class="rp-ncm-coord">@${coord}</span></div>`;
+    }
+  }
+
+  // ステップ表示
+  const stepsHtml = s
+    ? `<div class="rp-detail-row"><span class="rp-detail-key">戦力</span><span class="rp-detail-val">${s.steps} / ${s.maxSteps} step</span></div>`
+    : '';
+
+  el.innerHTML = `
+    <div class="rp-unit-name">${unit.label}</div>
+    <div class="rp-detail-row">
+      <span class="rp-detail-key">種別</span>
+      <span class="rp-detail-val">${typeLabel}</span>
+    </div>
+    <div class="rp-detail-row">
+      <span class="rp-detail-key">経験</span>
+      <span class="rp-detail-val rp-exp-${exp.key}">${exp.label}</span>
+    </div>
+    ${stepsHtml}
+    ${ncmHtml}
+    ${activeBadges ? `<div class="rp-badges-row">${activeBadges}</div>` : ''}
+  `.trim();
 }

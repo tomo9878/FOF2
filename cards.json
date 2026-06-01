@@ -603,6 +603,13 @@
       "+1": "HIT", "+2": "HIT", "+3": "HIT", "+4": "HIT", "+5": "HIT", "+6": "HIT"
     },
     "hit_effect": { "vet": "A", "line": "A", "green": "A" }
+  },
+  {
+    "card_number": 51,
+    "type": "Reshuffle",
+    "image": "Reshuffle Card.png",
+    "special": "reshuffle_action_deck",
+    "note": "このカードはアクション試行に対してカウントされない"
   }
   ]
 }
