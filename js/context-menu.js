@@ -11,6 +11,8 @@ import {
 import { hitA, hitF, hitL, hitP, hitC, hitCombo } from './hit.js';
 import { detachFireTeam, detachAssaultTeam, detachStep, supplementUnit } from './detach.js';
 import { calcNCM } from './ncm.js';
+import { cardVOFMap } from './vof.js';
+import { resolveCombatUnit } from './combat.js';
 import { UNITS } from './data/units-normandy.js';
 import {
   COVER_TYPES,
@@ -34,6 +36,7 @@ export function showContextMenu(e, unit) {
   refreshCoverSubmenu(unit.id);
   refreshNCMDisplay(unit.id);
   refreshNCMAdjustDisplay(unit.id);
+  refreshCombatResolveBtn(unit.id);
   updateRightPanelUnit(unit);
 
   // 一旦表示してサイズ取得
@@ -171,6 +174,19 @@ export function clearAllUnitStatesCM() {
 
 // ===== 初期化（NCM 調整ボタン等）=====
 export function initContextMenu() {
+  // ── 戦闘解決ボタン ──
+  document.getElementById('cmCombatResolve')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!cmCurrentUnit) return;
+    const coord = unitCoordMap.get(cmCurrentUnit.id);
+    if (!coord) return;
+    const ncmResult = calcNCM(coord, cmCurrentUnit.id, false);
+    if (!ncmResult) return;
+    const result = resolveCombatUnit(cmCurrentUnit.id, ncmResult.value);
+    _showUnitCombatResult(cmCurrentUnit, coord, result);
+    hideContextMenu();
+  });
+
   document.getElementById('cmNCMAdjMinus')?.addEventListener('click', (e) => {
     e.stopPropagation();
     if (!cmCurrentUnit) return;
@@ -366,5 +382,63 @@ export function updateRightPanelUnit(unit) {
     ${stepsHtml}
     ${ncmHtml}
     ${activeBadges ? `<div class="rp-badges-row">${activeBadges}</div>` : ''}
+  `.trim();
+}
+
+// ===== 戦闘解決ボタン 有効/無効切り替え =====
+
+/**
+ * そのユニットのカードに VOF がある場合のみボタンを有効化する
+ * @param {string} unitId
+ */
+function refreshCombatResolveBtn(unitId) {
+  const btn = document.getElementById('cmCombatResolve');
+  if (!btn) return;
+  const coord  = unitCoordMap.get(unitId);
+  const hasVof = !!coord && cardVOFMap.has(coord);
+  btn.style.opacity       = hasVof ? '1' : '0.35';
+  btn.style.pointerEvents = hasVof ? 'auto' : 'none';
+  btn.title = hasVof ? '' : 'このカードに VOF マーカーがありません';
+}
+
+// ===== ユニット個別戦闘解決の結果を右パネルに表示 =====
+
+const _HIT_EFFECT_LABELS = {
+  A: 'アサルトチーム', F: 'ファイアチーム', L: 'リッター',
+  P: 'パラライズ',     C: 'カジュアルティ',
+};
+
+/**
+ * 1ユニット分の戦闘解決結果を右パネルに表示する
+ * @param {object} unit     - cmCurrentUnit
+ * @param {string} coord    - カード座標
+ * @param {object} r        - resolveCombatUnit() の戻り値
+ */
+function _showUnitCombatResult(unit, coord, r) {
+  const el = document.getElementById('rpUnitInfo');
+  if (!el) return;
+
+  const sign   = r.ncm >= 0 ? '+' : '';
+  const cls    = r.result.toLowerCase();   // 'hit' / 'pin' / 'miss'
+  const expMap = { vet: 'ベテラン', line: 'ライン', green: '新兵' };
+
+  let detailHtml = '';
+  if (r.result === 'HIT' && r.hitCode) {
+    const effects  = r.hitCode.split('').map(c => _HIT_EFFECT_LABELS[c] ?? c).join(' + ');
+    const expLabel = expMap[r.experience] ?? r.experience;
+    detailHtml = `
+      <div class="cr-card">Hit カード #${r.hitCard.number}（${expLabel}）</div>
+      <div class="cr-detail">→ ${effects}</div>
+    `;
+  }
+
+  el.innerHTML = `
+    <div class="rp-unit-name">⚔ 戦闘解決 — ${coord}</div>
+    <div class="combat-result-entry ${cls}">
+      <div class="cr-unit-name">${unit.label}</div>
+      <div class="cr-ncm">NCM ${sign}${r.ncm}</div>
+      <div class="cr-card">カード #${r.card.number} → <span class="cr-result-${cls}">${r.result}</span></div>
+      ${detailHtml}
+    </div>
   `.trim();
 }
