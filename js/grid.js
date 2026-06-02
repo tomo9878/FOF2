@@ -153,21 +153,51 @@ function selectCard(el, card, coord) {
   selectedCard = { card, coord };
 }
 
+// Hill カード判定（地形名 '丘' または ファイル名に Hill を含む）
+function isHillCard(card) {
+  return card?.name === '丘' || /Hill/i.test(card?.file ?? '');
+}
+
+// 列番号 → 列レターの配列（cols 個ぶん A,B,C,...）
+function _colLetters(cols) {
+  return Array.from({ length: cols }, (_, i) => String.fromCharCode(65 + i));
+}
+
 // 内部実装（placed 配列確定後）
-function _buildGridWithPlaced(placed, units, markers) {
+// placed: [{ card, underCard }] の配列（underCard は Hill の下に重ねる地形、無ければ null）
+function _buildGridWithPlaced(placed, units, markers, rows, cols) {
   const grid = document.getElementById('cardGrid');
   grid.innerHTML = '';
 
-  placed.forEach((card, i) => {
-    const col = COLS[i % 4];
-    const row = ROWS[Math.floor(i / 4)];
+  const colLetters = _colLetters(cols);
+
+  // グリッドのレイアウトを rows/cols に合わせて設定（テレイン rows 行 + 区切り 64px + スタートエリア 1行）
+  grid.style.gridTemplateColumns = `repeat(${cols}, 210px)`;
+  grid.style.gridTemplateRows    = `repeat(${rows}, 276px) 64px 276px`;
+
+  placed.forEach((cell, i) => {
+    const card = cell.card;
+    const col = colLetters[i % cols];
+    const row = String(Math.floor(i / cols) + 1);
     const coord = col + row;
 
     const div = document.createElement('div');
     div.className = 'terrain-card';
     div.dataset.coord = coord;
     div.dataset.cardId = card.id;
-    div.title = `${coord}: ${card.id} ${card.name}`;
+    div.title = cell.underCard
+      ? `${coord}: ${card.id} ${card.name}（下: ${cell.underCard.id} ${cell.underCard.name}）`
+      : `${coord}: ${card.id} ${card.name}`;
+
+    // Hill の下に重ねる地形カード（ずらして覗かせる）
+    if (cell.underCard) {
+      div.classList.add('has-hill');
+      const underImg = document.createElement('img');
+      underImg.className = 'card-img card-img-under';
+      underImg.src = `images/${cell.underCard.file}`;
+      underImg.alt = cell.underCard.name;
+      div.appendChild(underImg);
+    }
 
     const img = document.createElement('img');
     img.className = 'card-img';
@@ -223,17 +253,23 @@ function _buildGridWithPlaced(placed, units, markers) {
     grid.appendChild(div);
   });
 
-  // ===== スタートエリア行（行4）=====
+  // ===== スタートエリア行（テレイン行の次の行）=====
+  const stagingRowNum = rows + 1;          // 座標の行番号
+  const dividerRow    = rows + 1;           // グリッド上の区切り行
+  const stagingRow    = rows + 2;           // グリッド上のスタートエリア行
+
   const divider = document.createElement('div');
   divider.className = 'staging-row-divider';
+  divider.style.gridRow = dividerRow;
   divider.textContent = 'スタートエリア';
   grid.appendChild(divider);
 
-  COLS.forEach((col) => {
-    const coord = col + '4';
+  colLetters.forEach((col) => {
+    const coord = col + stagingRowNum;
 
     const div = document.createElement('div');
     div.className = 'terrain-card staging-area';
+    div.style.gridRow = stagingRow;
     div.dataset.coord = coord;
     div.dataset.cardId = 'STAGING';
     div.title = `${coord}: スタートエリア`;
@@ -265,9 +301,26 @@ function _buildGridWithPlaced(placed, units, markers) {
   });
 }
 
-// buildGrid は (terrainCards, units, markers) を引数で受け取る
-// shuffle 関数も引数で受け取る（map.js から渡す）
-export function buildGrid(terrainCards, units, markers, shuffle) {
-  const placed = shuffle(terrainCards).slice(0, 12);
-  _buildGridWithPlaced(placed, units, markers);
+// buildGrid は (terrainCards, units, markers, shuffle, opts) を受け取る。
+// opts.rows / opts.cols でシナリオ指定の縦横枚数に並べる。
+// Hill カードが出たら、デッキからもう1枚引いて下にずらして重ねる（丘の段差表現）。
+export function buildGrid(terrainCards, units, markers, shuffle, opts = {}) {
+  const rows = opts.rows ?? 3;
+  const cols = opts.cols ?? 4;
+
+  const deck = shuffle(terrainCards);
+  let di = 0;
+  const placed = [];
+
+  for (let i = 0; i < rows * cols; i++) {
+    const card = deck[di++] ?? null;
+    const cell = { card, underCard: null };
+    // Hill が出たら、もう1枚引いて重ねる（デッキが尽きていなければ）
+    if (card && isHillCard(card) && di < deck.length) {
+      cell.underCard = deck[di++];
+    }
+    placed.push(cell);
+  }
+
+  _buildGridWithPlaced(placed, units, markers, rows, cols);
 }

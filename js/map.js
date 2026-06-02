@@ -1,6 +1,7 @@
 import { TERRAIN_CARDS, shuffle } from './data/cards.js';
-import { UNITS, MARKERS } from './data/units-normandy.js';
+import { UNITS, MARKERS } from './data/units-normandy.js'; // 初期配置は後日（現在マップのみ生成）
 import { buildGrid } from './grid.js';
+import { getScenario } from './data/scenarios/index.js';
 import { initZoom, calcFitZoom, applyZoom, changeZoom, setZoom, resetZoom } from './zoom.js';
 import { hideContextMenu, clearAllUnitStatesCM, initContextMenu } from './context-menu.js';
 import { initCardContextMenu, hideCardContextMenu } from './card-context-menu.js';
@@ -52,7 +53,10 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ===== 初期化 =====
-buildGrid(TERRAIN_CARDS, UNITS, MARKERS, shuffle);
+// マップ生成: シナリオ指定の rows×cols で地形カードを配置（Hill は下にもう1枚重ねる）。
+// ユニット/マーカーの初期配置は後日実装するため、現在は空で生成する。
+const scenario = getScenario(1);
+buildGrid(TERRAIN_CARDS, {}, {}, shuffle, { rows: scenario.map.rows, cols: scenario.map.cols });
 initContextMenu();
 initCardContextMenu();
 initZoom();
