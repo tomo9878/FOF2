@@ -16,7 +16,7 @@ export default {
   missionType: 'offensive',      // 'offensive' | 'defensive'
 
   // ── セットアップ変数（AP/NCM に直結）──
-  visibility: 'daylight',        // 'daylight' | 'limited'  ※TODO: 要確認（仮: 昼間）
+  visibility: 'daylight',        // 'daylight' | 'limited'（確定: Daylight +0）
 
   // ── 参加部隊と初期練度 ──
   // unitId → { experience: 'vet'|'line'|'green' }。
@@ -24,12 +24,38 @@ export default {
   // キャンペーン開始時に campaign.js の applyScenarioExperience() で
   // 可変ストアへ投入される。以降は成長要素として書き換わり次ミッションへ引き継がれる。
   // 配置座標は当面 units-normandy.js のモック配置を流用。
+  // 練度パターン: HQ系・XO=Green / 先任曹長=Veteran / 戦闘部隊=Line / 敵擲弾兵=Line
   forces: {
     friendly: {
-      // 例: 'US_1PLT_1SQ': { experience: 'line' },   // TODO
+      US_CO_HQ:    { experience: 'green' },
+      US_CO_XO:    { experience: 'green' },
+      US_CO_1SGT:  { experience: 'vet'   },   // 古参の先任曹長
+      US_1PLT_HQ:  { experience: 'green' },
+      US_2PLT_HQ:  { experience: 'green' },
+      US_3PLT_HQ:  { experience: 'green' },
+      US_1PLT_1SQ: { experience: 'line'  },
+      US_2PLT_1SQ: { experience: 'line'  },
+      US_3PLT_1SQ: { experience: 'line'  },
+      US_2PLT_W1:  { experience: 'line'  },   // LMG
+      US_HMG50:    { experience: 'line'  },
+      US_LMG_1:    { experience: 'line'  },
+      US_LMG_2:    { experience: 'line'  },
+      US_AT_1:     { experience: 'line'  },
+      US_AT_2:     { experience: 'line'  },
+      US_AT_3:     { experience: 'line'  },
+      // 60mm 迫撃砲は「班(Section)でまとめる」か「3チームに分割」を選択できる（CSR2）。
+      // 現状モックは3チーム形態。班としてまとめる場合は別途 Section ユニットを定義し line を振る。
+      US_MTR60_1:  { experience: 'line'  },
+      US_MTR60_2:  { experience: 'line'  },
+      US_MTR60_3:  { experience: 'line'  },
+      // ※ Arty FO（砲兵前進観測員, Line）は Additional Attachments。ユニット未定義のため後日追加。
     },
     enemy: {
-      // 例: 'GE_GR_1': { experience: 'line' },        // TODO
+      // 敵: 352nd Division 擲弾兵分隊（ランダムドロー）。FJ は Mission 2 以降。
+      GE_GR_1: { experience: 'line' },
+      GE_GR_2: { experience: 'line' },
+      GE_GR_3: { experience: 'line' },
+      GE_GR_4: { experience: 'line' },
     },
   },
 
@@ -42,7 +68,11 @@ export default {
   },
 
   // ── 進行・勝利条件 ──
-  turns: null,                   // TODO: 制限ターン数
-  victory: { ja: '' },           // TODO: 勝利条件
-  specialRules: [],              // TODO: 特殊ルール
+  turns: 10,                     // 10 Turns
+  reattempts: 1,                 // 1回まで再挑戦可（ルール 3.9）
+  victory: {
+    ja: 'Primary／Secondary Objective を確保し、Row 1・2 を制圧する',
+    en: 'Secure the Primary and Secondary Objectives and Clear Rows 1 and 2.',
+  },
+  specialRules: [],              // TODO: PC配置・火力支援・HQイベント表は対応機能の実装後に追加
 };
