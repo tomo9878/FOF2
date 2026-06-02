@@ -35,11 +35,11 @@ export const UNITS = {
   // ── named Fire Team 持ちユニット（namedFireTeam: true）──
   // Hit: A / Hit: F 受けた時、除去せず Pin のみ（B面 = Fire Team面 が裏にある）
   'A2': [
-    { id:'US_CO_HQ',    type:'weapon_team', faction:'friendly', namedFireTeam:true,
+    { id:'US_CO_HQ',    type:'weapon_team', faction:'friendly', namedFireTeam:true, commandRole:'co_hq',
       src:'images/HQ_04-CO.png',       srcReduced:'images/HQ_04-COb.png',      label:'CO HQ' },
-    { id:'US_CO_XO',    type:'weapon_team', faction:'friendly', namedFireTeam:true,
+    { id:'US_CO_XO',    type:'weapon_team', faction:'friendly', namedFireTeam:true, commandRole:'co_staff',
       src:'images/HQ_05-XO.png',       srcReduced:'images/HQ_05-XOb.png',      label:'CO XO' },
-    { id:'US_CO_1SGT',  type:'weapon_team', faction:'friendly', namedFireTeam:true,
+    { id:'US_CO_1SGT',  type:'weapon_team', faction:'friendly', namedFireTeam:true, commandRole:'co_staff',
       src:'images/HQ_06-1SGT.png',     srcReduced:'images/HQ_06-1SGTb.png',    label:'CO 1st SGT' },
   ],
   'B1': [
@@ -49,11 +49,11 @@ export const UNITS = {
       src:'images/2_Runner-N-K.png',   srcReduced:'images/2_Runner-N-Kb.png',  label:'Runner (2)' },
   ],
   'A3': [
-    { id:'US_1PLT_HQ',  type:'weapon_team', faction:'friendly', namedFireTeam:true,
+    { id:'US_1PLT_HQ',  type:'weapon_team', faction:'friendly', namedFireTeam:true, commandRole:'plt_hq',
       src:'images/HQ_07-1PLT.png',     srcReduced:'images/HQ_07-1PLTb.png',    label:'1st PLT HQ' },
-    { id:'US_2PLT_HQ',  type:'weapon_team', faction:'friendly', namedFireTeam:true,
+    { id:'US_2PLT_HQ',  type:'weapon_team', faction:'friendly', namedFireTeam:true, commandRole:'plt_hq',
       src:'images/HQ_08-2PLT.png',     srcReduced:'images/HQ_08-2PLTb.png',    label:'2nd PLT HQ' },
-    { id:'US_3PLT_HQ',  type:'weapon_team', faction:'friendly', namedFireTeam:true,
+    { id:'US_3PLT_HQ',  type:'weapon_team', faction:'friendly', namedFireTeam:true, commandRole:'plt_hq',
       src:'images/HQ_09-3PLT.png',     srcReduced:'images/HQ_09-3PLTb.png',    label:'3rd PLT HQ' },
   ],
   'C2': [
