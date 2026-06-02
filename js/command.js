@@ -9,11 +9,12 @@
 //   - 繰越上限 getCarryoverMax(): 練度 × 視界 で決まる（CARRYOVER_TABLE）
 //   - 消費上限 getExpendLimit(): 1インパルスで使える最大（視界のみ・練度非依存）
 //
-// ※ 練度はユニット定義（experience）に、視界は getVisibility() に既にあるため、
+// ※ 練度は campaign.js（可変ストア）に、視界は getVisibility() に既にあるため、
 //    導出値を箱に保存すると二重管理になる。よって都度計算する。
 
 import { getVisibility } from './ncm.js';
 import { UNITS } from './data/units-normandy.js';
+import { getUnitExperience } from './campaign.js';
 
 // ===== ルールテーブル =====
 
@@ -42,19 +43,6 @@ export const EXPEND_LIMIT = { daylight: 6, limited: 4 };
  */
 function _visMode() {
   return getVisibility() === 0 ? 'daylight' : 'limited';
-}
-
-/**
- * ユニットの経験レベルを UNITS 定義から引く。
- * @param {string} unitId
- * @returns {'vet'|'line'|'green'}
- */
-function _experience(unitId) {
-  for (const units of Object.values(UNITS)) {
-    const u = units.find(u => u.id === unitId);
-    if (u) return u.experience ?? 'line';
-  }
-  return 'line';
 }
 
 /**
@@ -119,7 +107,7 @@ export function changeCurrentAP(unitId, delta) {
  * @returns {number}
  */
 export function getCarryoverMax(unitId) {
-  const exp = _experience(unitId);
+  const exp = getUnitExperience(unitId);
   return CARRYOVER_TABLE[exp]?.[_visMode()] ?? 0;
 }
 

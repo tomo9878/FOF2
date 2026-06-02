@@ -13,12 +13,16 @@ export default {
   id: 'normandy-01',
   missionNumber: 1,
   title: { en: 'Trévières Offensive', ja: 'トレヴィエール攻勢' },
+  missionType: 'offensive',      // 'offensive' | 'defensive'
 
   // ── セットアップ変数（AP/NCM に直結）──
   visibility: 'daylight',        // 'daylight' | 'limited'  ※TODO: 要確認（仮: 昼間）
 
-  // ── 参加部隊と練度 ──
-  // unitId → { experience: 'vet'|'line'|'green' } で既定練度を上書きする。
+  // ── 参加部隊と初期練度 ──
+  // unitId → { experience: 'vet'|'line'|'green' }。
+  // ここに書くのは「ミッション開始時の初期練度」。
+  // キャンペーン開始時に campaign.js の applyScenarioExperience() で
+  // 可変ストアへ投入される。以降は成長要素として書き換わり次ミッションへ引き継がれる。
   // 配置座標は当面 units-normandy.js のモック配置を流用。
   forces: {
     friendly: {

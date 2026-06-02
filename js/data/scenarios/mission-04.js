@@ -5,7 +5,8 @@
 export default {
   id: 'normandy-04',
   missionNumber: 4,
-  title: { en: 'TODO', ja: '未定' },   // TODO: 正式名称
+  title: { en: 'Hill 192 Offensive', ja: '192高地攻勢' },
+  missionType: 'offensive',            // 'offensive' | 'defensive'
 
   visibility: 'daylight',              // 'daylight' | 'limited'  ※TODO
 

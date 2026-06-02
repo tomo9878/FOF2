@@ -14,6 +14,7 @@ import { calcNCM } from './ncm.js';
 import { cardVOFMap } from './vof.js';
 import { resolveStep1, resolveStep2 } from './combat.js';
 import { UNITS } from './data/units-normandy.js';
+import { getUnitExperience, EXPERIENCE_LABELS } from './campaign.js';
 import {
   COVER_TYPES,
   getCoverSlots,
@@ -313,16 +314,10 @@ export function refreshCoverSubmenu(unitId) {
 
 // ===== 右パネル：選択ユニット表示 =====
 
-/** ユニット定義から経験レベルを返す（UNITS に experience フィールドがあれば）。 */
+/** 経験レベルを campaign 状態から返す（成長要素のため可変）。 */
 function _getExpLabel(unitId) {
-  for (const units of Object.values(UNITS)) {
-    const u = units.find(u => u.id === unitId);
-    if (u) {
-      const exp = u.experience ?? 'line';
-      return { key: exp, label: { vet: 'ベテラン', line: 'ライン', green: '新兵' }[exp] ?? exp };
-    }
-  }
-  return { key: 'line', label: 'ライン' };
+  const exp = getUnitExperience(unitId);
+  return { key: exp, label: EXPERIENCE_LABELS[exp] ?? exp };
 }
 
 /** ユニット種別を日本語ラベルに変換 */

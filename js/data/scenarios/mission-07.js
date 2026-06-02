@@ -5,7 +5,8 @@
 export default {
   id: 'normandy-07',
   missionNumber: 7,
-  title: { en: 'TODO', ja: '未定' },   // TODO: 正式名称
+  title: { en: 'Tinchebray Offensive', ja: 'タンシュブレー攻勢' },
+  missionType: 'offensive',            // 'offensive' | 'defensive'
 
   visibility: 'daylight',              // 'daylight' | 'limited'  ※TODO
 

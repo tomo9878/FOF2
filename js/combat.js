@@ -18,22 +18,14 @@ import { calcNCM }         from './ncm.js';
 import { pinUnit, unitCoordMap } from './state.js';
 import { hitA, hitF, hitL, hitP, hitC, hitCombo } from './hit.js';
 import { UNITS } from './data/units-normandy.js';
+import { getUnitExperience } from './campaign.js';
 
 // ===== 内部ユーティリティ =====
 
-/**
- * ユニットの経験レベルを返す。
- * ユニット定義に experience フィールドがあればそれを使い、なければ 'line'。
- * @param {string} unitId
- * @returns {'vet'|'line'|'green'}
- */
-export function getUnitExperience(unitId) {
-  for (const units of Object.values(UNITS)) {
-    const u = units.find(u => u.id === unitId);
-    if (u) return u.experience ?? 'line';
-  }
-  return 'line'; // LAT / 動的生成ユニットはデフォルト 'line'
-}
+// 練度（experience）は campaign.js（可変ストア）で一元管理する。
+// 成長要素のため、ユニット定義の固定値ではなくキャンペーン状態を参照する。
+// 後方互換のため再エクスポートする。
+export { getUnitExperience };
 
 /**
  * 指定座標に配置されているユニットIDを全て返す。

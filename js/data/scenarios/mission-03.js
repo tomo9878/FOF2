@@ -5,7 +5,8 @@
 export default {
   id: 'normandy-03',
   missionNumber: 3,
-  title: { en: 'TODO', ja: '未定' },   // TODO: 正式名称
+  title: { en: "St. Georges d'Elle - le Parc Defensive", ja: 'サン＝ジョルジュ＝デル〜ル・パルク防衛戦' },
+  missionType: 'defensive',            // 'offensive' | 'defensive'
 
   visibility: 'daylight',              // 'daylight' | 'limited'  ※TODO
 

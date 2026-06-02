@@ -5,7 +5,8 @@
 export default {
   id: 'normandy-02',
   missionNumber: 2,
-  title: { en: 'TODO', ja: '未定' },   // TODO: 正式名称
+  title: { en: 'Cerisy Offensive', ja: 'スリジー攻勢' },
+  missionType: 'offensive',            // 'offensive' | 'defensive'
 
   visibility: 'daylight',              // 'daylight' | 'limited'  ※TODO
 

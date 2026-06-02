@@ -5,7 +5,8 @@
 export default {
   id: 'normandy-06',
   missionNumber: 6,
-  title: { en: 'TODO', ja: '未定' },   // TODO: 正式名称
+  title: { en: 'Vire Offensive', ja: 'ヴィール攻勢' },
+  missionType: 'offensive',            // 'offensive' | 'defensive'
 
   visibility: 'daylight',              // 'daylight' | 'limited'  ※TODO
 

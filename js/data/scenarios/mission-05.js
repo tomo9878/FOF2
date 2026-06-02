@@ -5,7 +5,8 @@
 export default {
   id: 'normandy-05',
   missionNumber: 5,
-  title: { en: 'TODO', ja: '未定' },   // TODO: 正式名称
+  title: { en: "St. Germain d'Elle - la Croix Rouge - le Soulaire Defensive", ja: 'サン＝ジェルマン＝デル〜ラ・クロワ・ルージュ〜ル・スレール防衛戦' },
+  missionType: 'defensive',            // 'offensive' | 'defensive'
 
   visibility: 'daylight',              // 'daylight' | 'limited'  ※TODO
 
