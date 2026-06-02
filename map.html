@@ -1110,6 +1110,42 @@
   .cr-result-hit  { color: #ee4422; font-weight: bold; }
   .cr-result-pin  { color: #cc8822; font-weight: bold; }
   .cr-result-miss { color: #66aa66; font-weight: bold; }
+
+  /* 戦闘解決ステップ制 右パネル */
+  .rp-cs-unit   { font-size: 12px; color: #e8d87a; font-weight: bold; margin: 4px 0 2px; }
+  .rp-cs-ncm    { font-size: 13px; color: #c8c8a0; margin-bottom: 8px; }
+  .rp-cs-card   { font-size: 11px; color: #a8a880; margin: 4px 0; line-height: 1.5; }
+  .rp-cs-effect { color: #e8c050; font-weight: bold; }
+  .rp-cs-done   { font-size: 11px; color: #66aa66; margin-top: 8px; }
+
+  /* カードを引くボタン */
+  .rp-draw-btn {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    padding: 8px 0;
+    background: #2a3a1a;
+    border: 1px solid #4a6a2a;
+    border-radius: 4px;
+    color: #a8d870;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: background 0.15s;
+  }
+  .rp-draw-btn:hover { background: #3a5a22; border-color: #6a9a3a; }
+  .rp-draw-btn--hit {
+    background: #3a1a0a;
+    border-color: #8a3a1a;
+    color: #e88050;
+    margin-top: 6px;
+  }
+  .rp-draw-btn--hit:hover { background: #5a2a0a; }
+
+  /* ドローロック中はカード・ユニット操作を封じる */
+  body[data-draw-lock="true"] .terrain-card,
+  body[data-draw-lock="true"] .unit-slot { pointer-events: none; }
 </style>
 </head>
 <body>

@@ -12,7 +12,7 @@ import { hitA, hitF, hitL, hitP, hitC, hitCombo } from './hit.js';
 import { detachFireTeam, detachAssaultTeam, detachStep, supplementUnit } from './detach.js';
 import { calcNCM } from './ncm.js';
 import { cardVOFMap } from './vof.js';
-import { resolveCombatUnit } from './combat.js';
+import { resolveStep1, resolveStep2 } from './combat.js';
 import { UNITS } from './data/units-normandy.js';
 import {
   COVER_TYPES,
@@ -26,6 +26,9 @@ import {
 export let cmCurrentUnit = null;
 
 export function showContextMenu(e, unit) {
+  // カード引き中は右クリックメニューを開かせない
+  if (_isDrawLocked()) return;
+
   cmCurrentUnit = unit;
   const menu = document.getElementById('contextMenu');
 
@@ -174,7 +177,7 @@ export function clearAllUnitStatesCM() {
 
 // ===== 初期化（NCM 調整ボタン等）=====
 export function initContextMenu() {
-  // ── 戦闘解決ボタン ──
+  // ── 戦闘解決ボタン → ステップ制フローを開始 ──
   document.getElementById('cmCombatResolve')?.addEventListener('click', (e) => {
     e.stopPropagation();
     if (!cmCurrentUnit) return;
@@ -182,8 +185,7 @@ export function initContextMenu() {
     if (!coord) return;
     const ncmResult = calcNCM(coord, cmCurrentUnit.id, false);
     if (!ncmResult) return;
-    const result = resolveCombatUnit(cmCurrentUnit.id, ncmResult.value);
-    _showUnitCombatResult(cmCurrentUnit, coord, result);
+    _startCombatFlow(cmCurrentUnit, coord, ncmResult.value);
     hideContextMenu();
   });
 
@@ -401,44 +403,130 @@ function refreshCombatResolveBtn(unitId) {
   btn.title = hasVof ? '' : 'このカードに VOF マーカーがありません';
 }
 
-// ===== ユニット個別戦闘解決の結果を右パネルに表示 =====
+// ===== ドローロック =====
+// カード引き中は他の操作（右クリックメニュー等）を禁止する。
+
+function _isDrawLocked() {
+  return document.body.dataset.drawLock === 'true';
+}
+
+function _setDrawLock(locked) {
+  if (locked) {
+    document.body.dataset.drawLock = 'true';
+  } else {
+    delete document.body.dataset.drawLock;
+  }
+}
+
+// ===== 戦闘解決ステップ制フロー =====
 
 const _HIT_EFFECT_LABELS = {
   A: 'アサルトチーム', F: 'ファイアチーム', L: 'リッター',
   P: 'パラライズ',     C: 'カジュアルティ',
 };
 
-/**
- * 1ユニット分の戦闘解決結果を右パネルに表示する
- * @param {object} unit     - cmCurrentUnit
- * @param {string} coord    - カード座標
- * @param {object} r        - resolveCombatUnit() の戻り値
- */
-function _showUnitCombatResult(unit, coord, r) {
-  const el = document.getElementById('rpUnitInfo');
-  if (!el) return;
+/** 現在進行中の戦闘解決ステート（null = 未実行）*/
+let _combatState = null;
 
-  const sign   = r.ncm >= 0 ? '+' : '';
-  const cls    = r.result.toLowerCase();   // 'hit' / 'pin' / 'miss'
+/**
+ * 戦闘解決フローを開始する。
+ * NCM を右パネルに表示し「カードを引く」ボタンを出す。
+ */
+function _startCombatFlow(unit, coord, ncm) {
+  _combatState = { unit, coord, ncm, step: 'ready' };
+  _setDrawLock(true);
+  _renderCombatPanel();
+}
+
+/** 右パネルを現在のステートに合わせて描画 */
+function _renderCombatPanel() {
+  const el = document.getElementById('rpUnitInfo');
+  if (!el || !_combatState) return;
+
+  const { unit, coord, ncm, step, card1, result, card2, hitCode, experience } = _combatState;
+  const sign   = ncm >= 0 ? '+' : '';
   const expMap = { vet: 'ベテラン', line: 'ライン', green: '新兵' };
 
-  let detailHtml = '';
-  if (r.result === 'HIT' && r.hitCode) {
-    const effects  = r.hitCode.split('').map(c => _HIT_EFFECT_LABELS[c] ?? c).join(' + ');
-    const expLabel = expMap[r.experience] ?? r.experience;
-    detailHtml = `
-      <div class="cr-card">Hit カード #${r.hitCard.number}（${expLabel}）</div>
-      <div class="cr-detail">→ ${effects}</div>
+  // ── 共通ヘッダー ──
+  let html = `
+    <div class="rp-unit-name">⚔ 戦闘解決 — ${coord}</div>
+    <div class="rp-cs-unit">${unit.label}</div>
+    <div class="rp-cs-ncm">NCM <span class="${ncm <= -2 ? 'rp-ncm-danger' : ncm <= 1 ? 'rp-ncm-warn' : 'rp-ncm-safe'}">${sign}${ncm}</span></div>
+  `;
+
+  // ── Step ready: カード1枚目を引く ──
+  if (step === 'ready') {
+    html += `<button class="rp-draw-btn" id="rpDrawBtn1">🃏 カードを引く</button>`;
+  }
+
+  // ── Step drawn1: 1枚目結果を表示 ──
+  if (step === 'drawn1' || step === 'done') {
+    const resCls = result.toLowerCase();
+    html += `
+      <div class="rp-cs-card">
+        カード <strong>#${card1.number}</strong>
+        → <span class="cr-result-${resCls}">${result}</span>
+      </div>
+    `;
+
+    if (result === 'HIT' && step === 'drawn1') {
+      // HITの場合のみ2枚目ボタンを表示
+      html += `<button class="rp-draw-btn rp-draw-btn--hit" id="rpDrawBtn2">🃏 Hit Effect を引く</button>`;
+    }
+  }
+
+  // ── Step done: 最終結果 ──
+  if (step === 'done' && result === 'HIT' && hitCode) {
+    const effects  = hitCode.split('').map(c => _HIT_EFFECT_LABELS[c] ?? c).join(' + ');
+    const expLabel = expMap[experience] ?? experience;
+    html += `
+      <div class="rp-cs-card">
+        カード <strong>#${card2.number}</strong>（${expLabel}）
+        → <span class="rp-cs-effect">${effects}</span>
+      </div>
     `;
   }
 
-  el.innerHTML = `
-    <div class="rp-unit-name">⚔ 戦闘解決 — ${coord}</div>
-    <div class="combat-result-entry ${cls}">
-      <div class="cr-unit-name">${unit.label}</div>
-      <div class="cr-ncm">NCM ${sign}${r.ncm}</div>
-      <div class="cr-card">カード #${r.card.number} → <span class="cr-result-${cls}">${r.result}</span></div>
-      ${detailHtml}
-    </div>
-  `.trim();
+  if (step === 'done') {
+    html += `<div class="rp-cs-done">✓ 適用完了</div>`;
+  }
+
+  el.innerHTML = html.trim();
+
+  // ── ボタンにイベントをバインド ──
+  document.getElementById('rpDrawBtn1')?.addEventListener('click', _onDraw1);
+  document.getElementById('rpDrawBtn2')?.addEventListener('click', _onDraw2);
+}
+
+/** 「カードを引く」ボタン押下 */
+function _onDraw1() {
+  if (!_combatState || _combatState.step !== 'ready') return;
+
+  const { unit, ncm } = _combatState;
+  const { card, result } = resolveStep1(unit.id, ncm);
+
+  _combatState.card1  = card;
+  _combatState.result = result;
+  _combatState.step   = (result === 'HIT') ? 'drawn1' : 'done';
+
+  // HIT 以外はここでロック解除
+  if (result !== 'HIT') _setDrawLock(false);
+
+  _renderCombatPanel();
+}
+
+/** 「Hit Effect を引く」ボタン押下 */
+function _onDraw2() {
+  if (!_combatState || _combatState.step !== 'drawn1') return;
+
+  const { unit } = _combatState;
+  const { card, hitCode, experience } = resolveStep2(unit.id);
+
+  _combatState.card2      = card;
+  _combatState.hitCode    = hitCode;
+  _combatState.experience = experience;
+  _combatState.step       = 'done';
+
+  _setDrawLock(false);
+  _renderCombatPanel();
 }

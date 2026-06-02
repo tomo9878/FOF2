@@ -17,6 +17,9 @@ import { resolveCombatCard, getUnitIdsOnCard } from './combat.js';
 let _currentCoord = null;
 
 export function showCardContextMenu(e, coord) {
+  // カード引き中はメニューを開かせない
+  if (document.body.dataset.drawLock === 'true') return;
+
   _currentCoord = coord;
   const menu = document.getElementById('cardContextMenu');
   document.getElementById('cardCmCoord').textContent = `カード ${coord}`;

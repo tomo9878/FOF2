@@ -98,46 +98,62 @@ function _applyHitCode(unit, hitCode) {
   if (fn) fn(unit);
 }
 
-// ===== メイン API =====
+// ===== ステップ別 API（手動カードドロー用）=====
+//
+// 設計方針: カードを引く操作は人間がボタンを押して行う（ゲームの肝）。
+// resolveStep1 / resolveStep2 はボタン押下時に呼ばれ、1枚ずつ処理する。
 
 /**
- * 1ユニットに対して戦闘解決を実行する（ルール 6.4節）。
+ * ステップ1: カードを1枚引いて HIT/PIN/MISS を判定し、状態を適用する。
+ * 人間が「カードを引く」ボタンを押したときに呼ぶ。
  *
  * @param {string} unitId
- * @param {number} ncm     - 事前に calcNCM() で計算済みの NCM 値
- * @returns {{
- *   result:     'HIT'|'PIN'|'MISS',
- *   card:       object,    // Step 2 で引いたカード
- *   ncm:        number,
- *   hitCard?:   object,    // HIT 時に引いた 2枚目カード
- *   hitCode?:   string,    // 適用した Hit Effect コード
- *   experience?:string,    // 参照した経験レベル
- * }}
+ * @param {number} ncm    - calcNCM() で計算済みの値
+ * @returns {{ card: object, result: 'HIT'|'PIN'|'MISS' }}
  */
-export function resolveCombatUnit(unitId, ncm) {
+export function resolveStep1(unitId, ncm) {
   const card   = drawActionCard();
   const result = getCombatResult(ncm, card);
 
-  if (result === 'MISS') {
-    return { result, card, ncm };
+  // PIN / HIT → Pinned 付与
+  if (result === 'PIN' || result === 'HIT') {
+    pinUnit(unitId);
   }
 
-  // PIN も HIT も Pinned を付ける
-  pinUnit(unitId);
+  return { card, result };
+}
 
-  if (result === 'PIN') {
-    return { result, card, ncm };
-  }
-
-  // HIT: 2枚目を引いてヒット効果を適用
-  const hitCard    = drawActionCard();
+/**
+ * ステップ2: カードをもう1枚引いて Hit Effect を判定・適用する。
+ * HIT 確定後に人間が「もう1枚引く」ボタンを押したときに呼ぶ。
+ *
+ * @param {string} unitId
+ * @returns {{ card: object, hitCode: string, experience: string }}
+ */
+export function resolveStep2(unitId) {
+  const card       = drawActionCard();
   const experience = getUnitExperience(unitId);
-  const hitCode    = hitCard.hit[experience];
+  const hitCode    = card.hit[experience];
 
   const unit = _getUnitObj(unitId);
   if (unit) _applyHitCode(unit, hitCode);
 
-  return { result, card, ncm, hitCard, hitCode, experience };
+  return { card, hitCode, experience };
+}
+
+// ===== 後方互換（一括解決）=====
+
+/**
+ * 1ユニットに対して全ステップを自動で一括解決する。
+ * カード右クリックの一括解決ボタンなど、自動化が必要な場面で使用。
+ * 通常プレイでは resolveStep1 / resolveStep2 を使うこと。
+ */
+export function resolveCombatUnit(unitId, ncm) {
+  const s1 = resolveStep1(unitId, ncm);
+  if (s1.result !== 'HIT') return { result: s1.result, card: s1.card, ncm };
+
+  const s2 = resolveStep2(unitId);
+  return { result: s1.result, card: s1.card, ncm, hitCard: s2.card, hitCode: s2.hitCode, experience: s2.experience };
 }
 
 /**
