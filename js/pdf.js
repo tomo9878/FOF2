@@ -6,6 +6,11 @@
 //   右(E)           → カード右辺中央
 //   下3方向(SW/S/SE) → カード下辺中央
 //   画像は方向に合わせて回転
+//
+// Crossfire 自動検出:
+//   PDF が 2方向以上 → 直接射撃 VOF の crossfire を自動で ON/OFF する
+
+import { cardVOFMap, VOF_IS_AREA, renderCardVOF } from './vof.js';
 
 export const cardPDFMap = new Map(); // coord → Set<direction>
 
@@ -34,6 +39,7 @@ export function togglePDF(coord, direction) {
   if (dirs.has(direction)) dirs.delete(direction);
   else                     dirs.add(direction);
   renderCardPDFs(coord);
+  checkCrossfire(coord); // PDF 変化のたびに自動判定
 }
 
 // PDF 状態を確認
@@ -45,6 +51,31 @@ export function hasPDF(coord, direction) {
 export function clearAllPDFs(coord) {
   cardPDFMap.delete(coord);
   renderCardPDFs(coord);
+  checkCrossfire(coord); // 全消去後も判定
+}
+
+// ===== Crossfire 自動検出 =====
+/**
+ * 指定カードの PDF 数を見て VOF の crossfire フラグを自動更新する。
+ * - 直接射撃 VOF が存在し、PDF が 2方向以上 → crossfire: true
+ * - 1方向以下 → crossfire: false
+ * - エリアファイア VOF は対象外（ルール上 Crossfire なし）
+ * VOF を後から置いたケースに対応するため、card-context-menu.js からも呼ぶこと。
+ *
+ * @param {string} coord
+ */
+export function checkCrossfire(coord) {
+  const vof = cardVOFMap.get(coord);
+  if (!vof || VOF_IS_AREA.has(vof.type)) return; // エリアファイアは対象外
+
+  const dirs       = cardPDFMap.get(coord);
+  const pdfCount   = dirs?.size ?? 0;
+  const shouldXfire = pdfCount >= 2;
+
+  if (vof.crossfire !== shouldXfire) {
+    vof.crossfire = shouldXfire;
+    renderCardVOF(coord); // マーカー表示を更新
+  }
 }
 
 // カード外縁の PDF マーカーを再描画

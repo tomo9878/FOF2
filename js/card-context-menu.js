@@ -1,5 +1,5 @@
 // ===== カード右クリック コンテキストメニュー（VOF + PDF配置 + カバースロット）=====
-import { togglePDF, hasPDF, clearAllPDFs } from './pdf.js';
+import { togglePDF, hasPDF, clearAllPDFs, checkCrossfire } from './pdf.js';
 import {
   setVOFType, clearVOF, toggleCrossfire, toggleConcentrate,
   flipToIncoming, getVOF, VOF_IS_AREA, isPendingVOF,
@@ -193,6 +193,7 @@ export function initCardContextMenu() {
         clearVOF(_currentCoord);     // 同タイプをクリック → 除去
       } else {
         setVOFType(_currentCoord, type); // 新タイプをセット
+        checkCrossfire(_currentCoord);   // PDFが先にある場合の自動検出
       }
       _refreshVOFButtons(_currentCoord);
     });
