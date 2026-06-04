@@ -185,14 +185,14 @@
     display: block;
   }
 
-  /* Hill: 下にもう1枚の地形カードをずらして重ねる（丘の段差表現） */
+  /* Hill: 下にもう1枚の地形カードを左上にずらして重ねる（丘の段差表現） */
   .terrain-card.has-hill .card-img-under {
     position: absolute;
-    top: 18px;
-    left: 18px;
+    top: -34px;
+    left: -42px;
     z-index: 0;
     filter: brightness(0.72);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.7);
   }
   .terrain-card.has-hill > .card-img {
     position: relative;
