@@ -5,7 +5,8 @@ export const GRID_W = 4 * 210 + 3 * 64 + 64;   // 840 + 192 + 64 = 1096px
 export const GRID_H = 3 * 276 + 64 + 276 + 4 * 64 + 64; // 828+64+276+256+64 = 1488px
 const MIN_ZOOM = 0.3;
 const MAX_ZOOM = 2.0;
-let currentZoom = 1.15;
+export const INITIAL_ZOOM = 1.39;   // 初期固定倍率（スクショ基準）
+let currentZoom = INITIAL_ZOOM;
 
 export function applyZoom(z, pivotX, pivotY) {
   const mapArea = document.getElementById('mapArea');
@@ -43,8 +44,8 @@ export function setZoom(val) { applyZoom(parseFloat(val)); }
 
 export function resetZoom() {
   const area = document.getElementById('mapArea');
-  applyZoom(calcFitZoom());
-  // フィット後に中央へ
+  applyZoom(INITIAL_ZOOM);   // 初期倍率に戻す
+  // 戻した後に中央へ
   setTimeout(() => {
     area.scrollLeft = (area.scrollWidth - area.clientWidth) / 2;
     area.scrollTop  = (area.scrollHeight - area.clientHeight) / 2;
@@ -57,15 +58,7 @@ export function calcFitZoom() {
 }
 
 export function initZoom() {
-  // ホイールでズーム（マウス位置を中心に）
-  document.getElementById('mapArea').addEventListener('wheel', (e) => {
-    e.preventDefault();
-    const rect = document.getElementById('mapArea').getBoundingClientRect();
-    const px = e.clientX - rect.left;
-    const py = e.clientY - rect.top;
-    applyZoom(currentZoom + (e.deltaY < 0 ? 0.08 : -0.08), px, py);
-  }, { passive: false });
-
-  // リサイズ時にフィットズームを再適用
-  window.addEventListener('resize', () => applyZoom(calcFitZoom()));
+  // マウスホイールによるズーム・リサイズ時の自動フィットは無効化。
+  // ズームはヘッダーの −/＋/スライダー/リセットからのみ操作する（初期倍率は固定）。
+  // ホイールは mapArea の通常スクロール（盤面の上下移動）に使う。
 }

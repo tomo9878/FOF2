@@ -4,7 +4,7 @@ import { buildGrid } from './grid.js';
 import { getScenario } from './data/scenarios/index.js';
 import { initContactLevel } from './contact.js';
 import { placePC } from './pc.js';
-import { initZoom, calcFitZoom, applyZoom, changeZoom, setZoom, resetZoom } from './zoom.js';
+import { initZoom, calcFitZoom, applyZoom, changeZoom, setZoom, resetZoom, INITIAL_ZOOM } from './zoom.js';
 import { hideContextMenu, clearAllUnitStatesCM, initContextMenu } from './context-menu.js';
 import { initCardContextMenu, hideCardContextMenu } from './card-context-menu.js';
 import { drawActionCard, getDeckCount } from './deck.js';
@@ -72,9 +72,9 @@ initContextMenu();
 initCardContextMenu();
 initZoom();
 
-// 初期ズーム 115% で開始→中央スクロール
+// 初期ズームを固定倍率で開始→中央スクロール
 setTimeout(() => {
-  applyZoom(1.15);
+  applyZoom(INITIAL_ZOOM);
   const area = document.getElementById('mapArea');
   area.scrollLeft = (area.scrollWidth - area.clientWidth) / 2;
   area.scrollTop  = (area.scrollHeight - area.clientHeight) / 2;
