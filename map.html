@@ -309,6 +309,18 @@
   }
 
   /* ===== VOF マーカー画像（カード上に表示）===== */
+  /* PC（Potential Contact）マーカー画像（右上・VOF と反対側） */
+  .pc-marker-img {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+    z-index: 5;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+  }
+
   .vof-marker-img {
     position: absolute;
     top: 6px;

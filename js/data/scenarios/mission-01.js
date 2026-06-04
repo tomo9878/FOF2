@@ -67,6 +67,11 @@ export default {
     // TODO: 固定配置カード・配置パターン・スタートエリア等
   },
 
+  // ── PC（Potential Contact）配置（§8.2.1）──
+  // 各行の全カードに指定文字のPCマーカーを letter side（表）で配置する。
+  // 行番号 → 文字（A=最severe / C=最穏やか）
+  pcPlacement: { 1: 'C', 2: 'A', 3: 'B' },
+
   // ── 進行・勝利条件 ──
   turns: 10,                     // 10 Turns
   reattempts: 1,                 // 1回まで再挑戦可（ルール 3.9）
