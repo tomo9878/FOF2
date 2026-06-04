@@ -7,18 +7,21 @@
 //   heavily_engaged : VOF下の占有カードが2枚以上 かつ うち1枚以上に敵と友軍が同居
 //   engaged         : VOF下の占有カードが2枚以上
 //   contact         : VOF下の占有カードが1枚 または Spotted な敵が1体以上
-//   no_contact      : VOF/PDFマーカーが皆無 かつ Spotted な敵なし
-//   （上記いずれも外れるが VOF/PDF が盤面にある場合は contact に倒す）
+//   no_contact      : 上記いずれも満たさない（VOF下の占有カードが0 かつ Spotted敵なし）
+//
+// ※ 判定の実体は「占有カード下のVOF」と「Spotted な敵」のみ。
+//    占有していないカードに置かれた VOF/PDF は活動レベルに影響しない。
+//    （VOF は本来ユニットのいるカードに対して置かれるため。誰も巻き込んでいない
+//      空カードの VOF/PDF で接触状態にはしない。）
 //
 // 影響（本モジュールでは算出・表示まで。下記は将来の接続先）:
 //   - No Contact 時に HQ コマンド取得判定 +1（§4.1.2）
 //   - PC マーカー解決時のドロー枚数（§8.2.4・ドローチャートは PC 実装時）
 //
 // 循環参照を避けるため、盤面変更側は CustomEvent 'board:changed' を発火するだけ。
-// 本モジュールがそれを購読して再計算する（依存は contact → vof/pdf/state の一方向）。
+// 本モジュールがそれを購読して再計算する（依存は contact → vof/state の一方向）。
 
 import { cardVOFMap } from './vof.js';
-import { cardPDFMap } from './pdf.js';
 import { unitCoordMap, getUnitState } from './state.js';
 
 export const ACTIVITY_LEVELS = ['no_contact', 'contact', 'engaged', 'heavily_engaged'];
@@ -64,9 +67,7 @@ function _occupancy() {
  * @returns {'no_contact'|'contact'|'engaged'|'heavily_engaged'}
  */
 export function computeActivityLevel() {
-  const occ    = _occupancy();
-  const anyVof = cardVOFMap.size > 0;
-  const anyPdf = cardPDFMap.size > 0;
+  const occ = _occupancy();
 
   // Spotted な敵（unspotted でない敵ユニット）
   let spottedEnemy = false;
@@ -86,10 +87,10 @@ export function computeActivityLevel() {
 
   if (underVofCount >= 2) return mixedExists ? 'heavily_engaged' : 'engaged';
   if (underVofCount === 1 || spottedEnemy) return 'contact';
-  if (!anyVof && !anyPdf && !spottedEnemy) return 'no_contact';
 
-  // VOF/PDF は盤面にあるが占有カード下でない等 → No Contact ではないため contact
-  return 'contact';
+  // 占有カード下の VOF も Spotted 敵もない → No Contact
+  // （空カードに VOF/PDF があっても、誰も巻き込んでいなければ接触ではない）
+  return 'no_contact';
 }
 
 /** 現在保持している活動レベルを返す */

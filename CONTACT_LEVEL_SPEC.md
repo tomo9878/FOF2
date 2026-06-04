@@ -27,7 +27,7 @@ Fields of Fire Deluxe ~ Series Rules 3rd Edition の §8.1 / §1.2.6（用語集
 | 3 | **Heavily Engaged** | 激戦 | VOF 下にある占有カードが**2枚以上**、かつ**そのうち1枚以上に敵と友軍の両方**がいる |
 | 2 | **Engaged** | 交戦 | VOF 下にある占有カードが**2枚以上**（友軍占有・敵占有を含む） |
 | 1 | **Contact** | 接触 | VOF 下にある占有カードが**1枚**、**または** Spotted な敵ユニットが**1体以上** |
-| 0 | **No Contact** | 接触なし | マップ上に VOF/PDF マーカーが**一切ない**（未起動の地雷・Pending 砲撃マーカー含む）**かつ** Spotted な敵が**いない**（両方を満たして初めて No Contact に下がる） |
+| 0 | **No Contact** | 接触なし | VOF下の占有カードが**0枚** **かつ** Spotted な敵が**いない** |
 
 ### 用語
 - **占有カード（occupied card）**：友軍または敵ユニットが1体以上いるカード
@@ -41,9 +41,6 @@ Fields of Fire Deluxe ~ Series Rules 3rd Edition の §8.1 / §1.2.6（用語集
 
 ```
 function computeActivityLevel():
-    # マップ上に VOF/PDF マーカーが1つでもあるか（未起動地雷・Pending 含む）
-    anyVofOrPdf = (VOFのあるカードが1枚以上) or (PDFのあるカードが1枚以上)
-
     # Spotted な敵ユニットの有無
     spottedEnemy = (unspotted でない敵ユニットが1体以上いる)
 
@@ -58,20 +55,19 @@ function computeActivityLevel():
     if occupiedUnderVOF.size == 1 or spottedEnemy:
         return 'contact'
 
-    # No Contact は「VOF/PDF が皆無 かつ Spotted 敵なし」のときのみ
-    if not anyVofOrPdf and not spottedEnemy:
-        return 'no_contact'
-
-    # それ以外（VOF/PDF はあるが占有カード下でない等）は最低 Contact 扱い
-    # ※ルール上 No Contact の条件を満たさない＝接触は発生しているため
-    return 'contact'
+    # 占有カード下の VOF も Spotted 敵もない → No Contact
+    return 'no_contact'
 ```
 
 ### 設計判断：ルールの隙間の埋め方
-「占有していないカードにだけ VOF がある（例：空カードへの Incoming! 砲撃）」場合、
-ルール文では Contact の最小条件（占有カードが VOF 下）にも No Contact の条件（VOF が皆無）にも
-厳密には当てはまらない。本実装では **「VOF/PDF が盤面にある＝No Contact ではない」** と解釈し、
-この場合を **Contact** に倒す。
+「占有していないカードにだけ VOF がある（例：空カードへの Incoming! 砲撃や、
+ユニット未配置時のテスト操作）」場合、ルール文の No Contact 条件（VOF/PDF が皆無）を
+厳密に取ると No Contact ではなくなるが、Contact の条件（占有カードが VOF 下）も満たさない。
+
+本実装では **判定の実体を「占有カード下の VOF」と「Spotted 敵」だけに置き**、
+誰も巻き込んでいない空カードの VOF/PDF は活動レベルに影響させない（→ No Contact のまま）。
+VOF は本来ユニットのいるカードに対して置かれるため、この扱いが実態に合う。
+（PDF も単独では活動レベルに影響しない。）
 
 ---
 
