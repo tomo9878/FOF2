@@ -189,21 +189,22 @@ function _buildGridWithPlaced(placed, units, markers, rows, cols) {
       ? `${coord}: ${card.id} ${card.name}（下: ${cell.underCard.id} ${cell.underCard.name}）`
       : `${coord}: ${card.id} ${card.name}`;
 
-    // Hill の下に重ねる地形カード（ずらして覗かせる）
-    if (cell.underCard) {
-      div.classList.add('has-hill');
-      const underImg = document.createElement('img');
-      underImg.className = 'card-img card-img-under';
-      underImg.src = `images/${cell.underCard.file}`;
-      underImg.alt = cell.underCard.name;
-      div.appendChild(underImg);
-    }
-
+    // Hill 本体は通常エリア（セルの正規位置）に置く
     const img = document.createElement('img');
     img.className = 'card-img';
     img.src = `images/${card.file}`;
     img.alt = card.name;
     div.appendChild(img);
+
+    // Hill の場合、2枚目を斜め右上にずらして上（前面）に重ねる
+    if (cell.underCard) {
+      div.classList.add('has-hill');
+      const overImg = document.createElement('img');
+      overImg.className = 'card-img card-img-over';
+      overImg.src = `images/${cell.underCard.file}`;
+      overImg.alt = cell.underCard.name;
+      div.appendChild(overImg);
+    }
 
     const overlay = document.createElement('div');
     overlay.className = 'card-overlay';

@@ -185,18 +185,13 @@
     display: block;
   }
 
-  /* Hill: 下にもう1枚の地形カードを左上にずらして重ねる（丘の段差表現） */
-  .terrain-card.has-hill .card-img-under {
+  /* Hill: 本体は通常エリアに置き、2枚目を斜め右上にずらして上に重ねる（丘の段差表現） */
+  /* DOM順（Hill本体 → 2枚目 → overlay）で前後が決まる。座標/ユニットの overlay が最前面 */
+  .terrain-card.has-hill .card-img-over {
     position: absolute;
-    top: -34px;
-    left: -42px;
-    z-index: 0;
-    filter: brightness(0.72);
+    top: -30px;
+    left: 34px;
     box-shadow: 0 6px 14px rgba(0,0,0,0.7);
-  }
-  .terrain-card.has-hill > .card-img {
-    position: relative;
-    z-index: 1;
   }
 
   /* カードオーバーレイ情報 */
