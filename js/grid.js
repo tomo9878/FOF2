@@ -88,6 +88,7 @@ export function addUnitToCard(coord, unitDef) {
   unitCoordMap.set(unitDef.id, coord);
   const slot = createUnitSlot(unitDef);
   layer.appendChild(slot);
+  document.dispatchEvent(new CustomEvent('board:changed')); // 活動レベル再計算
 }
 
 // ===== カードからユニットスロットを削除 =====
@@ -96,6 +97,7 @@ export function removeUnitFromCard(unitId) {
   if (slot) slot.remove();
   unitCoordMap.delete(unitId);
   unitStrengthMap.delete(unitId);
+  document.dispatchEvent(new CustomEvent('board:changed')); // 活動レベル再計算
 }
 
 // カードへユニットスロットを移動（ドラッグ&ドロップ完了時）
@@ -124,6 +126,7 @@ export function moveUnitToCard(unitId, newCoord) {
     const oldLayer = document.querySelector(`.unit-layer[data-coord="${oldCoord}"]`);
     if (oldLayer && oldLayer.children.length === 0) oldLayer.remove();
   }
+  document.dispatchEvent(new CustomEvent('board:changed')); // 活動レベル再計算
 }
 
 // ドラッグ&ドロップ受け入れハンドラを terrain-card に付与

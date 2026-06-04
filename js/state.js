@@ -120,6 +120,9 @@ export function renderUnitBadges(unitId) {
   if (slotEl) {
     slotEl.classList.toggle('both-exposed-pinned', !!(s.exposed && s.pinned));
   }
+
+  // 活動レベル再計算をトリガ（Spotted/Unspotted 等の状態変化を捕捉）
+  document.dispatchEvent(new CustomEvent('board:changed'));
 }
 
 export function pinUnit(unitId) {

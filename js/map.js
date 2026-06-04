@@ -2,6 +2,7 @@ import { TERRAIN_CARDS, shuffle } from './data/cards.js';
 import { UNITS, MARKERS } from './data/units-normandy.js'; // 初期配置は後日（現在マップのみ生成）
 import { buildGrid } from './grid.js';
 import { getScenario } from './data/scenarios/index.js';
+import { initContactLevel } from './contact.js';
 import { initZoom, calcFitZoom, applyZoom, changeZoom, setZoom, resetZoom } from './zoom.js';
 import { hideContextMenu, clearAllUnitStatesCM, initContextMenu } from './context-menu.js';
 import { initCardContextMenu, hideCardContextMenu } from './card-context-menu.js';
@@ -57,6 +58,7 @@ document.addEventListener('keydown', (e) => {
 // ユニット/マーカーの初期配置は後日実装するため、現在は空で生成する。
 const scenario = getScenario(1);
 buildGrid(TERRAIN_CARDS, {}, {}, shuffle, { rows: scenario.map.rows, cols: scenario.map.cols });
+initContactLevel();   // 活動レベルの購読開始＋初回算出
 initContextMenu();
 initCardContextMenu();
 initZoom();

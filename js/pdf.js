@@ -88,6 +88,9 @@ export function renderCardPDFs(coord) {
   // 既存マーカーを削除
   card.querySelectorAll('.pdf-marker').forEach(el => el.remove());
 
+  // 活動レベル再計算をトリガ（PDF の増減を捕捉）
+  document.dispatchEvent(new CustomEvent('board:changed'));
+
   const dirs = cardPDFMap.get(coord);
   if (!dirs || dirs.size === 0) return;
 

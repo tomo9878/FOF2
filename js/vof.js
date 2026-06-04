@@ -126,6 +126,9 @@ export function renderCardVOF(coord) {
     '.vof-marker-img, .xfire-marker-img, .concentrate-marker-img, .vof-area-badge'
   ).forEach(el => el.remove());
 
+  // 活動レベル再計算をトリガ（VOF の増減・変更を捕捉）
+  document.dispatchEvent(new CustomEvent('board:changed'));
+
   const vof = cardVOFMap.get(coord);
   if (!vof) return;
 
