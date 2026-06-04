@@ -1,6 +1,6 @@
 import { TERRAIN_CARDS, shuffle } from './data/cards.js';
 import { UNITS, MARKERS } from './data/units-normandy.js'; // 初期配置は後日（現在マップのみ生成）
-import { buildGrid } from './grid.js';
+import { buildGrid, buildUnitPool } from './grid.js';
 import { getScenario } from './data/scenarios/index.js';
 import { initContactLevel } from './contact.js';
 import { placePC } from './pc.js';
@@ -66,6 +66,19 @@ for (const [row, letter] of Object.entries(scenario.pcPlacement ?? {})) {
     placePC(String.fromCharCode(65 + c) + row, letter, true);
   }
 }
+
+// 未配置部隊プール：シナリオ友軍をスタートエリア下に並べる（ドラッグで配置）
+function findUnitDef(unitId) {
+  for (const arr of Object.values(UNITS)) {
+    const u = arr.find(x => x.id === unitId);
+    if (u) return u;
+  }
+  return null;
+}
+const friendlyDefs = Object.keys(scenario.forces?.friendly ?? {})
+  .map(findUnitDef)
+  .filter(Boolean);
+buildUnitPool(friendlyDefs, scenario.map.rows);
 
 initContactLevel();   // 活動レベルの購読開始＋初回算出
 initContextMenu();

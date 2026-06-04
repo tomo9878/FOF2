@@ -127,6 +127,14 @@ export function moveUnitToCard(unitId, newCoord) {
     if (oldLayer && oldLayer.children.length === 0) oldLayer.remove();
   }
   document.dispatchEvent(new CustomEvent('board:changed')); // 活動レベル再計算
+
+  // プール（未配置部隊）が空になったらプール行を隠す → スタートエリアが最下段に
+  const pool = document.getElementById('unitPool');
+  if (pool && pool.children.length === 0) {
+    pool.style.display = 'none';
+    const pd = document.getElementById('unitPoolDivider');
+    if (pd) pd.style.display = 'none';
+  }
 }
 
 // ドラッグ&ドロップ受け入れハンドラを terrain-card に付与
@@ -327,4 +335,37 @@ export function buildGrid(terrainCards, units, markers, shuffle, opts = {}) {
   }
 
   _buildGridWithPlaced(placed, units, markers, rows, cols);
+}
+
+// ===== 未配置部隊プール（スタートエリアの下）=====
+// 駒を並べ、ドラッグでスタートエリア/盤面へ配置する。
+// プール内の駒は unitCoordMap に登録しない（盤外）。配置時に moveUnitToCard で登録される。
+export function buildUnitPool(unitDefs, rows) {
+  const grid = document.getElementById('cardGrid');
+  if (!grid) return;
+
+  // 既存プールを除去
+  document.getElementById('unitPool')?.remove();
+  document.getElementById('unitPoolDivider')?.remove();
+  if (!unitDefs || unitDefs.length === 0) return;
+
+  // プール用に2行追加（区切り + プール本体）
+  grid.style.gridTemplateRows = `repeat(${rows}, 276px) 64px 276px 40px auto`;
+
+  const divider = document.createElement('div');
+  divider.id = 'unitPoolDivider';
+  divider.className = 'staging-row-divider';
+  divider.style.gridRow = String(rows + 3);
+  divider.textContent = '未配置部隊（ドラッグでスタートエリアへ）';
+  grid.appendChild(divider);
+
+  const pool = document.createElement('div');
+  pool.id = 'unitPool';
+  pool.className = 'unit-pool';
+  pool.style.gridRow    = String(rows + 4);
+  pool.style.gridColumn = '1 / -1';
+  unitDefs.forEach(def => {
+    pool.appendChild(createUnitSlot(def)); // coordMap 未登録 = 盤外
+  });
+  grid.appendChild(pool);
 }
