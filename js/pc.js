@@ -12,6 +12,33 @@ export const cardPCMap = new Map(); // coord → { letter:'A'|'B'|'C', revealed:
 const PC_IMG     = { A: 'PC A.png', B: 'PC B.png', C: 'PC C.png' };
 const PC_UNKNOWN = 'PC Q.png';
 
+// ===== PC ドローチャート（§8.2.4 / ヒントカード#52）=====
+//
+// PC マーカー解決時に「接触チェックのため引くアクションカード枚数」を
+// マーカーの文字 × 現在の活動レベルで決める。
+//   'auto' = カードを引かず自動で接触成立
+//   数値 N = アクションカードを N 枚引き、'Contact' の語があるカードが出れば接触
+//
+//        | 接触なし | 接触 | 交戦 | 激戦 |
+//   A    |  Auto   |  7  |  5  |  3  |
+//   B    |  Auto   |  5  |  3  |  2  |
+//   C    |   4     |  3  |  2  |  1  |
+export const PC_DRAW_CHART = {
+  A: { no_contact: 'auto', contact: 7, engaged: 5, heavily_engaged: 3 },
+  B: { no_contact: 'auto', contact: 5, engaged: 3, heavily_engaged: 2 },
+  C: { no_contact: 4,      contact: 3, engaged: 2, heavily_engaged: 1 },
+};
+
+/**
+ * PC マーカーの文字と活動レベルから、接触チェックの内容を返す。
+ * @param {'A'|'B'|'C'} letter
+ * @param {'no_contact'|'contact'|'engaged'|'heavily_engaged'} activityLevel
+ * @returns {'auto'|number|null} 'auto'=自動接触 / N=引く枚数 / null=不正
+ */
+export function getPCDraw(letter, activityLevel) {
+  return PC_DRAW_CHART[letter]?.[activityLevel] ?? null;
+}
+
 /**
  * PC マーカーを配置する。
  * @param {string} coord
