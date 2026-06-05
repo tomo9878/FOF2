@@ -16,6 +16,12 @@ import { resolveStep1, resolveStep2 } from './combat.js';
 import { UNITS } from './data/units-normandy.js';
 import { getUnitExperience, EXPERIENCE_LABELS } from './campaign.js';
 import {
+  canHoldCommands, getCommandRole, getCurrentAP, changeCurrentAP,
+  getCarryoverMax, getExpendLimit,
+} from './command.js';
+import { drawActionCard } from './deck.js';
+import { getActivityLevel } from './contact.js';
+import {
   COVER_TYPES,
   getCoverSlots,
   getUnitCoverSlot,
@@ -366,6 +372,26 @@ export function updateRightPanelUnit(unit) {
     ? `<div class="rp-detail-row"><span class="rp-detail-key">戦力</span><span class="rp-detail-val">${s.steps} / ${s.maxSteps} step</span></div>`
     : '';
 
+  // コマンド（AP）セクション — commandRole を持つ HQ/Staff のみ
+  let cmdHtml = '';
+  if (canHoldCommands(unit.id)) {
+    const ap        = getCurrentAP(unit.id);
+    const carryMax  = getCarryoverMax(unit.id);
+    const expendMax = getExpendLimit();
+    cmdHtml = `
+      <div class="rp-cmd">
+        <div class="rp-cmd-title">コマンド (AP)</div>
+        <div class="rp-cmd-ap">
+          <button class="rp-cmd-btn" id="rpCmdMinus">－</button>
+          <span class="rp-cmd-val" id="rpCmdVal">${ap}</span>
+          <button class="rp-cmd-btn" id="rpCmdPlus">＋</button>
+        </div>
+        <div class="rp-cmd-info">繰越上限 ${carryMax} / 1インパルス消費上限 ${expendMax}</div>
+        <button class="rp-draw-btn" id="rpCmdDraw">🃏 カードを引いてコマンド取得</button>
+      </div>
+    `;
+  }
+
   el.innerHTML = `
     <div class="rp-unit-name">${unit.label}</div>
     <div class="rp-detail-row">
@@ -379,7 +405,49 @@ export function updateRightPanelUnit(unit) {
     ${stepsHtml}
     ${ncmHtml}
     ${activeBadges ? `<div class="rp-badges-row">${activeBadges}</div>` : ''}
+    ${cmdHtml}
   `.trim();
+
+  // コマンドセクションのボタンをバインド
+  if (cmdHtml) _bindCommandButtons(unit.id);
+}
+
+// ===== コマンド（AP）ボタン =====
+
+function _bindCommandButtons(unitId) {
+  const valEl = document.getElementById('rpCmdVal');
+  const refresh = () => { if (valEl) valEl.textContent = getCurrentAP(unitId); };
+
+  document.getElementById('rpCmdMinus')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    changeCurrentAP(unitId, -1);   // 命令1つ分を人間が消費
+    refresh();
+    document.dispatchEvent(new CustomEvent('board:changed')); // 自動保存
+  });
+  document.getElementById('rpCmdPlus')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    changeCurrentAP(unitId, +1);   // 手動補正
+    refresh();
+    document.dispatchEvent(new CustomEvent('board:changed'));
+  });
+  // カードを引いてコマンド取得（取得は自動・カードを引く操作は人間）
+  document.getElementById('rpCmdDraw')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const card = drawActionCard();
+    let gained = card.activated ?? 0;
+    // No Contact 時は +1（§4.1.2 C）
+    const noContactBonus = getActivityLevel() === 'no_contact' ? 1 : 0;
+    gained += noContactBonus;
+    changeCurrentAP(unitId, gained);
+    refresh();
+    // 取得内訳を一時表示
+    const draw = document.getElementById('rpCmdDraw');
+    if (draw) {
+      draw.textContent = `カード #${card.number} → +${card.activated ?? 0}${noContactBonus ? ` +1(NoContact)` : ''}`;
+      setTimeout(() => { if (draw) draw.textContent = '🃏 カードを引いてコマンド取得'; }, 2500);
+    }
+    document.dispatchEvent(new CustomEvent('board:changed'));
+  });
 }
 
 // ===== 戦闘解決ボタン 有効/無効切り替え =====
