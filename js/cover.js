@@ -282,3 +282,37 @@ export function renderUnitCoverBadge(unitId) {
   badge.style.background = ct.color;
   slot.appendChild(badge);
 }
+
+// ===== 保存・復元 =====
+
+/** カバー状態を直列化（coord → スロット配列、unitIds は配列化） */
+export function serializeCover() {
+  const out = [];
+  cardCoverSlotMap.forEach((slots, coord) => {
+    out.push([coord, slots.map(s => ({ slotId: s.slotId, type: s.type, unitIds: [...s.unitIds] }))]);
+  });
+  return out;
+}
+
+/** 直列化データからカバー状態を復元（_unitSlotIndex も再構築） */
+export function restoreCover(data) {
+  cardCoverSlotMap.clear();
+  _unitSlotIndex.clear();
+  (data ?? []).forEach(([coord, slots]) => {
+    const rs = slots.map(s => ({ slotId: s.slotId, type: s.type, unitIds: new Set(s.unitIds) }));
+    cardCoverSlotMap.set(coord, rs);
+    rs.forEach(s => s.unitIds.forEach(uid => _unitSlotIndex.set(uid, { coord, slotId: s.slotId })));
+  });
+  cardCoverSlotMap.forEach((_, coord) => renderCardCovers(coord));
+  _unitSlotIndex.forEach((_, uid) => renderUnitCoverBadge(uid));
+}
+
+/** カバー状態を全消去（プレイ状態リセット用） */
+export function clearAllCover() {
+  const coords = [...cardCoverSlotMap.keys()];
+  const units  = [..._unitSlotIndex.keys()];
+  cardCoverSlotMap.clear();
+  _unitSlotIndex.clear();
+  coords.forEach(c => renderCardCovers(c));
+  units.forEach(u => renderUnitCoverBadge(u));
+}

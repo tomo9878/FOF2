@@ -4,6 +4,9 @@ import { buildGrid, buildUnitPool } from './grid.js';
 import { getScenario } from './data/scenarios/index.js';
 import { initContactLevel } from './contact.js';
 import { placePC } from './pc.js';
+import { applyScenarioExperience } from './campaign.js';
+import { setVisibility } from './ncm.js';
+import { restoreFromSave, save, clearStorage, resetPlay } from './persistence.js';
 import { initZoom, calcFitZoom, applyZoom, changeZoom, setZoom, resetZoom, INITIAL_ZOOM } from './zoom.js';
 import { hideContextMenu, clearAllUnitStatesCM, initContextMenu } from './context-menu.js';
 import { initCardContextMenu, hideCardContextMenu } from './card-context-menu.js';
@@ -55,19 +58,8 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ===== 初期化 =====
-// マップ生成: シナリオ指定の rows×cols で地形カードを配置（Hill は下にもう1枚重ねる）。
-// ユニット/マーカーの初期配置は後日実装するため、現在は空で生成する。
 const scenario = getScenario(1);
-buildGrid(TERRAIN_CARDS, {}, {}, shuffle, { rows: scenario.map.rows, cols: scenario.map.cols });
 
-// シナリオの PC（Potential Contact）配置：各行の全カードに指定文字を letter side で
-for (const [row, letter] of Object.entries(scenario.pcPlacement ?? {})) {
-  for (let c = 0; c < scenario.map.cols; c++) {
-    placePC(String.fromCharCode(65 + c) + row, letter, true);
-  }
-}
-
-// 未配置部隊プール：シナリオ友軍をスタートエリア下に並べる（ドラッグで配置）
 function findUnitDef(unitId) {
   for (const arr of Object.values(UNITS)) {
     const u = arr.find(x => x.id === unitId);
@@ -75,12 +67,35 @@ function findUnitDef(unitId) {
   }
   return null;
 }
-const friendlyDefs = Object.keys(scenario.forces?.friendly ?? {})
-  .map(findUnitDef)
-  .filter(Boolean);
-buildUnitPool(friendlyDefs, scenario.map.rows);
+
+// 保存があれば復元、なければシナリオから新規初期化
+const restored = restoreFromSave(scenario);
+if (!restored) {
+  buildGrid(TERRAIN_CARDS, {}, {}, shuffle, { rows: scenario.map.rows, cols: scenario.map.cols });
+  applyScenarioExperience(scenario);                          // 初期練度を投入
+  setVisibility(scenario.visibility === 'limited' ? 1 : 0);   // シナリオ視界
+
+  // シナリオの PC 配置（各行の全カードに letter side）
+  for (const [row, letter] of Object.entries(scenario.pcPlacement ?? {})) {
+    for (let c = 0; c < scenario.map.cols; c++) {
+      placePC(String.fromCharCode(65 + c) + row, letter, true);
+    }
+  }
+
+  // 未配置部隊プール：シナリオ友軍をスタートエリア下に並べる
+  const friendlyDefs = Object.keys(scenario.forces?.friendly ?? {})
+    .map(findUnitDef).filter(Boolean);
+  buildUnitPool(friendlyDefs, scenario.map.rows);
+
+  save(); // 初回スナップショット
+}
 
 initContactLevel();   // 活動レベルの購読開始＋初回算出
+document.addEventListener('board:changed', save);  // 盤面変更のたび自動保存
+
+// リセット（HTML ボタンから呼ぶ）
+window.resetPlayState = () => resetPlay(scenario);                     // プレイ状態だけ初期化（駒は残す）
+window.newGame        = () => { clearStorage(); location.reload(); };  // 全初期化
 initContextMenu();
 initCardContextMenu();
 initZoom();

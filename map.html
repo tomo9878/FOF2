@@ -1200,6 +1200,10 @@
       <input type="range" id="zoomSlider" min="40" max="180" value="115" step="5"
         oninput="setZoom(this.value/100)" class="zoom-slider">
     </div>
+    <button class="btn" onclick="resetPlayState()" style="font-size:11px"
+      title="マップ・駒配置は残し、VOF/状態/AP/PC などプレイ中の状態だけ初期化">状態リセット</button>
+    <button class="btn" onclick="if(confirm('新規ゲーム：マップ再生成・駒もプールに戻ります。よろしいですか？'))newGame()"
+      style="font-size:11px" title="全初期化（マップ再シャッフル・駒プールに戻す）">新規ゲーム</button>
   </div>
 </div>
 

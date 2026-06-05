@@ -11,6 +11,9 @@ export const ROWS = ['1','2','3'];
 
 export let selectedCard = null;
 
+// 現在のマップ配置（保存・復元用）: [{ coord, cardId, underCardId }]
+export const placedCards = [];
+
 // ===== ドラッグ&ドロップ状態 =====
 let _dragUnitId = null;
 
@@ -24,6 +27,7 @@ export function createUnitSlot(u) {
   slot.className = 'unit-slot';
   slot.dataset.unitId  = unit.id;
   slot.dataset.faction = unit.faction || 'neutral';
+  slot.dataset.type    = unit.type || ''; // 復元用（context-menu の判定にも使える）
 
   const uImg = document.createElement('img');
   uImg.className = 'unit-marker';
@@ -186,11 +190,17 @@ function _buildGridWithPlaced(placed, units, markers, rows, cols) {
   grid.style.gridTemplateColumns = `repeat(${cols}, 210px)`;
   grid.style.gridTemplateRows    = `repeat(${rows}, 276px) 64px 276px`;
 
+  // マップ配置の記録をリセット（保存・復元用）
+  placedCards.length = 0;
+
   placed.forEach((cell, i) => {
     const card = cell.card;
     const col = colLetters[i % cols];
     const row = String(Math.floor(i / cols) + 1);
     const coord = col + row;
+
+    // 配置を記録
+    placedCards.push({ coord, cardId: card.id, underCardId: cell.underCard?.id ?? null });
 
     const div = document.createElement('div');
     div.className = 'terrain-card';
@@ -320,18 +330,27 @@ export function buildGrid(terrainCards, units, markers, shuffle, opts = {}) {
   const rows = opts.rows ?? 3;
   const cols = opts.cols ?? 4;
 
-  const deck = shuffle(terrainCards);
-  let di = 0;
-  const placed = [];
-
-  for (let i = 0; i < rows * cols; i++) {
-    const card = deck[di++] ?? null;
-    const cell = { card, underCard: null };
-    // Hill が出たら、もう1枚引いて重ねる（デッキが尽きていなければ）
-    if (card && isHillCard(card) && di < deck.length) {
-      cell.underCard = deck[di++];
+  let placed;
+  if (opts.placed) {
+    // 保存された固定配置から復元（cardId / underCardId → カード定義）
+    const byId = id => terrainCards.find(c => c.id === id) ?? null;
+    placed = opts.placed.map(p => ({
+      card:      byId(p.cardId),
+      underCard: p.underCardId ? byId(p.underCardId) : null,
+    }));
+  } else {
+    // 通常: シャッフルして配置（Hill が出たらもう1枚重ねる）
+    const deck = shuffle(terrainCards);
+    let di = 0;
+    placed = [];
+    for (let i = 0; i < rows * cols; i++) {
+      const card = deck[di++] ?? null;
+      const cell = { card, underCard: null };
+      if (card && isHillCard(card) && di < deck.length) {
+        cell.underCard = deck[di++];
+      }
+      placed.push(cell);
     }
-    placed.push(cell);
   }
 
   _buildGridWithPlaced(placed, units, markers, rows, cols);
