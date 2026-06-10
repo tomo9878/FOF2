@@ -388,6 +388,28 @@
     margin: 0 6px;
     flex-shrink: 0;
   }
+
+  /* 中隊司令部 AP管理（ヘッダー） */
+  .co-hq-cmd {
+    display: flex; flex-direction: column; gap: 5px;
+    background: #1e2a1e; border: 1px solid #4a6a3a; border-radius: 6px;
+    padding: 7px 16px;
+  }
+  .co-hq-cmd .label { font-size: 11px; color: #8a8a5a; letter-spacing: 1px; }
+  .co-hq-ap { display: flex; align-items: center; gap: 8px; }
+  .co-hq-ap .ap-current { font-size: 22px; font-weight: bold; color: #e8d87a; min-width: 24px; text-align: center; }
+  .ap-btn {
+    width: 28px; height: 28px; background: #2a3a2a; border: 1px solid #5a7a4a;
+    border-radius: 4px; color: #c8d8b8; font-size: 15px; cursor: pointer;
+  }
+  .ap-btn:hover { background: #3a5a3a; }
+  .draw-btn-sm {
+    background: #2a3a1a; border: 1px solid #4a6a2a; border-radius: 4px;
+    color: #a8d870; font-size: 12px; padding: 5px 12px; cursor: pointer; margin-left: 6px;
+  }
+  .draw-btn-sm:hover { background: #3a5a22; }
+  /* スタッフ（XO/先任軍曹）の配下なし表示 */
+  .staff-note { color: #6a6a4a; font-size: 13px; padding: 8px 4px; }
 </style>
 </head>
 <body>
@@ -396,30 +418,24 @@
 <div class="company-bar">
   <span class="company-title">▍ 第2大隊 · A中隊</span>
 
-  <div class="company-unit">
-    <span class="label">中隊本部</span>
-    <span class="value" style="color:#7ad47a">● 起動中</span>
+  <!-- 中隊司令部(CO HQ) の AP管理 -->
+  <div class="co-hq-cmd">
+    <span class="label">中隊司令部 (CO HQ) <span style="color:#7ad47a">● 起動中</span></span>
+    <div class="co-hq-ap">
+      <span style="color:#8a8a5a;font-size:11px">AP</span>
+      <button class="ap-btn" onclick="adjCoAp(-1)">－</button>
+      <span class="ap-current" id="coApVal">4</span>
+      <span style="color:#6a6a4a">/ 6</span>
+      <button class="ap-btn" onclick="adjCoAp(1)">＋</button>
+      <span style="color:#8a8a5a;font-size:11px;margin-left:10px">貯蓄</span>
+      <span style="color:#d45a5a;font-weight:bold">2</span>
+      <button class="draw-btn-sm" onclick="drawCoAp()">🃏 カード引いて取得</button>
+    </div>
   </div>
-  <div class="company-unit">
-    <span class="label">副官(XO)</span>
-    <span class="value">待機</span>
-  </div>
-  <div class="company-unit">
-    <span class="label">先任軍曹</span>
-    <span class="value">待機</span>
-  </div>
-  <div class="company-unit">
-    <span class="label">捕虜</span>
-    <span class="value">0</span>
-  </div>
-  <div class="company-unit">
-    <span class="label">戦闘不能</span>
-    <span class="value" style="color:#d45a5a">1</span>
-  </div>
-  <div class="company-unit">
-    <span class="label">後送完了</span>
-    <span class="value">2</span>
-  </div>
+
+  <div class="company-unit"><span class="label">捕虜</span><span class="value">0</span></div>
+  <div class="company-unit"><span class="label">戦闘不能</span><span class="value" style="color:#d45a5a">1</span></div>
+  <div class="company-unit"><span class="label">後送完了</span><span class="value">2</span></div>
 
   <div class="turn-phase">
     <div class="phase-box">▶ 友軍コマンドフェーズ</div>
@@ -443,6 +459,8 @@
   </div>
   <div class="tab" onclick="showTab('mtr')">迫撃砲班</div>
   <div class="tab" onclick="showTab('hmg')">重機関銃小隊</div>
+  <div class="tab" onclick="showTab('xo')">副官 (XO) <span class="exp-badge exp-green">新</span></div>
+  <div class="tab" onclick="showTab('sgt')">先任軍曹 <span class="exp-badge exp-vet">練</span></div>
 </div>
 
 <!-- ===== コンテンツ ===== -->
@@ -568,42 +586,166 @@
 
 </div><!-- /content-plt1 -->
 
-<!-- 他タブのプレースホルダー -->
+<!-- 第2小隊 -->
 <div class="content" id="content-plt2" style="display:none">
   <div class="section-card">
-    <div class="section-header">■ 第2小隊 司令部</div>
-    <div class="section-body" style="color:#6a6a4a">（第2小隊のコンテンツ）</div>
+    <div class="section-header">
+      <div class="activated-indicator" style="background:#6a6a4a"></div>
+      ■ 第2小隊・司令部
+      <input class="commander-name" type="text" placeholder="指揮官名..." value="">
+      <div class="divider"></div>
+      <span style="color:#6a6a4a;font-size:13px">未起動</span>
+    </div>
+    <div class="section-body">
+      <div class="hq-row">
+        <div class="hq-item"><span class="lbl">練度</span><span class="exp-badge exp-green" style="font-size:16px;padding:5px 14px">新兵</span></div>
+        <div class="hq-item"><span class="lbl">行動ポイント (AP)</span><div class="ap-number-box"><span class="ap-current">0</span><span class="ap-sep">/</span><span class="ap-max">3</span></div></div>
+        <div class="hq-item"><span class="lbl">貯蓄 AP</span><div class="ap-number-box saved-box"><span class="ap-current" style="color:#d45a5a">0</span></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="section-card">
+    <div class="section-header">■ 分隊 <div class="divider"></div></div>
+    <div class="section-body">
+      <div class="squad-row"><img class="squad-marker" src="images/2nd_2-1.png" alt="1/2"><div class="squad-info"><div class="squad-name">第1分隊 (1/2)</div><div class="squad-status"><span class="status-badge status-ok">通常</span></div><div class="strength-dots"><div class="str-dot alive"></div><div class="str-dot alive"></div><div class="str-dot alive"></div></div></div></div>
+    </div>
   </div>
 </div>
+
+<!-- 第3小隊 -->
 <div class="content" id="content-plt3" style="display:none">
   <div class="section-card">
-    <div class="section-header">■ 第3小隊 司令部</div>
-    <div class="section-body" style="color:#6a6a4a">（第3小隊のコンテンツ）</div>
+    <div class="section-header">
+      <div class="activated-indicator" style="background:#6a6a4a"></div>
+      ■ 第3小隊・司令部
+      <input class="commander-name" type="text" placeholder="指揮官名..." value="">
+      <div class="divider"></div>
+      <span style="color:#6a6a4a;font-size:13px">未起動</span>
+    </div>
+    <div class="section-body">
+      <div class="hq-row">
+        <div class="hq-item"><span class="lbl">練度</span><span class="exp-badge exp-vet" style="font-size:16px;padding:5px 14px">古参兵</span></div>
+        <div class="hq-item"><span class="lbl">行動ポイント (AP)</span><div class="ap-number-box"><span class="ap-current">0</span><span class="ap-sep">/</span><span class="ap-max">9</span></div></div>
+        <div class="hq-item"><span class="lbl">貯蓄 AP</span><div class="ap-number-box saved-box"><span class="ap-current" style="color:#d45a5a">0</span></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="section-card">
+    <div class="section-header">■ 分隊 <div class="divider"></div></div>
+    <div class="section-body">
+      <div class="squad-row"><img class="squad-marker" src="images/2nd_3-1.png" alt="1/3"><div class="squad-info"><div class="squad-name">第1分隊 (1/3)</div><div class="squad-status"><span class="status-badge status-ok">通常</span></div><div class="strength-dots"><div class="str-dot alive"></div><div class="str-dot alive"></div><div class="str-dot alive"></div></div></div></div>
+    </div>
   </div>
 </div>
+
+<!-- 迫撃砲班 -->
 <div class="content" id="content-mtr" style="display:none">
   <div class="section-card">
-    <div class="section-header">■ 迫撃砲班</div>
-    <div class="section-body" style="color:#6a6a4a">（迫撃砲班のコンテンツ）</div>
+    <div class="section-header">
+      <div class="activated-indicator" style="background:#6a6a4a"></div>
+      ■ 迫撃砲班・班長
+      <div class="divider"></div>
+      <span style="color:#6a6a4a;font-size:13px">未起動</span>
+    </div>
+    <div class="section-body">
+      <div class="hq-row">
+        <div class="hq-item"><span class="lbl">練度</span><span class="exp-badge exp-line" style="font-size:16px;padding:5px 14px">並兵</span></div>
+        <div class="hq-item"><span class="lbl">行動ポイント (AP)</span><div class="ap-number-box"><span class="ap-current">0</span><span class="ap-sep">/</span><span class="ap-max">6</span></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="section-card">
+    <div class="section-header">■ 火器チーム <div class="divider"></div></div>
+    <div class="section-body">
+      <div class="squad-row"><img class="squad-marker" src="images/1_Mtr 60mm.png" alt="1/Mtr"><div class="squad-info"><div class="squad-name">60mm迫撃砲 1 (1/Mtr)</div><div class="squad-status"><span class="status-badge status-ok">通常</span></div></div></div>
+    </div>
   </div>
 </div>
+
+<!-- 重機関銃小隊 -->
 <div class="content" id="content-hmg" style="display:none">
   <div class="section-card">
-    <div class="section-header">■ 重機関銃小隊</div>
-    <div class="section-body" style="color:#6a6a4a">（重機関銃小隊のコンテンツ）</div>
+    <div class="section-header">
+      <div class="activated-indicator" style="background:#6a6a4a"></div>
+      ■ 重機関銃小隊・司令部
+      <div class="divider"></div>
+      <span style="color:#6a6a4a;font-size:13px">未起動</span>
+    </div>
+    <div class="section-body">
+      <div class="hq-row">
+        <div class="hq-item"><span class="lbl">練度</span><span class="exp-badge exp-line" style="font-size:16px;padding:5px 14px">並兵</span></div>
+        <div class="hq-item"><span class="lbl">行動ポイント (AP)</span><div class="ap-number-box"><span class="ap-current">0</span><span class="ap-sep">/</span><span class="ap-max">6</span></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="section-card">
+    <div class="section-header">■ 火器チーム <div class="divider"></div></div>
+    <div class="section-body">
+      <div class="squad-row"><img class="squad-marker" src="images/US HMG 50cal.png" alt=".50HMG"><div class="squad-info"><div class="squad-name">.50cal HMG (HMG50)</div><div class="squad-status"><span class="status-badge status-ok">通常</span></div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 副官 (XO) — スタッフ（配下なし） -->
+<div class="content" id="content-xo" style="display:none">
+  <div class="section-card">
+    <div class="section-header">
+      <div class="activated-indicator" style="background:#6a6a4a"></div>
+      ■ 副官 (XO)
+      <div class="divider"></div>
+      <span style="color:#6a6a4a;font-size:13px">待機</span>
+    </div>
+    <div class="section-body">
+      <div class="hq-row">
+        <div class="hq-item"><span class="lbl">練度</span><span class="exp-badge exp-green" style="font-size:16px;padding:5px 14px">新兵</span></div>
+        <div class="hq-item"><span class="lbl">行動ポイント (AP)</span><div class="ap-number-box"><span class="ap-current">0</span><span class="ap-sep">/</span><span class="ap-max">3</span></div></div>
+      </div>
+      <div class="staff-note">※ 中隊スタッフ。配下部隊なし（CO HQ の補佐として行動）</div>
+    </div>
+  </div>
+</div>
+
+<!-- 先任軍曹 (1SG) — スタッフ（配下なし） -->
+<div class="content" id="content-sgt" style="display:none">
+  <div class="section-card">
+    <div class="section-header">
+      <div class="activated-indicator" style="background:#6a6a4a"></div>
+      ■ 先任軍曹 (1SG)
+      <div class="divider"></div>
+      <span style="color:#6a6a4a;font-size:13px">待機</span>
+    </div>
+    <div class="section-body">
+      <div class="hq-row">
+        <div class="hq-item"><span class="lbl">練度</span><span class="exp-badge exp-vet" style="font-size:16px;padding:5px 14px">古参兵</span></div>
+        <div class="hq-item"><span class="lbl">行動ポイント (AP)</span><div class="ap-number-box"><span class="ap-current">0</span><span class="ap-sep">/</span><span class="ap-max">9</span></div></div>
+      </div>
+      <div class="staff-note">※ 中隊スタッフ。配下部隊なし（CO HQ の補佐として行動）</div>
+    </div>
   </div>
 </div>
 
 <script>
-const tabs = ['plt1','plt2','plt3','mtr','hmg'];
+const tabs = ['plt1','plt2','plt3','mtr','hmg','xo','sgt'];
 
 function showTab(id) {
   tabs.forEach(t => {
-    document.getElementById('content-' + t).style.display = t === id ? 'flex' : 'none';
+    const el = document.getElementById('content-' + t);
+    if (el) el.style.display = t === id ? 'flex' : 'none';
   });
   document.querySelectorAll('.tab').forEach((el, i) => {
     el.classList.toggle('active', tabs[i] === id);
   });
+}
+
+// ヘッダー: 中隊司令部 AP（モック動作）
+function adjCoAp(d) {
+  const el = document.getElementById('coApVal');
+  el.textContent = Math.max(0, Math.min(6, +el.textContent + d));
+}
+function drawCoAp() {
+  // モック: カードを引いて起動コマンドを取得（仮に +activated 相当）
+  const el = document.getElementById('coApVal');
+  el.textContent = Math.min(6, +el.textContent + 4);
 }
 </script>
 </body>
