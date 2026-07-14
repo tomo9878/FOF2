@@ -79,8 +79,8 @@ function _dirToLosKey(dir) {
 
 /**
  * PDF 進入方向に基づいて地形防御値を決定
- * - dark border（los[dir]=true かつ defHigh ≠ defLow）からの PDF → defHigh
- * - それ以外（white border / 同カード内 / Incoming）→ defLow
+ * - dark border（los[dir]=false かつ defHigh ≠ defLow）からの PDF → defHigh
+ * - それ以外（white border(los[dir]=true) / 同カード内 / Incoming）→ defLow
  * @param {string} coord
  * @returns {number}
  */
@@ -98,8 +98,8 @@ function _getTerrainDef(coord) {
     return td.defLow;
   }
 
-  // いずれかの PDF が dark border から来ていれば defHigh
-  const hasDarkBorder = [...pdfs].some(dir => td.los[_dirToLosKey(dir)] === true);
+  // いずれかの PDF が dark border（los[dir]=false）から来ていれば defHigh
+  const hasDarkBorder = [...pdfs].some(dir => td.los[_dirToLosKey(dir)] === false);
   return hasDarkBorder ? td.defHigh : td.defLow;
 }
 

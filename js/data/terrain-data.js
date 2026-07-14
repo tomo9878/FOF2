@@ -1,12 +1,13 @@
 // ===== 地形防御データ（terrain_cards.json より抽出）=====
 //
-// defHigh    : PDF が dark border（los=true）方向から進入する場合の防御値
-// defLow     : PDF がすべて white border / 同カード内 / Incoming の場合の防御値
+// defHigh    : PDF が dark border（los=false）方向から進入する場合の防御値
+// defLow     : PDF がすべて white border（los=true）/ 同カード内 / Incoming の場合の防御値
 // burstPenalty: Incoming! / Air Strike! 時に defHigh から減算する値
 //               正値 = 爆発が地形を突き抜けやすい（防御値減）
 //               負値 = 樹冠が爆発を吸収（防御値増）
 // los        : { top, top_right, right, bottom_right, bottom, bottom_left, left, top_left }
-//              true = その方向が dark border（bocage/gully の壁など）
+//              true  = その方向が white border（LOSが通る＝開放）
+//              false = その方向が dark border（LOSが遮られる＝bocage/gully の壁など）
 //              ※ defHigh === defLow のカードでは los の値は無効（どちらも同じ防御値）
 
 // 共通定数

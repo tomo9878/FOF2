@@ -4,6 +4,11 @@ import {
 } from './state.js';
 import { showContextMenu, hideContextMenu } from './context-menu.js';
 import { showCardContextMenu, hideCardContextMenu } from './card-context-menu.js';
+import { cardVOFMap, renderCardVOF } from './vof.js';
+import { cardPDFMap, renderCardPDFs } from './pdf.js';
+import { cardPCMap, renderCardPC } from './pc.js';
+import { remapCoverCoords } from './cover.js';
+import { drawTerrainCardForExpansion } from './terrain-deck.js';
 
 // 座標ラベル（列A〜D、行1〜3）
 export const COLS = ['A','B','C','D'];
@@ -13,6 +18,20 @@ export let selectedCard = null;
 
 // 現在のマップ配置（保存・復元用）: [{ coord, cardId, underCardId }]
 export const placedCards = [];
+
+// ===== マップ拡張（§8.4.5 Map Expansion）用の内部状態 =====
+// 行ラベルは負数・0も許可する（例: 元の Row1 より前方に拡張 → Row "0", "-1"...）。
+// 列は常に 'A' 始まりを保つ（左方向への拡張は既存カードを1列右へ再ラベルして 'A' を明け渡す）。
+let _minRowNum = 1;
+let _maxRowNum = 1;
+let _colCount  = 0;
+
+function _cssRow(rowNum)     { return rowNum - _minRowNum + 1; }
+function _cssCol(colIdx)     { return colIdx + 1; }
+function _colIndexOf(letter) { return letter.charCodeAt(0) - 65; }
+function _colLetterOf(idx)   { return String.fromCharCode(65 + idx); }
+function _rowNumOf(coord)    { return parseInt(coord.slice(1), 10); }
+function _colIdxOfCoord(coord) { return _colIndexOf(coord[0]); }
 
 // ===== ドラッグ&ドロップ状態 =====
 let _dragUnitId = null;
@@ -178,6 +197,81 @@ function _colLetters(cols) {
   return Array.from({ length: cols }, (_, i) => String.fromCharCode(65 + i));
 }
 
+// 1枚分の地形カード div を作る（初期構築・マップ拡張の両方から使う）
+function _createTerrainCardDiv(coord, card, underCard, markers = {}, units = {}) {
+  const div = document.createElement('div');
+  div.className = 'terrain-card';
+  div.dataset.coord = coord;
+  div.dataset.cardId = card.id;
+  div.title = underCard
+    ? `${coord}: ${card.id} ${card.name}（下: ${underCard.id} ${underCard.name}）`
+    : `${coord}: ${card.id} ${card.name}`;
+
+  // Hill 本体は通常エリア（セルの正規位置）に置く
+  const img = document.createElement('img');
+  img.className = 'card-img';
+  img.src = `images/${card.file}`;
+  img.alt = card.name;
+  div.appendChild(img);
+
+  // Hill の場合、2枚目を斜め右上にずらして上（前面）に重ねる
+  if (underCard) {
+    div.classList.add('has-hill');
+    const overImg = document.createElement('img');
+    overImg.className = 'card-img card-img-over';
+    overImg.src = `images/${underCard.file}`;
+    overImg.alt = underCard.name;
+    div.appendChild(overImg);
+  }
+
+  const overlay = document.createElement('div');
+  overlay.className = 'card-overlay';
+
+  const coordLabel = document.createElement('div');
+  coordLabel.className = 'card-coord';
+  coordLabel.textContent = coord;
+  overlay.appendChild(coordLabel);
+
+  // VOF/PCマーカー
+  if (markers[coord] === 'vof') {
+    const vof = document.createElement('div');
+    vof.className = 'vof-marker';
+    vof.textContent = '2';
+    overlay.appendChild(vof);
+  } else if (markers[coord] === 'pc') {
+    const pc = document.createElement('div');
+    pc.className = 'pc-marker';
+    pc.textContent = 'PC';
+    overlay.appendChild(pc);
+  }
+
+  // ユニットマーカー
+  if (units[coord]) {
+    const unitLayer = document.createElement('div');
+    unitLayer.className = 'unit-layer';
+    unitLayer.dataset.coord = coord;
+    units[coord].forEach(u => {
+      unitCoordMap.set(u.id, coord);
+      unitLayer.appendChild(createUnitSlot(u));
+    });
+    overlay.appendChild(unitLayer);
+  }
+
+  div.appendChild(overlay);
+
+  div.addEventListener('click', () => selectCard(div, card, coord));
+  div.addEventListener('contextmenu', (e) => {
+    // unit-slot の contextmenu は stopPropagation 済みなので
+    // ここに来るのはカード地面への右クリックのみ
+    e.preventDefault();
+    e.stopPropagation();
+    hideContextMenu();
+    showCardContextMenu(e, coord);
+  });
+  _addDropHandlers(div, coord);
+  return div;
+}
+
 // 内部実装（placed 配列確定後）
 // placed: [{ card, underCard }] の配列（underCard は Hill の下に重ねる地形、無ければ null）
 function _buildGridWithPlaced(placed, units, markers, rows, cols) {
@@ -185,6 +279,11 @@ function _buildGridWithPlaced(placed, units, markers, rows, cols) {
   grid.innerHTML = '';
 
   const colLetters = _colLetters(cols);
+
+  // マップ拡張の内部状態を初期化
+  _minRowNum = 1;
+  _maxRowNum = rows;
+  _colCount  = cols;
 
   // グリッドのレイアウトを rows/cols に合わせて設定（テレイン rows 行 + 区切り 64px + スタートエリア 1行）
   grid.style.gridTemplateColumns = `repeat(${cols}, 210px)`;
@@ -195,83 +294,16 @@ function _buildGridWithPlaced(placed, units, markers, rows, cols) {
 
   placed.forEach((cell, i) => {
     const card = cell.card;
-    const col = colLetters[i % cols];
-    const row = String(Math.floor(i / cols) + 1);
-    const coord = col + row;
+    const colIdx = i % cols;
+    const rowNum = Math.floor(i / cols) + 1;
+    const coord = colLetters[colIdx] + rowNum;
 
     // 配置を記録
     placedCards.push({ coord, cardId: card.id, underCardId: cell.underCard?.id ?? null });
 
-    const div = document.createElement('div');
-    div.className = 'terrain-card';
-    div.dataset.coord = coord;
-    div.dataset.cardId = card.id;
-    div.title = cell.underCard
-      ? `${coord}: ${card.id} ${card.name}（下: ${cell.underCard.id} ${cell.underCard.name}）`
-      : `${coord}: ${card.id} ${card.name}`;
-
-    // Hill 本体は通常エリア（セルの正規位置）に置く
-    const img = document.createElement('img');
-    img.className = 'card-img';
-    img.src = `images/${card.file}`;
-    img.alt = card.name;
-    div.appendChild(img);
-
-    // Hill の場合、2枚目を斜め右上にずらして上（前面）に重ねる
-    if (cell.underCard) {
-      div.classList.add('has-hill');
-      const overImg = document.createElement('img');
-      overImg.className = 'card-img card-img-over';
-      overImg.src = `images/${cell.underCard.file}`;
-      overImg.alt = cell.underCard.name;
-      div.appendChild(overImg);
-    }
-
-    const overlay = document.createElement('div');
-    overlay.className = 'card-overlay';
-
-    const coordLabel = document.createElement('div');
-    coordLabel.className = 'card-coord';
-    coordLabel.textContent = coord;
-    overlay.appendChild(coordLabel);
-
-    // VOF/PCマーカー
-    if (markers[coord] === 'vof') {
-      const vof = document.createElement('div');
-      vof.className = 'vof-marker';
-      vof.textContent = '2';
-      overlay.appendChild(vof);
-    } else if (markers[coord] === 'pc') {
-      const pc = document.createElement('div');
-      pc.className = 'pc-marker';
-      pc.textContent = 'PC';
-      overlay.appendChild(pc);
-    }
-
-    // ユニットマーカー
-    if (units[coord]) {
-      const unitLayer = document.createElement('div');
-      unitLayer.className = 'unit-layer';
-      unitLayer.dataset.coord = coord;
-      units[coord].forEach(u => {
-        unitCoordMap.set(u.id, coord);
-        unitLayer.appendChild(createUnitSlot(u));
-      });
-      overlay.appendChild(unitLayer);
-    }
-
-    div.appendChild(overlay);
-
-    div.addEventListener('click', () => selectCard(div, card, coord));
-    div.addEventListener('contextmenu', (e) => {
-      // unit-slot の contextmenu は stopPropagation 済みなので
-      // ここに来るのはカード地面への右クリックのみ
-      e.preventDefault();
-      e.stopPropagation();
-      hideContextMenu();
-      showCardContextMenu(e, coord);
-    });
-    _addDropHandlers(div, coord);
+    const div = _createTerrainCardDiv(coord, card, cell.underCard, markers, units);
+    div.style.gridRow    = _cssRow(rowNum);
+    div.style.gridColumn = _cssCol(colIdx);
     grid.appendChild(div);
   });
 
@@ -321,6 +353,138 @@ function _buildGridWithPlaced(placed, units, markers, rows, cols) {
     _addDropHandlers(div, coord);
     grid.appendChild(div);
   });
+}
+
+// ===== マップ拡張（§8.4.5 Map Expansion）=====
+//
+// 敵配置がマップ外に出る場合、地形カードを引いて必要な辺に1行/1列追加する。
+// 対応する辺: 'top'（Frontで奥へ）/ 'left'（Left Front）/ 'right'（Right Front）。
+// 'bottom' は §8.4.2 の方向表（front/left_front/right_front）では使われないため対象外。
+
+/** Hillカードなら重ね用にもう1枚引き、{card, underCard} を返す */
+function _drawExpansionCell() {
+  const card = drawTerrainCardForExpansion();
+  const cell = { card, underCard: null };
+  if (isHillCard(card)) cell.underCard = drawTerrainCardForExpansion();
+  return cell;
+}
+
+/** 拡張で生まれた1マスをDOMに追加し、placedCardsに記録する */
+function _placeExpansionCard(coord, cssRow, cssCol) {
+  const grid = document.getElementById('cardGrid');
+  const cell = _drawExpansionCell();
+  placedCards.push({ coord, cardId: cell.card.id, underCardId: cell.underCard?.id ?? null });
+  const div = _createTerrainCardDiv(coord, cell.card, cell.underCard);
+  div.style.gridRow    = cssRow;
+  div.style.gridColumn = cssCol;
+  grid.appendChild(div);
+}
+
+/** テレイン行数の変化に合わせて grid-template-rows とスタートエリア/区切りの位置を更新する */
+function _repositionStagingRows() {
+  const grid = document.getElementById('cardGrid');
+  const terrainRows = _maxRowNum - _minRowNum + 1;
+  grid.style.gridTemplateRows = `repeat(${terrainRows}, 276px) 64px 276px`;
+
+  const dividerRow = terrainRows + 1;
+  const stagingRow = terrainRows + 2;
+  const divider = document.querySelector('.staging-row-divider');
+  if (divider) divider.style.gridRow = dividerRow;
+  document.querySelectorAll('.terrain-card.staging-area').forEach(el => {
+    el.style.gridRow = stagingRow;
+  });
+}
+
+function _shiftCoordColRight(coord) {
+  return _colLetterOf(_colIdxOfCoord(coord) + 1) + coord.slice(1);
+}
+
+function _shiftMapKeysColRight(map) {
+  const entries = [...map.entries()];
+  map.clear();
+  entries.forEach(([coord, value]) => map.set(_shiftCoordColRight(coord), value));
+}
+
+/** 既存の全カード・関連stateを1列右へ再ラベルし、'A' 列を明け渡す（左方向への拡張用） */
+function _shiftAllColumnsRight() {
+  placedCards.forEach(p => { p.coord = _shiftCoordColRight(p.coord); });
+
+  unitCoordMap.forEach((coord, unitId) => unitCoordMap.set(unitId, _shiftCoordColRight(coord)));
+
+  _shiftMapKeysColRight(cardVOFMap);
+  _shiftMapKeysColRight(cardPDFMap);
+  _shiftMapKeysColRight(cardPCMap);
+  remapCoverCoords(_shiftCoordColRight);
+
+  document.querySelectorAll('[data-coord]').forEach(el => {
+    el.dataset.coord = _shiftCoordColRight(el.dataset.coord);
+  });
+
+  // 既存カードのCSS列位置を1つ後ろへずらす（ラベルは既に上でシフト済み）
+  document.querySelectorAll('.terrain-card[data-coord]:not(.staging-area)').forEach(el => {
+    el.style.gridColumn = _cssCol(_colIdxOfCoord(el.dataset.coord));
+  });
+
+  // coordに紐づくマーカー表示を作り直す
+  cardVOFMap.forEach((_, c) => renderCardVOF(c));
+  cardPDFMap.forEach((_, c) => renderCardPDFs(c));
+  cardPCMap.forEach((_, c) => renderCardPC(c));
+}
+
+/**
+ * マップを指定した辺へ1行（または1列）分拡張する。
+ * @param {'top'|'left'|'right'} edge
+ * @returns {string[]} 新しく追加されたカードの coord 配列
+ */
+export function expandMapEdge(edge) {
+  const grid = document.getElementById('cardGrid');
+  if (!grid) return [];
+
+  if (edge === 'top') {
+    const newRowNum = _minRowNum - 1;
+    _minRowNum = newRowNum;
+    // 既存カードのCSS行位置を1つ後ろへずらす（ラベル自体は変えない）
+    document.querySelectorAll('.terrain-card[data-coord]:not(.staging-area)').forEach(el => {
+      el.style.gridRow = _cssRow(_rowNumOf(el.dataset.coord));
+    });
+    const newCoords = [];
+    for (let colIdx = 0; colIdx < _colCount; colIdx++) {
+      const coord = _colLetterOf(colIdx) + newRowNum;
+      _placeExpansionCard(coord, _cssRow(newRowNum), _cssCol(colIdx));
+      newCoords.push(coord);
+    }
+    _repositionStagingRows();
+    document.dispatchEvent(new CustomEvent('board:changed'));
+    return newCoords;
+  }
+
+  if (edge === 'right') {
+    const newColIdx = _colCount;
+    _colCount++;
+    grid.style.gridTemplateColumns = `repeat(${_colCount}, 210px)`;
+    const newCoords = [];
+    for (let rowNum = _minRowNum; rowNum <= _maxRowNum; rowNum++) {
+      const coord = _colLetterOf(newColIdx) + rowNum;
+      _placeExpansionCard(coord, _cssRow(rowNum), _cssCol(newColIdx));
+      newCoords.push(coord);
+    }
+    return newCoords;
+  }
+
+  if (edge === 'left') {
+    _shiftAllColumnsRight();
+    _colCount++;
+    grid.style.gridTemplateColumns = `repeat(${_colCount}, 210px)`;
+    const newCoords = [];
+    for (let rowNum = _minRowNum; rowNum <= _maxRowNum; rowNum++) {
+      const coord = 'A' + rowNum;
+      _placeExpansionCard(coord, _cssRow(rowNum), _cssCol(0));
+      newCoords.push(coord);
+    }
+    return newCoords;
+  }
+
+  return [];
 }
 
 // buildGrid は (terrainCards, units, markers, shuffle, opts) を受け取る。

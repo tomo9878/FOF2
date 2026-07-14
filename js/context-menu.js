@@ -17,7 +17,7 @@ import { UNITS } from './data/units-normandy.js';
 import { getUnitExperience, EXPERIENCE_LABELS } from './campaign.js';
 import {
   canHoldCommands, getCommandRole, getCurrentAP, changeCurrentAP,
-  getCarryoverMax, getExpendLimit,
+  getCarryoverMax, getExpendLimit, getActivated, setActivated,
 } from './command.js';
 import { drawActionCard } from './deck.js';
 import { getActivityLevel } from './contact.js';
@@ -378,6 +378,7 @@ export function updateRightPanelUnit(unit) {
     const ap        = getCurrentAP(unit.id);
     const carryMax  = getCarryoverMax(unit.id);
     const expendMax = getExpendLimit();
+    const activated = getActivated(unit.id);
     cmdHtml = `
       <div class="rp-cmd">
         <div class="rp-cmd-title">コマンド (AP)</div>
@@ -387,6 +388,9 @@ export function updateRightPanelUnit(unit) {
           <button class="rp-cmd-btn" id="rpCmdPlus">＋</button>
         </div>
         <div class="rp-cmd-info">繰越上限 ${carryMax} / 1インパルス消費上限 ${expendMax}</div>
+        <label class="rp-cmd-activated-label">
+          <input type="checkbox" id="rpCmdActivated" ${activated ? 'checked' : ''}> CO HQに起動された
+        </label>
         <button class="rp-draw-btn" id="rpCmdDraw">🃏 カードを引いてコマンド取得</button>
       </div>
     `;
@@ -430,20 +434,38 @@ function _bindCommandButtons(unitId) {
     refresh();
     document.dispatchEvent(new CustomEvent('board:changed'));
   });
+  // 「CO HQに起動された」チェック（誰を起動するかは人間が管理）
+  document.getElementById('rpCmdActivated')?.addEventListener('change', (e) => {
+    e.stopPropagation();
+    setActivated(unitId, e.target.checked);
+    document.dispatchEvent(new CustomEvent('board:changed'));
+  });
   // カードを引いてコマンド取得（取得は自動・カードを引く操作は人間）
+  // 起動済みなら activated 値、未起動ならイニシアチブ値（引いた時点で自動的に起動済みになる）
   document.getElementById('rpCmdDraw')?.addEventListener('click', (e) => {
     e.stopPropagation();
     const card = drawActionCard();
-    let gained = card.activated ?? 0;
-    // No Contact 時は +1（§4.1.2 C）
-    const noContactBonus = getActivityLevel() === 'no_contact' ? 1 : 0;
-    gained += noContactBonus;
+    const wasActivated = getActivated(unitId);
+    let gained, modeLabel, bonusLabel = '';
+    if (wasActivated) {
+      gained = card.activated ?? 0;
+      modeLabel = '起動';
+    } else {
+      // No Contact 時は General Initiative +1（§4.1.2 C）
+      const noContactBonus = getActivityLevel() === 'no_contact' ? 1 : 0;
+      gained = (card.initiative ?? 0) + noContactBonus;
+      modeLabel = 'イニシアチブ';
+      if (noContactBonus) bonusLabel = ' +1(NoContact)';
+      setActivated(unitId, true); // 未起動ユニットはイニシアチブで自動的に起動される
+      const chk = document.getElementById('rpCmdActivated');
+      if (chk) chk.checked = true;
+    }
     changeCurrentAP(unitId, gained);
     refresh();
     // 取得内訳を一時表示
     const draw = document.getElementById('rpCmdDraw');
     if (draw) {
-      draw.textContent = `カード #${card.number} → +${card.activated ?? 0}${noContactBonus ? ` +1(NoContact)` : ''}`;
+      draw.textContent = `カード #${card.number} [${modeLabel}] → +${gained}${bonusLabel}`;
       setTimeout(() => { if (draw) draw.textContent = '🃏 カードを引いてコマンド取得'; }, 2500);
     }
     document.dispatchEvent(new CustomEvent('board:changed'));
@@ -480,6 +502,10 @@ function _setDrawLock(locked) {
     delete document.body.dataset.drawLock;
   }
 }
+
+// 他モジュール（card-context-menu.js の PC 解決フロー等）から共有するための公開版
+export const isDrawLocked = _isDrawLocked;
+export const setDrawLock  = _setDrawLock;
 
 // ===== 戦闘解決ステップ制フロー =====
 

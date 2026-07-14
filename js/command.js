@@ -99,6 +99,30 @@ export function changeCurrentAP(unitId, delta) {
   setCurrentAP(unitId, getCurrentAP(unitId) + delta);
 }
 
+// ===== 起動(Activated) / イニシアチブ 判定 =====
+//
+// CO HQ が起動を選んだユニットは「起動」扱い（カードの activated 値を取得）。
+// 選ばれなかったユニットが自発的にカードを引く場合は「イニシアチブ」扱い
+// （カードの initiative 値を取得）で、その時点で自動的に「起動済み」になる。
+// どちらで起動するかの判断（誰を選ぶか）は人間が管理する。
+
+/**
+ * @param {string} unitId
+ * @returns {boolean}
+ */
+export function getActivated(unitId) {
+  return unitCommandMap.get(unitId)?.activated ?? false;
+}
+
+/**
+ * @param {string} unitId
+ * @param {boolean} v
+ */
+export function setActivated(unitId, v) {
+  if (!unitCommandMap.has(unitId)) unitCommandMap.set(unitId, { currentAP: 0 });
+  unitCommandMap.get(unitId).activated = !!v;
+}
+
 // ===== 導出値（計算）=====
 
 /**

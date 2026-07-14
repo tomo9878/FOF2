@@ -13,6 +13,9 @@ import {
   removeCoverSlot,
 } from './cover.js';
 import { resolveCombatCard, getUnitIdsOnCard } from './combat.js';
+import { getPCResolutionPlan, startPCResolution, resolvePCDrawStep, finishPCResolution } from './pc-resolve.js';
+import { resolveEnemyContactType } from './enemy-contact.js';
+import { isDrawLocked, setDrawLock } from './context-menu.js';
 
 let _currentCoord = null;
 
@@ -27,6 +30,7 @@ export function showCardContextMenu(e, coord) {
   _refreshPDFButtons(coord);
   _refreshNCMDisplay(coord);
   _refreshCoverSection(coord);
+  _refreshPCButton(coord);
 
   menu.style.display = 'block';
   const mw = menu.offsetWidth, mh = menu.offsetHeight;
@@ -88,6 +92,20 @@ function _refreshVOFButtons(coord) {
 
   // NCM 表示も更新
   _refreshNCMDisplay(coord);
+}
+
+// ===== PC（Potential Contact）解決ボタン =====
+function _refreshPCButton(coord) {
+  const btn = document.getElementById('cardCmPCResolve');
+  if (!btn) return;
+  const plan = getPCResolutionPlan(coord);
+  btn.disabled = !plan;
+  btn.style.background  = plan ? '#3a2a1a' : '#2a2a1a';
+  btn.style.borderColor = plan ? '#8a6a2a' : '#4a4a2a';
+  btn.style.color       = plan ? '#d4a05a' : '#8a8a6a';
+  btn.textContent = plan
+    ? `❓ PC解決: ${plan.letter}${plan.revealed ? '' : '（?側）'}`
+    : '❓ PC解決（対象なし）';
 }
 
 // ===== NCM 表示更新 =====
@@ -281,6 +299,13 @@ export function initCardContextMenu() {
     }
   });
 
+  // ── PC解決ボタン ──
+  document.getElementById('cardCmPCResolve')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!_currentCoord) return;
+    _startPCFlow(_currentCoord);
+  });
+
   // ── 外クリックで閉じる ──
   document.addEventListener('click', (e) => {
     const menu = document.getElementById('cardContextMenu');
@@ -344,4 +369,132 @@ function _showCombatResults(results) {
     <div class="rp-unit-name">⚔ 戦闘解決 — ${results.coord}</div>
     ${entries}
   `.trim();
+}
+
+// ===== PC解決ステップ制フロー（§8.2.4） =====
+//
+// 設計方針: カードを引く操作は必ず人間が行う（combat.js の resolveStep1/2 と同じ）。
+// 'auto' 判定はドロー不要のため確認ボタン1回で確定する。
+
+/** 現在進行中のPC解決ステート（null = 未実行）*/
+let _pcState = null;
+
+function _startPCFlow(coord) {
+  const start = startPCResolution(coord);
+  if (!start) return;
+
+  _pcState = (start.drawSpec === 'auto')
+    ? { coord, letter: start.letter, mode: 'auto', step: 'ready' }
+    : { coord, letter: start.letter, mode: 'draw', drawsNeeded: start.drawSpec, drawsDone: 0, contactFound: false, cards: [], step: 'ready' };
+
+  setDrawLock(true);
+  hideCardContextMenu();
+  _renderPCPanel();
+}
+
+function _renderPCPanel() {
+  const el = document.getElementById('rpUnitInfo');
+  if (!el || !_pcState) return;
+
+  const { coord, letter, mode, step } = _pcState;
+  let html = `<div class="rp-unit-name">❓ PC解決 — ${coord}（${letter}）</div>`;
+
+  if (mode === 'auto') {
+    if (step === 'ready') {
+      html += `
+        <div class="rp-cs-card">現在の活動レベルでは Auto（自動接触）</div>
+        <button class="rp-draw-btn" id="pcResolveBtn">✓ 接触成立を確定</button>
+      `;
+    } else {
+      html += `<div class="rp-cs-effect">⚠ 接触成立！</div>`;
+      html += _typeStepHtml(_pcState);
+    }
+  } else {
+    const { drawsNeeded, drawsDone, contactFound, cards } = _pcState;
+    html += `<div class="rp-cs-ncm">ドロー ${drawsDone} / ${drawsNeeded}</div>`;
+    html += cards.map(c => `
+      <div class="rp-cs-card">カード #${c.number}${c.type === 'contact' ? ' → <b>Contact!</b>' : ''}</div>
+    `).join('');
+
+    if (step === 'ready') {
+      html += `<button class="rp-draw-btn" id="pcDrawBtn">🃏 カードを引く</button>`;
+    } else if (!contactFound) {
+      html += `<div class="rp-cs-done" style="color:#7ab4d4">接触なし</div><div class="rp-cs-done">✓ 解決完了</div>`;
+    } else {
+      html += `<div class="rp-cs-effect">⚠ 接触成立！</div>`;
+      html += _typeStepHtml(_pcState);
+    }
+  }
+
+  el.innerHTML = html.trim();
+  document.getElementById('pcResolveBtn')?.addEventListener('click', _onPCAutoConfirm);
+  document.getElementById('pcDrawBtn')?.addEventListener('click', _onPCDraw);
+  document.getElementById('pcTypeDrawBtn')?.addEventListener('click', _onPCTypeDraw);
+}
+
+/** 接触成立後（§8.3 種類判定）のステップ表示: 未判定ならボタン、判定済みなら結果 */
+function _typeStepHtml(state) {
+  if (state.step !== 'done') {
+    return `<button class="rp-draw-btn" id="pcTypeDrawBtn">🃏 カードを引く（種類判定 §8.3）</button>`;
+  }
+  return `${_enemyTypeHtml(state.enemyType)}<div class="rp-cs-done">✓ 解決完了</div>`;
+}
+
+/** choiceResults（武器種別・FO種別等の追加判定）を表示用HTMLに変換する */
+function _choiceResultsHtml(choiceResults) {
+  if (!choiceResults) return '';
+  const entries = Object.entries(choiceResults).filter(([, r]) => r?.value);
+  if (entries.length === 0) return '';
+  const rows = entries.map(([key, r]) => {
+    const cardNote = r.card ? ` (カード #${r.card.number} → R#${r.r})` : '';
+    return `<div class="rp-cs-card">追加判定 [${key}] → <b>${r.value}</b>${cardNote}</div>`;
+  }).join('');
+  return rows;
+}
+
+/** §8.3 判定結果を表示用HTMLに変換する */
+function _enemyTypeHtml(enemyType) {
+  if (!enemyType) return '';
+  const pkg = enemyType.package;
+  const cardLabel = `カード #${enemyType.card.number} → R#${enemyType.r}`;
+  if (!pkg) return `<div class="rp-cs-card">${cardLabel} → 該当パッケージなし</div>`;
+  return `
+    <div class="rp-cs-card">
+      ${cardLabel} → <b>#${pkg.id} ${pkg.label}</b>（${pkg.detail}）
+    </div>
+    <div class="rp-cs-card">${pkg.placement}</div>
+    ${_choiceResultsHtml(enemyType.choiceResults)}
+  `;
+}
+
+function _onPCAutoConfirm() {
+  if (!_pcState || _pcState.mode !== 'auto' || _pcState.step !== 'ready') return;
+  finishPCResolution(_pcState.coord);
+  _pcState.step = 'contact_made'; // 接触成立 → 続けて§8.3の種類判定ドローへ
+  _renderPCPanel();
+}
+
+function _onPCDraw() {
+  if (!_pcState || _pcState.mode !== 'draw' || _pcState.step !== 'ready') return;
+
+  const { card, isContact } = resolvePCDrawStep();
+  _pcState.cards.push(card);
+  _pcState.drawsDone++;
+  if (isContact) _pcState.contactFound = true;
+
+  if (_pcState.drawsDone >= _pcState.drawsNeeded) {
+    finishPCResolution(_pcState.coord);
+    _pcState.step = _pcState.contactFound ? 'contact_made' : 'done';
+    if (!_pcState.contactFound) setDrawLock(false); // 接触なし→ここでロック解除して終了
+  }
+  _renderPCPanel();
+}
+
+/** §8.3 種類判定ドロー（接触成立後、人間がボタンを押して1枚引く） */
+function _onPCTypeDraw() {
+  if (!_pcState || _pcState.step !== 'contact_made') return;
+  _pcState.enemyType = resolveEnemyContactType(_pcState.letter);
+  _pcState.step = 'done';
+  setDrawLock(false);
+  _renderPCPanel();
 }

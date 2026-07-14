@@ -316,3 +316,23 @@ export function clearAllCover() {
   coords.forEach(c => renderCardCovers(c));
   units.forEach(u => renderUnitCoverBadge(u));
 }
+
+/**
+ * マップ拡張（§8.4.5）で座標を再ラベルする際に呼ぶ。
+ * cardCoverSlotMap のキーと _unitSlotIndex の coord を shiftFn で変換して再構築する。
+ * @param {(coord:string) => string} shiftFn
+ */
+export function remapCoverCoords(shiftFn) {
+  const oldCoords = [...cardCoverSlotMap.keys()];
+  const entries = [...cardCoverSlotMap.entries()].map(([coord, slots]) => [shiftFn(coord), slots]);
+  cardCoverSlotMap.clear();
+  entries.forEach(([coord, slots]) => cardCoverSlotMap.set(coord, slots));
+
+  _unitSlotIndex.forEach((entry, unitId) => {
+    _unitSlotIndex.set(unitId, { ...entry, coord: shiftFn(entry.coord) });
+  });
+
+  oldCoords.forEach(c => renderCardCovers(c)); // 旧座標のDOMに残った表示を消す
+  cardCoverSlotMap.forEach((_, coord) => renderCardCovers(coord));
+  _unitSlotIndex.forEach((_, uid) => renderUnitCoverBadge(uid));
+}

@@ -1169,6 +1169,10 @@
   }
   .rp-cmd-btn:hover { background: #3a5a7a; }
   .rp-cmd-info { font-size: 10px; color: #6a8a9a; text-align: center; margin: 6px 0; }
+  .rp-cmd-activated-label {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: #9ab8c8; cursor: pointer; margin-top: 4px;
+  }
 
   /* カードを引くボタン */
   .rp-draw-btn {
@@ -1223,6 +1227,7 @@
       title="マップ・駒配置は残し、VOF/状態/AP/PC などプレイ中の状態だけ初期化">状態リセット</button>
     <button class="btn" onclick="if(confirm('新規ゲーム：マップ再生成・駒もプールに戻ります。よろしいですか？'))newGame()"
       style="font-size:11px" title="全初期化（マップ再シャッフル・駒プールに戻す）">新規ゲーム</button>
+    <a class="btn" href="roadmap.html" target="_blank" style="font-size:11px;text-decoration:none;display:inline-block">📋 ロードマップ</a>
   </div>
 </div>
 
@@ -1436,6 +1441,15 @@
             style="width:100%; background:#3a1a1a; border-color:#6a2a2a; color:#cc9988;"
             title="VOFがあるカード上の全ユニットを一括解決">
       ⚔ 戦闘解決（カードを引く）
+    </button>
+  </div>
+
+  <!-- PC（Potential Contact）解決ボタン -->
+  <div class="vof-sub-row">
+    <button id="cardCmPCResolve" disabled
+            style="width:100%; background:#2a2a1a; border-color:#4a4a2a; color:#8a8a6a;"
+            title="友軍ユニットがいるPCマーカー付きカードで接触判定を行う（§8.2.4）">
+      ❓ PC解決（対象なし）
     </button>
   </div>
 
