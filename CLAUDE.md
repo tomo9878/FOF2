@@ -25,15 +25,21 @@
 - 戦闘解決ステップ制（NCM表示→人間がカード引く→HIT/PIN/MISS→人間がHit Effectカード引く）：完成
 - ドローロック機構（カード引き中は他操作を封鎖）：完成
 - Crossfire 自動検出（PDF 2方向以上で自動 ON）：完成
-- コマンドポイント(AP)管理 command.js：箱のみ完成（現在AP保持＋繰越上限/消費上限の計算）
+- コマンドポイント(AP)管理 command.js：現在AP保持＋繰越上限/消費上限の計算＋**CO HQに起動された(Activated)/イニシアチブの判別**（未起動ユニットはイニシアチブで自動的に起動扱い）：完成
 - 練度(experience)を campaign.js で可変管理（成長要素対応・シナリオ初期練度投入・昇格）：完成
 - キャンペーン7シナリオ定義スケルトン（視界/練度/部隊/マップ/勝利条件の器・攻勢/防衛タイプ）：完成
 - Mission 1（Trévières）コア投入（視界Daylight・10ターン・全部隊初期練度・勝利条件）：完成
 - マップ生成（シナリオ rows×cols 配置・Hillカードは下にもう1枚ずらし重ね）：完成
 - 動作チェック用の無造作なユニット/マーカー配置を除去（初期配置は後日）：完成
 - コンタクトレベル（活動レベル4段階: 接触なし/接触/交戦/激戦）を盤面から自動算出・ヘッダー表示・盤面操作で自動更新：完成（仕様書 CONTACT_LEVEL_SPEC.md）
-- PC（Potential Contact）マーカーシステム（配置・A/B/C表示・?裏対応）＋ Mission 1 のPC配置（Row1:C / Row2:A / Row3:B）：完成（解決ロジックは未実装）
+- PC（Potential Contact）マーカーシステム（配置・A/B/C表示・?裏対応）＋ Mission 1 のPC配置（Row1:C / Row2:A / Row3:B）：完成
 - PCドローチャート（活動レベル×A/B/C→Auto/ドロー枚数）データ設定：完成（pc.js PC_DRAW_CHART / getPCDraw）
+- PC解決ロジック §8.2.4（pc-resolve.js）：接触するかの判定をカード右クリック「PC解決」から実行。Auto/N枚ドロー（人間が1枚ずつ引く）に対応：完成
+- 敵接触タイプ判定 §8.3（enemy-contact.js）：シナリオ別R#テーブル汎用エンジン(scenario-tables.js) + Mission1のEnemy Force Package/Higher HQ Eventデータ投入。武器種別(LMG/HMG)・FO種別(Artillery/Mortar)等の追加ランダム判定（choices）にも対応：完成
+- R#の実カード化：カード番号から `floor((n-1)*denom/50)+1` でR#を再現し、共有デッキから実際に1枚引く方式に統一（Math.random不使用）：完成
+- LOS/距離判定 §5.2.1（los.js）：8方向・Close/Long/Very Longレンジ・Hill標高越え対応。副産物としてncm.jsの地形防御(defHigh/defLow)判定の逆転バグを修正：完成
+- 配置距離判定 §8.4.1（placement.js）とマップ拡張 §8.4.5（grid.js expandMapEdge / terrain-deck.js）：Max LOS/Range配置がマップ外に出る場合、地形カードを引いて行/列を拡張：完成
+- roadmap.html：ROADMAP.mdの内容を見て操作できるインタラクティブなダッシュボード（ステータス切替・優先度チェックリスト・Markdown書き出し）：完成
 - 初期配置: 未配置部隊プール（スタートエリア下）→ドラッグでスタートエリア/盤面へ配置、プール空で行が消える：完成
 - 拡大率: 初期139%固定・マウスホイールズーム無効（ズームはヘッダー操作のみ）：完成
 - コマンド(AP)取得UI：HQ選択→右パネルでAP表示＋手動±＋「カード引いてコマンド取得」（activated自動加算・No Contact時+1）：完成（取得=自動／消費=人間が±）
@@ -70,7 +76,9 @@ HIT判定カードと結果判定カードの間など、連続ドロー中は�
 - [x] ~~コマンドシステム簡略版UI（HQ選択→AP表示＋手動±＋カード引き取得）~~ 完成
 - [ ] コマンドフェーズの起動セグメント（HQ起動順・配下への配分・消費上限チェック）
 - [ ] BN HQ ユニット定義の追加（commandRole:'bn_hq' を付けるだけで箱が機能する）
-- [ ] PC解決ロジック（ドローチャート: images/Chart - Potential Contact Draw - Deluxe.png から A/B/C×活動レベルの数値を抽出 → ドロー/Auto判定 → 敵パッケージ出現）
+- [x] ~~PC解決ロジック（§8.2.4接触判定＋§8.3タイプ判定）~~ 完成
+- [ ] §8.4.3 実際の敵ユニット生成・配置（placement.jsで決めた座標にユニットを実際に置く・cover探索・友軍との重なり回避）
+- [ ] §8.4.2 方向判定と§8.4.1距離判定の実戦UI接続（現状はplacement.js単体では動くが、PC解決フローからは未呼び出し）
 - [x] ~~活動レベル No Contact 時の HQ コマンド判定 +1~~ 完成（コマンド取得時に+1）
 
 ## 既知の課題・ブロッカー
@@ -81,27 +89,34 @@ HIT判定カードと結果判定カードの間など、連続ドロー中は�
 ```
 ミニ作業/
 ├── map.html          メインHTML（CSS込み）
+├── roadmap.html       ROADMAP.md内容の操作可能ダッシュボード
 └── js/
     ├── map.js        初期化・フェーズ制御
     ├── deck.js       アクションカードデッキ管理（共有）
+    ├── terrain-deck.js 地形カード補充（マップ拡張§8.4.5用）
     ├── combat.js     戦闘解決エンジン（NCM→HIT/PIN/MISS→Hit適用）
     ├── contact.js    コンタクトレベル（活動レベル）自動算出・ヘッダー表示
-    ├── command.js    コマンドポイント(AP)管理（現在AP保持＋繰越/消費上限の計算）
+    ├── command.js    コマンドポイント(AP)管理（現在AP保持＋繰越/消費上限の計算＋起動/イニシアチブ判別）
     ├── campaign.js   キャンペーン状態（練度の可変管理・成長・シナリオ投入）
     ├── state.js      ユニット状態管理
     ├── vof.js        VOF マーカー管理（直接射撃＋エリアファイア）
     ├── pdf.js        PDF マーカー管理
-    ├── pc.js         PC（Potential Contact）マーカー管理（配置・表示）
+    ├── pc.js         PC（Potential Contact）マーカー管理（配置・表示・ドローチャート）
+    ├── pc-resolve.js PC解決エンジン（§8.2.4 接触するかの判定）
+    ├── enemy-contact.js 敵接触タイプ判定（§8.3 パッケージ判定＋武器/FO種別等の追加判定）
+    ├── los.js        LOS/距離判定（§5.2.1 8方向・レンジ・Hill標高越え）
+    ├── placement.js  敵配置の距離・方向解決（§8.4.1/8.4.2）
     ├── persistence.js 状態保存・復元（localStorage・2層version）
     ├── ncm.js        NCM 計算
     ├── cover.js      カバーマーカー管理
     ├── context-menu.js      ユニット右クリックメニュー（右パネル連動）
-    ├── card-context-menu.js カード右クリックメニュー（戦闘解決ボタン）
+    ├── card-context-menu.js カード右クリックメニュー（戦闘解決・PC解決ボタン）
     ├── hit.js        ヒット処理
     ├── detach.js     分離処理
     └── data/
         ├── cards.js         アクションカードデータ（全50枚・combat/hit込み）
         ├── terrain-data.js  地形防御データ（全55カード）
         ├── units-normandy.js ユニット定義
-        └── scenarios/       キャンペーン7ミッション定義（mission-01〜07 ＋ index）
+        ├── scenario-tables.js シナリオ別R#テーブル汎用エンジン
+        └── scenarios/       キャンペーン7ミッション定義（mission-01〜07 ＋ index。mission-01にtables追加）
 ```
