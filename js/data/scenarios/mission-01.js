@@ -13,7 +13,8 @@ export default {
   id: 'normandy-01',
   missionNumber: 1,
   title: { en: 'Trévières Offensive', ja: 'トレヴィエール攻勢' },
-  missionType: 'offensive',      // 'offensive' | 'defensive'
+  missionType: 'offensive',      // 'offensive' | 'defensive' | 'combat_patrol'
+  singlePlatoon: false,          // 単一小隊ミッションなら General Initiative は半分・切り捨て（§3.3.2d）
 
   // ── セットアップ変数（AP/NCM に直結）──
   visibility: 'daylight',        // 'daylight' | 'limited'（確定: Daylight +0）

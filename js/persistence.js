@@ -22,7 +22,7 @@ import { cardVOFMap, renderCardVOF } from './vof.js';
 import { cardPDFMap, renderCardPDFs } from './pdf.js';
 import { cardPCMap, renderCardPC } from './pc.js';
 import { serializeCover, restoreCover, clearAllCover } from './cover.js';
-import { unitCommandMap } from './command.js';
+import { unitCommandMap, getBNHQStatus, setBNHQStatus, BN_HQ_STATUS } from './command.js';
 import { unitExperienceMap } from './campaign.js';
 import { getVisibility, setVisibility } from './ncm.js';
 import { recomputeActivityLevel } from './contact.js';
@@ -30,7 +30,9 @@ import { resetSquadPools } from './enemy-contact.js';
 
 const KEY = 'fof_save';
 const SETUP_VERSION = 1;
-const PLAY_VERSION  = 1;
+// v2: unitCommandMap の activated の意味を「上位HQに起動された」に限定し、
+//     「このターン取得済み」を drawn に分離した（旧データは意味が違うので破棄する）
+const PLAY_VERSION  = 2;
 
 // ===== 内部 =====
 
@@ -87,6 +89,7 @@ export function serialize() {
       ap:       [...unitCommandMap],
       detached: [...detachedLATsMap],
       visibility: getVisibility(),
+      bnHQ:     getBNHQStatus(),
     },
   };
 }
@@ -142,6 +145,7 @@ function _applyPlay(play) {
   (play.ap       ?? []).forEach(([id, n]) => unitCommandMap.set(id, n));
   (play.detached ?? []).forEach(([p, l]) => detachedLATsMap.set(p, l));
   setVisibility(play.visibility ?? 0);
+  if (play.bnHQ) setBNHQStatus(play.bnHQ);
   // 描画
   cardVOFMap.forEach((_, c) => renderCardVOF(c));
   cardPDFMap.forEach((_, c) => renderCardPDFs(c));
@@ -187,6 +191,7 @@ export function resetPlay(scenario) {
   unitCommandMap.clear();
   detachedLATsMap.clear();
   resetSquadPools();
+  setBNHQStatus(BN_HQ_STATUS.OFF_MAP_COMM); // BN HQ は原則盤外から始まる（§4.1.1）
   setVisibility(scenario.visibility === 'limited' ? 1 : 0);
 
   // 全カード・全駒のマーカー/バッジを再描画（消去を反映）

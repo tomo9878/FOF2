@@ -50,16 +50,46 @@ function _visMode() {
 }
 
 /**
+ * 盤面に駒を持たない仮想の指揮エンティティ。
+ * BN HQ は原則マップ外にいるので駒（UNITS）を持たないが、コマンドは保持しうる
+ * （盤上に上位HQリーダーが登場した場合。FOF.pdf p.18 §4.1.1 BN HQ Impulse）。
+ */
+export const VIRTUAL_COMMAND_UNITS = { BN_HQ: 'bn_hq', GENERAL_INIT: 'general' };
+
+/** BN HQ を表す仮想ユニットID */
+export const BN_HQ_UNIT_ID = 'BN_HQ';
+
+/** General Initiative の共有プールを表す仮想ユニットID */
+export const GENERAL_INIT_UNIT_ID = 'GENERAL_INIT';
+
+/** 繰り越せない（save できない）コマンドを持つ仮想ユニット */
+const NO_SAVE_UNIT_IDS = new Set([BN_HQ_UNIT_ID, GENERAL_INIT_UNIT_ID]);
+
+/**
  * ユニットの commandRole を UNITS 定義から引く（なければ null）。
  * @param {string} unitId
  * @returns {string|null}
  */
 export function getCommandRole(unitId) {
+  if (unitId in VIRTUAL_COMMAND_UNITS) return VIRTUAL_COMMAND_UNITS[unitId];
   for (const units of Object.values(UNITS)) {
     const u = units.find(u => u.id === unitId);
     if (u) return u.commandRole ?? null;
   }
   return null;
+}
+
+/**
+ * 指定 commandRole を持つ盤面ユニットのIDを列挙する。
+ * @param {string} role
+ * @returns {string[]}
+ */
+export function findUnitsByCommandRole(role) {
+  const ids = [];
+  for (const units of Object.values(UNITS)) {
+    for (const u of units) if (u.commandRole === role) ids.push(u.id);
+  }
+  return ids;
 }
 
 /**
@@ -103,14 +133,61 @@ export function changeCurrentAP(unitId, delta) {
   setCurrentAP(unitId, getCurrentAP(unitId) + delta);
 }
 
-// ===== 起動(Activated) / イニシアチブ 判定 =====
+// ===== 指揮系統（Command Reference Table）=====
 //
-// CO HQ が起動を選んだユニットは「起動」扱い（カードの activated 値を取得）。
-// 選ばれなかったユニットが自発的にカードを引く場合は「イニシアチブ」扱い
-// （カードの initiative 値を取得）で、その時点で自動的に「起動済み」になる。
-// どちらで起動するかの判断（誰を選ぶか）は人間が管理する。
+// FOF.pdf p.18「Command Reference Table」
+//   BN HQ    : Activate できるのは CO HQ のみ（盤外時は BN TAC 網で通信できる場合だけ・§4.3.3）
+//   CO HQ    : Activate できるのは CO Staff と全ての下位HQ（PLT HQ 等）
+//   CO XO / 1st Sgt / GySgt : Activate できるユニットなし
+//   PLT HQ / Weapon Team HQ / Tank HQ : Activate できるユニットなし
+// ※ Activate 自体は CO HQ のコマンド消費を伴うアクション（§4.2.1a）。
+//    「誰を起動するか」の選択は人間が行う（このモジュールは可否だけを持つ）。
+
+/** commandRole → その役職が Activate できる commandRole の一覧 */
+export const CAN_ACTIVATE = {
+  bn_hq:    ['co_hq'],
+  co_hq:    ['co_staff', 'plt_hq'],
+  co_staff: [],
+  plt_hq:   [],
+};
+
+/** commandRole の表示名 */
+export const COMMAND_ROLE_LABELS = {
+  bn_hq: 'BN HQ', co_hq: 'CO HQ', co_staff: 'CO Staff', plt_hq: 'PLT HQ',
+};
 
 /**
+ * このユニットを Activate できる上位の commandRole を返す（起動されない役職は null）。
+ * @param {string} unitId
+ * @returns {string|null}
+ */
+export function getActivatorRole(unitId) {
+  const role = getCommandRole(unitId);
+  if (!role) return null;
+  const entry = Object.entries(CAN_ACTIVATE).find(([, targets]) => targets.includes(role));
+  return entry ? entry[0] : null;
+}
+
+/**
+ * 上位HQに起動されうるユニットか（BN HQ は誰にも起動されないので false）。
+ * @param {string} unitId
+ * @returns {boolean}
+ */
+export function canBeActivated(unitId) {
+  return getActivatorRole(unitId) !== null;
+}
+
+// ===== 起動(Activated) / 取得済み(Drawn) =====
+//
+// この2つはルール上まったく別の概念なので別フラグで持つ:
+//   activated : 起動セグメントで上位HQに Activate された（→ カードの activated 値を使う）
+//   drawn     : このターンのインパルスでコマンドを取得し終えた（Activation Completed 相当）
+// 起動されなかったユニットはイニシアチブセグメントで自分のインパルスを持ち、
+// カードの initiative 値（CO Staff は固定1）を取得する。イニシアチブで引いても
+// 「上位HQに起動された」ことにはならない。
+
+/**
+ * 上位HQに起動されたか。
  * @param {string} unitId
  * @returns {boolean}
  */
@@ -125,6 +202,37 @@ export function getActivated(unitId) {
 export function setActivated(unitId, v) {
   if (!unitCommandMap.has(unitId)) unitCommandMap.set(unitId, { currentAP: 0 });
   unitCommandMap.get(unitId).activated = !!v;
+}
+
+/**
+ * このターン、既にコマンドを取得済みか。
+ * @param {string} unitId
+ * @returns {boolean}
+ */
+export function getCommandsDrawn(unitId) {
+  return unitCommandMap.get(unitId)?.drawn ?? false;
+}
+
+/**
+ * @param {string} unitId
+ * @param {boolean} v
+ */
+export function setCommandsDrawn(unitId, v) {
+  if (!unitCommandMap.has(unitId)) unitCommandMap.set(unitId, { currentAP: 0 });
+  unitCommandMap.get(unitId).drawn = !!v;
+}
+
+/**
+ * クリーンアップフェーズ（§3.8）で全HQの起動・取得済みフラグを落とす。
+ * 保有コマンド（Saved Commands）はここでは消さない。
+ */
+export function resetImpulseFlags() {
+  for (const [unitId, entry] of unitCommandMap) {
+    entry.activated = false;
+    entry.drawn = false;
+    // save できないコマンド（BN HQ・General Initiative）は使い残しても消える
+    if (NO_SAVE_UNIT_IDS.has(unitId)) entry.currentAP = 0;
+  }
 }
 
 // ===== イニシアチブの例外: CO Staff =====
@@ -147,6 +255,117 @@ export const CO_STAFF_INITIATIVE_COMMANDS = 1;
  */
 export function hasFixedInitiative(unitId) {
   return getCommandRole(unitId) === 'co_staff';
+}
+
+// ===== §3.3.1a / §4.1.1 BN HQ インパルス =====
+//
+// FOF.pdf p.15 §3.3.1a ／ p.18-19 §4.1.1「BN HQ Impulse」
+//   ・BN HQ はミッション指定が無い限りマップ外から始まる。
+//     盤上に上位HQリーダー（連隊長・大隊長等）が現れた場合は「盤上」扱いになる。
+//   ・盤外 かつ CO HQ が BN TAC 無線／電話で通信可 → **自動的に CO HQ を起動**
+//     （カードは引かない）。
+//   ・盤上 → 最上級の上位HQユニットに**最大コマンド（昼6／夜4）を自動付与**。
+//     カードは引かない。**BN HQ のコマンドは繰り越せない（save 不可）**。
+//   ・BN HQ が使用不能（無線破損・電話線切断 §4.3.4・上位HQイベント・
+//     盤上の上位HQリーダー戦死 §6.5.2）→ CO HQ は起動されず、
+//     ターンは CO HQ イニシアチブ・インパルスから始まる（前ターンからの
+//     ランナーが盤上にいる場合を除く §4.3.2）。
+
+/** BN HQ の状態 */
+export const BN_HQ_STATUS = {
+  OFF_MAP_COMM:    'off_map_comm',    // 盤外・BN TAC で通信可 → CO HQ を自動起動
+  OFF_MAP_NO_COMM: 'off_map_no_comm', // 盤外・通信不通 → 起動なし
+  ON_MAP:          'on_map',          // 盤上（上位HQリーダー登場）→ 最大コマンド付与
+  UNAVAILABLE:     'unavailable',     // 使用不能 → 起動なし
+};
+
+/** BN HQ 状態の表示ラベル */
+export const BN_HQ_STATUS_LABELS = {
+  [BN_HQ_STATUS.OFF_MAP_COMM]:    '盤外・通信可（BN TAC）',
+  [BN_HQ_STATUS.OFF_MAP_NO_COMM]: '盤外・通信不通',
+  [BN_HQ_STATUS.ON_MAP]:          '盤上（上位HQリーダー登場）',
+  [BN_HQ_STATUS.UNAVAILABLE]:     '使用不能（無線破損・戦死等）',
+};
+
+let _bnHQStatus = BN_HQ_STATUS.OFF_MAP_COMM;
+
+/** @returns {string} */
+export function getBNHQStatus() { return _bnHQStatus; }
+
+/** @param {string} s */
+export function setBNHQStatus(s) {
+  if (s in BN_HQ_STATUS_LABELS) _bnHQStatus = s;
+}
+
+/**
+ * BN HQ インパルスを解決する（カードは引かない）。
+ * @returns {{status:string, activatedCOHQ:string[], bnCommands:number, note:string}}
+ */
+export function resolveBNHQImpulse() {
+  const status = _bnHQStatus;
+  const result = { status, activatedCOHQ: [], bnCommands: 0, note: '' };
+
+  if (status === BN_HQ_STATUS.ON_MAP) {
+    // 最上級の上位HQユニットに最大コマンドを付与（繰り越し不可）
+    result.bnCommands = getExpendLimit();
+    setCurrentAP(BN_HQ_UNIT_ID, result.bnCommands);
+    setCommandsDrawn(BN_HQ_UNIT_ID, true);
+    result.note = `BN HQ に最大 ${result.bnCommands} コマンド（save 不可）。`
+      + 'CO HQ の起動にもここから消費する';
+    return result;
+  }
+
+  if (status === BN_HQ_STATUS.OFF_MAP_COMM) {
+    for (const id of findUnitsByCommandRole('co_hq')) {
+      setActivated(id, true);
+      result.activatedCOHQ.push(id);
+    }
+    result.note = 'BN HQ は盤外だが通信可のため CO HQ を自動起動（カードは引かない）';
+    return result;
+  }
+
+  result.note = status === BN_HQ_STATUS.UNAVAILABLE
+    ? 'BN HQ 使用不能。CO HQ は起動されず、CO HQ イニシアチブ・インパルスから開始'
+    : 'BN HQ と通信できず CO HQ は起動されない。CO HQ イニシアチブ・インパルスから開始';
+  return result;
+}
+
+// ===== §3.3.2d / §4.1.1 General Initiative インパルス =====
+//
+// FOF.pdf p.16 §3.3.2d ／ p.20 §4.1.1「General Initiative Impulse」
+//   ・アクションカードを1枚引き、**星アイコンの数字（＝イニシアチブ値）**をそのまま使う。
+//   ・単一小隊ミッション（Combat Patrol 等、実質1個小隊しか出ないもの）なら
+//     **半分にして端数切り捨て**。それ以外の修正（§4.1.2）は一切乗らない。
+//   ・盤上のどのユニットへの命令にも使える。**HQ/Staff は不要で、通信も不要**
+//     （§4.1.3 の「必ずHQ/Staffが発令者でなければならないアクション」だけは例外）。
+//   ・**繰り越せない**（save 不可）。
+
+let _singlePlatoonMission = false;
+
+/** @returns {boolean} 単一小隊ミッションか（§3.3.2d の半減対象） */
+export function getSinglePlatoonMission() { return _singlePlatoonMission; }
+
+/** @param {boolean} v */
+export function setSinglePlatoonMission(v) { _singlePlatoonMission = !!v; }
+
+/**
+ * シナリオ定義から単一小隊ミッションかどうかを取り込む。
+ * 明示の singlePlatoon が無ければ missionType==='combat_patrol' を単一小隊とみなす。
+ * @param {object} scenario
+ */
+export function applyScenarioCommandSettings(scenario) {
+  _singlePlatoonMission = scenario?.singlePlatoon ?? scenario?.missionType === 'combat_patrol';
+}
+
+/**
+ * General Initiative の取得数を計算する（カードのドロー自体は呼び出し側=人間が行う）。
+ * @param {number} cardInitiative - 引いたカードの星アイコンの数字
+ * @returns {{base:number, halved:boolean, total:number}}
+ */
+export function resolveGeneralInitiative(cardInitiative) {
+  const base = cardInitiative ?? 0;
+  const halved = _singlePlatoonMission;
+  return { base, halved, total: halved ? Math.floor(base / 2) : base };
 }
 
 // ===== §4.1.2 コマンドドローの修正 =====
@@ -247,6 +466,9 @@ export function applyCommandModifiers(unitId, base, segment) {
  * @returns {number}
  */
 export function getCarryoverMax(unitId) {
+  // BN HQ・General Initiative のコマンドは繰り越せない
+  // （p.19「You cannot save BN HQ Commands.」／p.20「General Initiative Commands cannot be saved.」）
+  if (NO_SAVE_UNIT_IDS.has(unitId)) return 0;
   const exp = getUnitExperience(unitId);
   return CARRYOVER_TABLE[exp]?.[_visMode()] ?? 0;
 }
@@ -257,4 +479,29 @@ export function getCarryoverMax(unitId) {
  */
 export function getExpendLimit() {
   return EXPEND_LIMIT[_visMode()];
+}
+
+// ===== インパルス終了（Saved Commands ゾーンへ）=====
+//
+// FOF.pdf p.18 §4.1.1 の Note ／ p.19 各インパルス末尾
+//   「Track Commands for an HQ in the top zone then slide the marker down into
+//    the Saved Commands zone when you are finished.」
+//   「…if it has any Commands remaining that can be saved, slide it down into
+//    the Saved Commands zone. Otherwise place it in the Activations Completed box.」
+// 繰り越せる上限は練度×視界（§4.1.3・CARRYOVER_TABLE）。上限を超えた分は失われる。
+// クリーンアップでは resetImpulseFlags() が全HQを Command Tracking ゾーンへ戻す
+// （＝起動/取得済みフラグを落とす）。保存済みコマンドはそのまま残る。
+
+/**
+ * そのユニットのインパルスを終了し、残ったコマンドを繰越上限で切り捨てて保存する。
+ * @param {string} unitId
+ * @returns {{before:number, saved:number, lost:number, max:number}}
+ */
+export function finishImpulse(unitId) {
+  const before = getCurrentAP(unitId);
+  const max    = getCarryoverMax(unitId);
+  const saved  = Math.min(before, max);
+  setCurrentAP(unitId, saved);
+  setCommandsDrawn(unitId, true);   // このターンのインパルスは終了
+  return { before, saved, lost: before - saved, max };
 }

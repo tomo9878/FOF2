@@ -19,6 +19,8 @@ import {
   canHoldCommands, getCommandRole, getCurrentAP, changeCurrentAP,
   getCarryoverMax, getExpendLimit, getActivated, setActivated,
   hasFixedInitiative, CO_STAFF_INITIATIVE_COMMANDS, applyCommandModifiers,
+  getCommandsDrawn, setCommandsDrawn, getActivatorRole, COMMAND_ROLE_LABELS,
+  finishImpulse,
 } from './command.js';
 import { drawActionCard } from './deck.js';
 import {
@@ -379,6 +381,15 @@ export function updateRightPanelUnit(unit) {
     const carryMax  = getCarryoverMax(unit.id);
     const expendMax = getExpendLimit();
     const activated = getActivated(unit.id);
+    const drawn     = getCommandsDrawn(unit.id);
+    // 起動チェックは「上位HQに起動されうる役職」にだけ出す（§4.1.1 Command Reference Table）
+    const actRole   = getActivatorRole(unit.id);
+    const activatedHtml = actRole
+      ? `<label class="rp-cmd-activated-label">
+          <input type="checkbox" id="rpCmdActivated" ${activated ? 'checked' : ''}>
+          ${COMMAND_ROLE_LABELS[actRole]}に起動された
+        </label>`
+      : `<div class="rp-cmd-info">${COMMAND_ROLE_LABELS[getCommandRole(unit.id)] ?? ''} は起動されない（自前のインパルス）</div>`;
     cmdHtml = `
       <div class="rp-cmd">
         <div class="rp-cmd-title">コマンド (AP)</div>
@@ -388,10 +399,9 @@ export function updateRightPanelUnit(unit) {
           <button class="rp-cmd-btn" id="rpCmdPlus">＋</button>
         </div>
         <div class="rp-cmd-info">繰越上限 ${carryMax} / 1インパルス消費上限 ${expendMax}</div>
-        <label class="rp-cmd-activated-label">
-          <input type="checkbox" id="rpCmdActivated" ${activated ? 'checked' : ''}> CO HQに起動された
-        </label>
-        <button class="rp-draw-btn" id="rpCmdDraw">${_cmdDrawLabel(unit.id)}</button>
+        ${activatedHtml}
+        <button class="rp-draw-btn" id="rpCmdDraw" ${drawn ? 'disabled' : ''}>${_cmdDrawLabel(unit.id)}</button>
+        <button class="rp-finish-btn" id="rpCmdFinish">⏹ インパルス終了（残りを Save）</button>
       </div>
     `;
   }
@@ -421,6 +431,7 @@ export function updateRightPanelUnit(unit) {
 function _bindCommandButtons(unitId) {
   const valEl = document.getElementById('rpCmdVal');
   const refresh = () => { if (valEl) valEl.textContent = getCurrentAP(unitId); };
+  _bindFinishButton(unitId, refresh);
 
   document.getElementById('rpCmdMinus')?.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -463,9 +474,6 @@ function _bindCommandButtons(unitId) {
       gained = CO_STAFF_INITIATIVE_COMMANDS;
       modeLabel = 'イニシアチブ(CO Staff固定)';
       srcLabel = 'カード不要';
-      setActivated(unitId, true);
-      const chk = document.getElementById('rpCmdActivated');
-      if (chk) chk.checked = true;
     } else {
       const card = drawActionCard();
       const r = applyCommandModifiers(unitId, card.initiative ?? 0, 'initiative');
@@ -473,19 +481,43 @@ function _bindCommandButtons(unitId) {
       modeLabel = 'イニシアチブ';
       srcLabel = `カード #${card.number}`;
       breakdown = _fmtCommandMods(r);
-      setActivated(unitId, true); // 未起動ユニットはイニシアチブで自動的に起動される
-      const chk = document.getElementById('rpCmdActivated');
-      if (chk) chk.checked = true;
     }
 
+    // 取得はターン内1回だけ（Activation Completed 相当）。
+    // ここで activated は触らない（起動されたかどうかとは別概念）。
+    setCommandsDrawn(unitId, true);
     changeCurrentAP(unitId, gained);
     refresh();
     // 取得内訳を一時表示
     const draw = document.getElementById('rpCmdDraw');
     if (draw) {
       draw.textContent = `${srcLabel} [${modeLabel}]${breakdown} → +${gained}`;
+      draw.disabled = true;
       setTimeout(() => { if (draw) draw.textContent = _cmdDrawLabel(unitId); }, 4000);
     }
+    document.dispatchEvent(new CustomEvent('board:changed'));
+  });
+}
+
+/**
+ * インパルス終了ボタン: 残りコマンドを繰越上限で切り捨てて保存する（§4.1.1 / §4.1.3）。
+ * @param {string} unitId
+ * @param {Function} refresh
+ */
+function _bindFinishButton(unitId, refresh) {
+  document.getElementById('rpCmdFinish')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const r = finishImpulse(unitId);
+    refresh();
+    const btn = document.getElementById('rpCmdFinish');
+    if (btn) {
+      btn.textContent = r.lost > 0
+        ? `Save ${r.saved}（上限${r.max}／${r.lost} は破棄）`
+        : `Save ${r.saved}（上限${r.max}）`;
+      setTimeout(() => { if (btn) btn.textContent = '⏹ インパルス終了（残りを Save）'; }, 4000);
+    }
+    const draw = document.getElementById('rpCmdDraw');
+    if (draw) { draw.disabled = true; draw.textContent = _cmdDrawLabel(unitId); }
     document.dispatchEvent(new CustomEvent('board:changed'));
   });
 }
@@ -510,6 +542,7 @@ function _fmtCommandMods(r) {
  * @returns {string}
  */
 function _cmdDrawLabel(unitId) {
+  if (getCommandsDrawn(unitId)) return '✔ このターン取得済み';
   if (!getActivated(unitId) && hasFixedInitiative(unitId)) {
     return `＋${CO_STAFF_INITIATIVE_COMMANDS} コマンド取得（CO Staff固定・カード不要）`;
   }

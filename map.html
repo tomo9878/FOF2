@@ -1174,6 +1174,31 @@
     font-size: 11px; color: #9ab8c8; cursor: pointer; margin-top: 4px;
   }
 
+  /* BN HQ インパルス */
+  .rp-bnhq-select {
+    width: 100%;
+    padding: 5px 6px;
+    background: #1a2430; border: 1px solid #3a5a6a; border-radius: 4px;
+    color: #c8d8e8; font-size: 11px; font-family: inherit;
+  }
+  .rp-bnhq-note { font-size: 10px; color: #7a9aaa; line-height: 1.5; margin-top: 6px; }
+
+  /* インパルス終了ボタン */
+  .rp-finish-btn {
+    display: block;
+    width: 100%;
+    margin-top: 6px;
+    padding: 6px 0;
+    background: #2a2a3a;
+    border: 1px solid #4a4a6a;
+    border-radius: 4px;
+    color: #b8b8d8;
+    font-size: 11px;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .rp-finish-btn:hover { background: #3a3a5a; }
+
   /* カードを引くボタン */
   .rp-draw-btn {
     display: block;
@@ -1255,6 +1280,29 @@
     <div class="rp-btn-row">
       <button class="btn" onclick="nextPhase()">次フェーズ ▶</button>
     </div>
+  </div>
+
+  <!-- BN HQ インパルス（§3.3.1a / §4.1.1）-->
+  <div class="rp-section">
+    <div class="rp-section-title">🏛 BN HQ インパルス</div>
+    <select class="rp-bnhq-select" id="bnHQStatus"></select>
+    <div class="rp-btn-row">
+      <button class="btn" id="bnHQResolveBtn">BN HQ インパルス実行</button>
+    </div>
+    <div class="rp-bnhq-note" id="bnHQNote">起動セグメントの最初に実行する（カードは引かない）</div>
+  </div>
+
+  <!-- General Initiative インパルス（§3.3.2d）-->
+  <div class="rp-section">
+    <div class="rp-section-title">⭐ General Initiative</div>
+    <div class="rp-cmd-ap">
+      <button class="rp-cmd-btn" id="giMinus">－</button>
+      <span class="rp-cmd-val" id="giVal">0</span>
+      <button class="rp-cmd-btn" id="giPlus">＋</button>
+    </div>
+    <div class="rp-cmd-info">HQ不要・通信不要／繰り越し不可</div>
+    <button class="rp-draw-btn" id="giDraw">🃏 カードを引いて General Initiative</button>
+    <div class="rp-bnhq-note" id="giNote">イニシアチブセグメントの最後に実行する</div>
   </div>
 
   <!-- アクションカード -->
