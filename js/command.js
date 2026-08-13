@@ -15,6 +15,10 @@
 import { getVisibility } from './ncm.js';
 import { UNITS } from './data/units-normandy.js';
 import { getUnitExperience } from './campaign.js';
+import { cardVOFMap } from './vof.js';
+import { unitCoordMap, getUnitState } from './state.js';
+import { getUnitCoverSlot } from './cover.js';
+import { getActivityLevel } from './contact.js';
 
 // ===== ルールテーブル =====
 
@@ -121,6 +125,118 @@ export function getActivated(unitId) {
 export function setActivated(unitId, v) {
   if (!unitCommandMap.has(unitId)) unitCommandMap.set(unitId, { currentAP: 0 });
   unitCommandMap.get(unitId).activated = !!v;
+}
+
+// ===== イニシアチブの例外: CO Staff =====
+//
+// CO Staff Initiative Impulse だけは**カードを引かず固定1コマンド**で、
+// §4.1.2 の修正（Pinned/練度/カバー/VOF/No Contact）も一切適用されない。
+//   FOF.pdf p.19 §4.1.1「CO Staff Initiative Impulse」
+//     "…give it one Command. This number is not modified."
+//   FOF.pdf p.20 §4.1.2 冒頭
+//     "…(but never in the CO Staff Initiative Impulse or General Initiative Impulse)"
+// ※ CO Staff でも CO HQ に「起動された」場合は通常どおりカードを引き activated 値を取る。
+
+/** CO Staff がイニシアチブで得る固定コマンド数 */
+export const CO_STAFF_INITIATIVE_COMMANDS = 1;
+
+/**
+ * このユニットのイニシアチブがカードドロー不要（固定値）かどうか。
+ * @param {string} unitId
+ * @returns {boolean}
+ */
+export function hasFixedInitiative(unitId) {
+  return getCommandRole(unitId) === 'co_staff';
+}
+
+// ===== §4.1.2 コマンドドローの修正 =====
+//
+// FOF.pdf p.20 §4.1.2「Modifications to the Command Draw」
+//   A. HQ/Staff が: Pinned −1 ／ Green −1 ／ Veteran +1 ／ カバーマーカー下 +1
+//   B. HQ/Staff が VOF 下: Small Arms −1 ／ Automatic −2
+//      ／ Heavy・Sniper・Grenade・Incoming!・Air Strike! −3
+//      （複数ある場合は最も強い＝最も低い1つだけを見る）
+//   C. 現在の活動レベルが No Contact: +1
+// 適用対象は起動セグメントとイニシアチブセグメントのドローのみ。
+// **CO Staff Initiative Impulse と General Initiative Impulse には一切適用しない。**
+// 最低値: 起動セグメント=1（p.18）／イニシアチブセグメント=0（p.19）。
+
+/**
+ * VOF タイプ → コマンド修正値（§4.1.2 B）。
+ * ルール本文が列挙しているのは Small Arms / Automatic /
+ * Heavy・Sniper・Grenade・Incoming!・Air Strike! のみ。
+ * 列挙外（Mines/BoobyTrap/Demo/Pending/Illum/All Pinned）は修正なしとして扱う。
+ */
+export const VOF_COMMAND_MOD = {
+  'S': -1,
+  'A': -2,
+  'H': -3, 'S!': -3, 'Grenade': -3,
+  'Incoming-3': -3, 'Incoming-4': -3, 'Incoming-5': -3,
+  'Incoming-6': -3, 'Incoming-7': -3,
+  'WP-3': -3, 'WP-4': -3,
+  'AirStrike': -3, 'AirStrike-8': -3,
+};
+
+/** 起動セグメントの最低コマンド数 */
+export const MIN_ACTIVATION_COMMANDS = 1;
+/** イニシアチブセグメントの最低コマンド数 */
+export const MIN_INITIATIVE_COMMANDS = 0;
+
+/**
+ * そのユニットが乗っているカードの VOF による修正（§4.1.2 B）。
+ * 1カード1VOF なので「最も強いものだけ」は自動的に満たされる。
+ * ※ Sniper VOF は実際の標的に関係なく同カードのHQに影響する（§7.15）が、
+ *    カード単位で判定しているのでこれも自動的に満たされる。
+ * @param {string} unitId
+ * @returns {{label:string, delta:number}|null}
+ */
+function _vofCommandMod(unitId) {
+  const coord = unitCoordMap.get(unitId);
+  if (!coord) return null;
+  const vof = cardVOFMap.get(coord);
+  if (!vof?.type) return null;
+  const delta = VOF_COMMAND_MOD[vof.type];
+  if (!delta) return null;
+  return { label: `VOF ${vof.type}`, delta };
+}
+
+/**
+ * §4.1.2 の修正一覧を返す（内訳を表示できるよう配列で返す）。
+ * @param {string} unitId
+ * @returns {Array<{label:string, delta:number}>}
+ */
+export function getCommandModifiers(unitId) {
+  const mods = [];
+
+  if (getUnitState(unitId).pinned) mods.push({ label: 'Pinned', delta: -1 });
+
+  const exp = getUnitExperience(unitId);
+  if (exp === 'green') mods.push({ label: 'Green', delta: -1 });
+  if (exp === 'vet')   mods.push({ label: 'Veteran', delta: +1 });
+
+  if (getUnitCoverSlot(unitId)) mods.push({ label: 'Cover', delta: +1 });
+
+  const vofMod = _vofCommandMod(unitId);
+  if (vofMod) mods.push(vofMod);
+
+  if (getActivityLevel() === 'no_contact') mods.push({ label: 'No Contact', delta: +1 });
+
+  return mods;
+}
+
+/**
+ * カードの素の値に §4.1.2 の修正と最低値クランプを適用する。
+ * @param {string} unitId
+ * @param {number} base - カードの activated / initiative の素の値
+ * @param {'activation'|'initiative'} segment
+ * @returns {{base:number, mods:Array, sum:number, raw:number, min:number, total:number}}
+ */
+export function applyCommandModifiers(unitId, base, segment) {
+  const mods = getCommandModifiers(unitId);
+  const sum = mods.reduce((a, m) => a + m.delta, 0);
+  const raw = base + sum;
+  const min = segment === 'activation' ? MIN_ACTIVATION_COMMANDS : MIN_INITIATIVE_COMMANDS;
+  return { base, mods, sum, raw, min, total: Math.max(min, raw) };
 }
 
 // ===== 導出値（計算）=====

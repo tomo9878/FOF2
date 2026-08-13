@@ -18,9 +18,9 @@ import { getUnitExperience, EXPERIENCE_LABELS } from './campaign.js';
 import {
   canHoldCommands, getCommandRole, getCurrentAP, changeCurrentAP,
   getCarryoverMax, getExpendLimit, getActivated, setActivated,
+  hasFixedInitiative, CO_STAFF_INITIATIVE_COMMANDS, applyCommandModifiers,
 } from './command.js';
 import { drawActionCard } from './deck.js';
-import { getActivityLevel } from './contact.js';
 import {
   COVER_TYPES,
   getCoverSlots,
@@ -391,7 +391,7 @@ export function updateRightPanelUnit(unit) {
         <label class="rp-cmd-activated-label">
           <input type="checkbox" id="rpCmdActivated" ${activated ? 'checked' : ''}> CO HQに起動された
         </label>
-        <button class="rp-draw-btn" id="rpCmdDraw">🃏 カードを引いてコマンド取得</button>
+        <button class="rp-draw-btn" id="rpCmdDraw">${_cmdDrawLabel(unit.id)}</button>
       </div>
     `;
   }
@@ -438,38 +438,82 @@ function _bindCommandButtons(unitId) {
   document.getElementById('rpCmdActivated')?.addEventListener('change', (e) => {
     e.stopPropagation();
     setActivated(unitId, e.target.checked);
+    // CO Staff は起動/イニシアチブでカードの要否が変わるのでラベルを更新
+    const draw = document.getElementById('rpCmdDraw');
+    if (draw) draw.textContent = _cmdDrawLabel(unitId);
     document.dispatchEvent(new CustomEvent('board:changed'));
   });
-  // カードを引いてコマンド取得（取得は自動・カードを引く操作は人間）
+  // コマンド取得（取得量の計算は自動・カードを引く操作は人間）
   // 起動済みなら activated 値、未起動ならイニシアチブ値（引いた時点で自動的に起動済みになる）
+  // 例外: CO Staff のイニシアチブはカードを引かず固定1（§4.1.1 / §4.1.2 修正適用外）
   document.getElementById('rpCmdDraw')?.addEventListener('click', (e) => {
     e.stopPropagation();
-    const card = drawActionCard();
     const wasActivated = getActivated(unitId);
-    let gained, modeLabel, bonusLabel = '';
+    let gained, modeLabel, srcLabel, breakdown = '';
+
     if (wasActivated) {
-      gained = card.activated ?? 0;
+      const card = drawActionCard();
+      const r = applyCommandModifiers(unitId, card.activated ?? 0, 'activation');
+      gained = r.total;
       modeLabel = '起動';
+      srcLabel = `カード #${card.number}`;
+      breakdown = _fmtCommandMods(r);
+    } else if (hasFixedInitiative(unitId)) {
+      // CO Staff Initiative Impulse: カードを引かない・§4.1.2 の修正も乗らない
+      gained = CO_STAFF_INITIATIVE_COMMANDS;
+      modeLabel = 'イニシアチブ(CO Staff固定)';
+      srcLabel = 'カード不要';
+      setActivated(unitId, true);
+      const chk = document.getElementById('rpCmdActivated');
+      if (chk) chk.checked = true;
     } else {
-      // No Contact 時は General Initiative +1（§4.1.2 C）
-      const noContactBonus = getActivityLevel() === 'no_contact' ? 1 : 0;
-      gained = (card.initiative ?? 0) + noContactBonus;
+      const card = drawActionCard();
+      const r = applyCommandModifiers(unitId, card.initiative ?? 0, 'initiative');
+      gained = r.total;
       modeLabel = 'イニシアチブ';
-      if (noContactBonus) bonusLabel = ' +1(NoContact)';
+      srcLabel = `カード #${card.number}`;
+      breakdown = _fmtCommandMods(r);
       setActivated(unitId, true); // 未起動ユニットはイニシアチブで自動的に起動される
       const chk = document.getElementById('rpCmdActivated');
       if (chk) chk.checked = true;
     }
+
     changeCurrentAP(unitId, gained);
     refresh();
     // 取得内訳を一時表示
     const draw = document.getElementById('rpCmdDraw');
     if (draw) {
-      draw.textContent = `カード #${card.number} [${modeLabel}] → +${gained}${bonusLabel}`;
-      setTimeout(() => { if (draw) draw.textContent = '🃏 カードを引いてコマンド取得'; }, 2500);
+      draw.textContent = `${srcLabel} [${modeLabel}]${breakdown} → +${gained}`;
+      setTimeout(() => { if (draw) draw.textContent = _cmdDrawLabel(unitId); }, 4000);
     }
     document.dispatchEvent(new CustomEvent('board:changed'));
   });
+}
+
+/**
+ * §4.1.2 の修正内訳を「4 −1(Green) +1(NoContact)」の形に整形する。
+ * 最低値クランプが働いた場合はその旨も付ける。
+ * @param {{base:number, mods:Array, raw:number, min:number, total:number}} r
+ * @returns {string}
+ */
+function _fmtCommandMods(r) {
+  const parts = r.mods.map(m => `${m.delta > 0 ? '+' : '−'}${Math.abs(m.delta)}(${m.label})`);
+  let s = ` ${r.base}${parts.length ? ' ' + parts.join(' ') : ''}`;
+  if (r.total !== r.raw) s += ` →最低${r.min}`;
+  return s;
+}
+
+/**
+ * コマンド取得ボタンのラベル。
+ * CO Staff がイニシアチブで取る場合だけカードを引かないので文言を変える。
+ * @param {string} unitId
+ * @returns {string}
+ */
+function _cmdDrawLabel(unitId) {
+  if (!getActivated(unitId) && hasFixedInitiative(unitId)) {
+    return `＋${CO_STAFF_INITIATIVE_COMMANDS} コマンド取得（CO Staff固定・カード不要）`;
+  }
+  return '🃏 カードを引いてコマンド取得';
 }
 
 // ===== 戦闘解決ボタン 有効/無効切り替え =====
