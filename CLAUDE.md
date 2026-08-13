@@ -2,6 +2,21 @@
 
 > 全体の実装状況・未実装項目の棚卸し・優先度は **ROADMAP.md**（ルールブック全13章 × 実装状況マトリクス）を参照。
 
+## ドキュメント同期ルール（明文化・必須）
+
+ルール実装に関わるファイル（`js/data/*`・`los.js`・`placement.js`・`enemy-contact.js`・
+`pc-resolve.js`・`command.js`・その他ルールブックの節を実装するモジュール）を変更したら、
+**同じ作業の中で**以下を必ず更新する。「あとでまとめて更新」は禁止：
+
+1. **ROADMAP.md** の該当章・節のステータス（✅/🟡/⬜/⛔）とメモ欄
+2. **roadmap.html** の同じ項目のデータ（ROADMAP.mdとステータス・メモがズレないようにする）
+3. ルールブック（FOF.pdf / campaign PDF等）を参照して確認した内容は、結論だけでなく
+   **どのページ・どの節で確認したか**をメモ欄か仕様書（CONTACT_LEVEL_SPEC.md 等）に残す
+   → 次回セッションで同じ調査をやり直さずに済むようにするため
+
+このルールの目的: 仕様書（ROADMAP.md）とコードの実装状況が常に一致している状態を保ち、
+別タスクに戻ったときの調査コスト・文脈のズレを防ぐ。
+
 ## 現在の状態
 - マップ描画・ユニット配置・ドラッグ移動：完成
 - VOF マーカー（直接射撃 S/A/H/P）：完成
@@ -36,13 +51,17 @@
 - PCドローチャート（活動レベル×A/B/C→Auto/ドロー枚数）データ設定：完成（pc.js PC_DRAW_CHART / getPCDraw）
 - PC解決ロジック §8.2.4（pc-resolve.js）：接触するかの判定をカード右クリック「PC解決」から実行。Auto/N枚ドロー（人間が1枚ずつ引く）に対応：完成
 - 敵接触タイプ判定 §8.3（enemy-contact.js）：シナリオ別R#テーブル汎用エンジン(scenario-tables.js) + Mission1のEnemy Force Package/Higher HQ Eventデータ投入。武器種別(LMG/HMG)・FO種別(Artillery/Mortar)等の追加ランダム判定（choices）にも対応：完成
+- Squad袋引き・装備プール（enemy-contact.js drawSquadFromPool/equipmentPools）：Grenadier分隊(Gp1-4, rating A/A/A/S)はカード画像で確認した「Draw one at random each time a squad is placed」を実装（ランダム袋引き・使用済み管理）。HMG/LMG/迫撃砲/スポッターは同一性能の複数個体を順番割当（ランダムではない）：完成
+- 敵ユニット実配置 §8.4.3（enemy-placement.js）：§8.4.2方向ドロー→§8.4.1距離解決→addUnitToCardで実際に盤面配置。Squad袋引き/装備プールで解決できたものだけ自動配置し、Sniper・FLAK 36・Patrol等まだ駒が無いものは「手動配置してください」と明示。PC解決フロー（card-context-menu.js）に「配置方向ドロー」ボタンとして接続済み：完成（cover探索・友軍重なり回避・PDF/VOF自動付与は未）
 - R#の実カード化：カード番号から `floor((n-1)*denom/50)+1` でR#を再現し、共有デッキから実際に1枚引く方式に統一（Math.random不使用）：完成
 - LOS/距離判定 §5.2.1（los.js）：8方向・Close/Long/Very Longレンジ・Hill標高越え対応。副産物としてncm.jsの地形防御(defHigh/defLow)判定の逆転バグを修正：完成
 - 配置距離判定 §8.4.1（placement.js）とマップ拡張 §8.4.5（grid.js expandMapEdge / terrain-deck.js）：Max LOS/Range配置がマップ外に出る場合、地形カードを引いて行/列を拡張：完成
 - roadmap.html：ROADMAP.mdの内容を見て操作できるインタラクティブなダッシュボード（ステータス切替・優先度チェックリスト・Markdown書き出し）：完成
 - 初期配置: 未配置部隊プール（スタートエリア下）→ドラッグでスタートエリア/盤面へ配置、プール空で行が消える：完成
 - 拡大率: 初期139%固定・マウスホイールズーム無効（ズームはヘッダー操作のみ）：完成
-- コマンド(AP)取得UI：HQ選択→右パネルでAP表示＋手動±＋「カード引いてコマンド取得」（activated自動加算・No Contact時+1）：完成（取得=自動／消費=人間が±）
+- コマンド(AP)取得UI：HQ選択→右パネルでAP表示＋手動±＋「カード引いてコマンド取得」：完成（取得=自動／消費=人間が±）
+  - §4.1.2 の修正を全実装（Pinned−1 / Green−1 / Vet+1 / Cover+1 / VOF S−1・A−2・H/S!/Grenade/Incoming/AirStrike−3 / No Contact+1）＋最低値クランプ（起動=1・イニシアチブ=0）。取得時に内訳を表示
+  - CO Staff のイニシアチブは例外で**カードを引かず固定1・修正適用外**（FOF.pdf p.19 §4.1.1 / p.20 §4.1.2）
 - 状態保存・復元（localStorage・persistence.js）：完成。リロードで駒配置・マーカー・状態が残る
   - 2層version（setup層=マップ/駒/練度・保持／play層=VOF/PC/状態/AP・壊れやすい）
   - ★スキーマ変更時は persistence.js の SETUP_VERSION / PLAY_VERSION を +1（PLAY上げれば駒配置は残しplay層だけ破棄）
@@ -77,13 +96,19 @@ HIT判定カードと結果判定カードの間など、連続ドロー中は�
 - [ ] コマンドフェーズの起動セグメント（HQ起動順・配下への配分・消費上限チェック）
 - [ ] BN HQ ユニット定義の追加（commandRole:'bn_hq' を付けるだけで箱が機能する）
 - [x] ~~PC解決ロジック（§8.2.4接触判定＋§8.3タイプ判定）~~ 完成
-- [ ] §8.4.3 実際の敵ユニット生成・配置（placement.jsで決めた座標にユニットを実際に置く・cover探索・友軍との重なり回避）
-- [ ] §8.4.2 方向判定と§8.4.1距離判定の実戦UI接続（現状はplacement.js単体では動くが、PC解決フローからは未呼び出し）
+- [x] ~~§8.4.3 実際の敵ユニット生成・配置（§8.4.2方向＋§8.4.1距離→addUnitToCard）~~ 完成（cover探索・友軍重なり回避・PDF/VOF自動付与は未）
+- [x] ~~§8.4.2 方向判定と§8.4.1距離判定の実戦UI接続~~ 完成（PC解決フローの「配置方向ドロー」ボタン）
+- [ ] Sniper・FLAK 36 AA Gun・Patrol Squad のユニット定義追加（units-normandy.jsに未定義。placeResolvedUnitsは「駒が未定義」と表示するのみで配置しない）
+- [ ] 配置後のcover探索・友軍ユニットとの重なり回避（§8.4.3詳細）・PDF/VOF自動付与
 - [x] ~~活動レベル No Contact 時の HQ コマンド判定 +1~~ 完成（コマンド取得時に+1）
 
 ## 既知の課題・ブロッカー
 - Visibility は setVisibility()/getVisibility() 実装済みだが UI なし（シナリオヘッダーと合わせて実装予定）
 - Best VOF 自動選択（複数 VOF）は Phase 2 以降
+
+## プロジェクト専用スキル（.claude/skills/）
+- **verify-rule**: ルールブック(FOF.pdf/campaign PDF)確認→実装突き合わせ→ROADMAP.md/roadmap.html同期を一気通貫で行う
+- **scaffold-mission**: campaign PDFのミッション章からmission-01.jsと同じスキーマでmission-0X.jsを埋める（Mission2〜7投入用）
 
 ## ファイル構成
 ```
@@ -103,7 +128,8 @@ HIT判定カードと結果判定カードの間など、連続ドロー中は�
     ├── pdf.js        PDF マーカー管理
     ├── pc.js         PC（Potential Contact）マーカー管理（配置・表示・ドローチャート）
     ├── pc-resolve.js PC解決エンジン（§8.2.4 接触するかの判定）
-    ├── enemy-contact.js 敵接触タイプ判定（§8.3 パッケージ判定＋武器/FO種別等の追加判定）
+    ├── enemy-contact.js 敵接触タイプ判定（§8.3 パッケージ判定＋武器/FO種別等の追加判定＋Squad袋引き/装備プール）
+    ├── enemy-placement.js 敵ユニット実配置（§8.4.3 方向ドロー→距離解決→addUnitToCardで盤面配置）
     ├── los.js        LOS/距離判定（§5.2.1 8方向・レンジ・Hill標高越え）
     ├── placement.js  敵配置の距離・方向解決（§8.4.1/8.4.2）
     ├── persistence.js 状態保存・復元（localStorage・2層version）

@@ -30,7 +30,7 @@ Series Rules 3rd Edition の目次と現状実装を照合した棚卸し。
 |----|------|------|
 | 3.1 友軍上位HQイベント | 🟡 | カード引き→HQイベント表。ミッションごとに内容が違う（PDF確認済＝FoF_Deluxe_Normandy_Campaign.pdf）。攻勢系(1,2,4,6,7)はほぼ共通テンプレ＋確率差、Combat Patrol系(3,5)は全く別イベントセット。**Mission1データは`scenario-tables.js`汎用エンジン＋`mission-01.js`の`tables.friendlyHigherHQEvents`/`enemyHigherHQEvents`に投入済み**。フェーズ処理・UI接続は未 |
 | 3.2 敵活動フェーズ(防衛) | ⬜ | 防衛ミッション用 |
-| 3.3 友軍コマンドフェーズ | ⬜ | **ゲームの心臓部**。起動→コマンド取得→消費 |
+| 3.3 友軍コマンドフェーズ | ⬜ | **ゲームの心臓部**。起動→コマンド取得→消費。インパルス順序を FOF.pdf p.15-16（§3.3.1/§3.3.2）で確認済：**起動セグメント**①BN HQ→②CO HQ→③PLT HQ/CO Staff（CO HQに起動された分のみ）／**イニシアチブセグメント**④CO HQ Init→⑤PLT HQ Init→⑥CO Staff Init（**カードを引かず固定1・修正なし**）→⑦General Initiative（HQ不要・誰にでも使える・save不可・単一小隊ミッションは半減）。実装は現状インパルス概念なし（ユニット個別に引くだけ） |
 | 3.4 敵活動フェーズ(攻撃) | ⬜ | |
 | 3.5 相互捕虜・退却 | ⬜ | |
 | 3.6 AT戦闘・車両移動 | ⛔ | 車両は対象外 |
@@ -42,7 +42,7 @@ Series Rules 3rd Edition の目次と現状実装を照合した棚卸し。
 ### 4.0 Command & Control（指揮）— ★コアループ
 | 節 | 状況 | メモ |
 |----|------|------|
-| 4.1 コマンド | 🟡 | AP箱(command.js)＋取得UI(HQ選択→カード引き自動加算/手動±)＋No Contact+1 ✅。**起動セグメント・配下配分・消費上限チェック未** |
+| 4.1 コマンド | 🟡 | AP箱(command.js)＋取得UI(HQ選択→カード引き自動加算/手動±)＋No Contact+1 ✅。消費上限6/4・繰越上限(Green3/2・Line6/4・Vet9/6)のテーブル値は §4.1.3(p.20) と一致 ✅。**FOF.pdf p.18-20(§4.1.1〜4.1.3)と突き合わせた未実装/ズレ**：(a)誰が誰を起動するかの階層（BN HQ→CO HQ／CO HQ→PLT HQ・CO Staff）が無く、全commandRoleに同じ「CO HQに起動された」チェックが出る (b)BN HQはカードを引かず最大6/4固定・save不可 (c)~~CO Staffのイニシアチブ~~ **修正済**：カードを引かず固定1・修正適用外にした（command.js `hasFixedInitiative`/`CO_STAFF_INITIATIVE_COMMANDS`。デッキ非消費をブラウザで確認） (d)実装の`setActivated(true)`は「このターン引いた」の意味で、ルール上のActivatedとは別概念（起動セグメント実装時に衝突する） (e)General Initiative Impulse 未実装 (f)~~修正はNo Contact+1のみ~~ **修正済**：§4.1.2 A/B/C 全部（Pinned-1/Green-1/Vet+1/Cover+1/VOF S-1・A-2・H/S!/Grenade/Incoming/AirStrike-3/No Contact+1）＋最低値クランプ（起動=1・イニシアチブ=0）を command.js `getCommandModifiers`/`applyCommandModifiers` に実装。UIに内訳を表示。※ルール本文に列挙の無いVOF（Mines/BoobyTrap/Demo/Pending/Illum/P）は修正0として扱う (g)Saved Commandsゾーンの概念が無く currentAP 1本のため繰越上限の切り捨てが効かない |
 | 4.2 アクション | 🟡 | ドラッグ移動のみ。**アクション体系(移動/射撃/Rally/Spot等)とAP消費未** |
 | 4.3 通信(無線/電話/ランナー) | ⬜ | Chain of Command の通信制約 |
 | 4.4 発煙・照明(Pyrotechnics) | ⬜ | |
@@ -83,8 +83,8 @@ Series Rules 3rd Edition の目次と現状実装を照合した棚卸し。
 |----|------|------|
 | 8.1 敵接触(活動レベル) | ✅ | 4段階自動算出・表示・更新 |
 | 8.2 PCマーカー | 🟡 | 配置✅・ドローチャートデータ✅・**接触するか判定(pc-resolve.js)✅**（カード右クリック「PC解決」） |
-| 8.3 接触タイプ判定 | 🟡 | 敵パッケージ表(enemy-contact.js)。Mission1データ投入済み（German Contact Packages・Enemy Force Packages）。PC解決フローに接続済み。**パッケージ内の追加ランダム判定（武器種別LMG/HMG・FO種別Artillery/Mortar・追加装備有無等）も実装済み**（`choices`+`resolveValueSpec`、R#明記時はその比率／なければ§1.2.7の一般則でdenom=2）。**実際の敵ユニット配置(§8.4)は未** |
-| 8.4 接触位置 | 🟡 | **距離判定(placement.js)実装済み**：Point Blank/Close/Long/Very Long固定距離 + Max LOS/Range（los.jsで実際にLOSが届く最遠カードを算出）。R#条件付き距離（Strong Point等の共有ロール）も対応。Mission1の全12パッケージにdistanceSpec投入済み。方向(§8.4.2)はunitPlacementDirectionテーブル既存分と接続可能。**§8.4.5 マップ拡張も実装済み**：配置がマップ外に出る場合、grid.jsのexpandMapEdge()が地形カードを引いて行/列を追加（LOSが通る限り拡張を続け、遮られたら停止）。terrain-deck.jsで補充カードを供給。**実際のユニット生成・cover探索・友軍との重なり回避(§8.4.3)は未** |
+| 8.3 接触タイプ判定 | ✅ | 敵パッケージ表(enemy-contact.js)。Mission1データ投入済み（German Contact Packages・Enemy Force Packages）。PC解決フローに接続済み。パッケージ内の追加ランダム判定（武器種別LMG/HMG・FO種別Artillery/Mortar・追加装備有無等）も実装済み（`choices`+`resolveValueSpec`、R#明記時はその比率／なければ§1.2.7の一般則でdenom=2）。**Squad袋引き（Grenadier Gp1-4、"Draw one at random each time a squad is placed."）を実装（rating A/A/A/S を画像確認・units-normandy.jsに反映）。HMG/LMG/迫撃砲/スポッターは装備プール（順番割当）で解決** |
+| 8.4 接触位置 | 🟡 | 距離判定(placement.js)実装済み：Point Blank/Close/Long/Very Long固定距離 + Max LOS/Range（los.jsで実際にLOSが届く最遠カードを算出）。R#条件付き距離（Strong Point等の共有ロール）も対応。方向(§8.4.2)はカード右クリックのPC解決フローから「配置方向」ドローとして接続済み（enemy-placement.js resolveDirection）。§8.4.5 マップ拡張も実装済み（grid.js expandMapEdge・terrain-deck.js）。**§8.4.3 実際のユニット生成・配置も実装済み**（enemy-placement.js placeResolvedUnits → addUnitToCard で盤面に実配置。Squad袋引き/装備プールで解決できたものだけ自動配置し、Sniper・FLAK 36・Patrol等の未定義ユニットは「手動配置してください」と明示）。**cover探索・友軍との重なり回避・PDF/VOF自動付与は未** |
 | 8.5 敵スポット | ⬜ | unspotted状態はあるがスポット判定なし |
 | 8.6 敵の挙動(Behavior) | ⬜ | 敵AI（Activity Check） |
 | 8.7 地雷・ブービートラップ | ⬜ | VOF種別あり、パッケージ処理未 |

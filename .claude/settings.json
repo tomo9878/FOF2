@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__voicevox__speak",
+      "mcp__confluence__confluence_get_page",
+      "mcp__confluence__confluence_search",
+      "mcp__confluence__confluence_get_page_children",
+      "mcp__confluence__confluence_update_page",
+      "mcp__confluence__confluence_create_page",
+      "mcp__plugin_autos-search_confluence__confluence_get_page",
+      "mcp__plugin_autos-search_confluence__confluence_search",
+      "mcp__plugin_autos-search_confluence__confluence_update_page",
+      "mcp__plugin_autos-search_confluence__confluence_create_page",
+      "mcp__jira__jira_search",
+      "mcp__jira__jira_get_board_issues",
+      "mcp__jira__jira_get_agile_boards",
+      "mcp__jira__jira_get_user_profile",
+      "mcp__gmail__get_message",
+      "mcp__gmail__get_thread",
+      "mcp__google-calendar__list_events",
+      "mcp__Claude_in_Chrome__list_connected_browsers",
+      "mcp__playwright__browser_evaluate",
+      "mcp__Claude_Preview__preview_eval"
+    ]
+  }
+}
