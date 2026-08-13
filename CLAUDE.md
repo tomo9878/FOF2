@@ -66,6 +66,9 @@
   - `activated`（上位HQに起動された）と `drawn`（このターン取得済み）は別フラグ。クリーンアップフェーズで `resetImpulseFlags()` が両方を落とす（保有APは残す）
   - 「⏹ インパルス終了（残りを Save）」で `finishImpulse()` が残りAPを繰越上限（§4.1.3）で切り捨て保存。超過分は破棄
   - 1インパルス消費上限（昼6・夜4／§4.1.3）：`expendCommand()` が消費カウンタを持ち、上限で「－」を無効化。＋は取り消し（カウンタも戻る）。General Initiative は対象外
+- インパルス順序制御 §3.3.1/§3.3.2（右パネル「🎖 インパルス」）：7インパルス（BN HQ→CO HQ起動→PLT/Staff起動→CO HQ Init→PLT Init→CO Staff Init→General Init）を順に進める。該当しないユニットの取得ボタンは理由つきで無効化。クリーンアップで先頭へ戻る：完成
+- 起動アクション §4.2.1a（CO HQ/BN HQ の右パネル）：1コマンド消費・自動成功で下位HQ/Staffを起動。分隊・武器チーム・LAT・上位HQ・自分自身は起動不可、二重起動不可、AP不足/消費上限で不可：完成
+- 命令の発令可否 `canGiveOrder()` §4.1.1（Command Reference Table 右列）：BN HQ=全員／CO HQ・CO XO・1st Sgt・GySgt=自分より下位のみ／PLT HQ=自小隊＋全LAT／HQ以外は発令不可。CO Staff の序列は `staffRank`（xo/1sgt）で細分：完成
 - General Initiative インパルス §3.3.2d（右パネル「⭐ General Initiative」）：人間がカードを引き★をそのまま取得（§4.1.2の修正なし）。単一小隊ミッションは半分・切り捨て。HQ不要・通信不要・繰越不可。共有プールは仮想ユニット `GENERAL_INIT`：完成
 - BN HQ インパルス §3.3.1a/§4.1.1（右パネル「🏛 BN HQ インパルス」）：状態4種から解決。盤外＋通信可→CO HQ自動起動（カード非消費）／盤上→最大6・4を仮想ユニット `BN_HQ` に付与（繰越不可・クリーンアップで破棄）／通信不通・使用不能→起動なし：完成
 - 状態保存・復元（localStorage・persistence.js）：完成。リロードで駒配置・マーカー・状態が残る
@@ -99,7 +102,9 @@ HIT判定カードと結果判定カードの間など、連続ドロー中は�
 - [ ] Visibility UI（シナリオヘッダーエリアに Daylight/Night/Fog トグル）
 - [ ] Concentrate Fire / Grenade Miss / Demo Miss フラグ（cardVOFMap 拡張）
 - [x] ~~コマンドシステム簡略版UI（HQ選択→AP表示＋手動±＋カード引き取得）~~ 完成
-- [ ] コマンドフェーズの起動セグメント（HQ起動順・配下への配分）※消費上限チェックは完成
+- [x] ~~コマンドフェーズの起動セグメント（HQ起動順・配下への配分・消費上限チェック）~~ 完成
+- [ ] 駒の表裏（command side / Fire Team side・§1.2.3B）— Activate の前提条件チェックに必要
+- [ ] Attachment の小隊割当（§2.3.2 Mission Log）— PLT HQ の命令範囲判定に必要（今はユニットIDの `US_nPLT_` 接頭辞で小隊を判定している）
 - [x] ~~BN HQ の箱~~ 完成（盤面駒ではなく仮想ユニット `BN_HQ` として実装。盤上に上位HQリーダーの駒が要る場合は別途ユニット定義が必要）
 - [x] ~~PC解決ロジック（§8.2.4接触判定＋§8.3タイプ判定）~~ 完成
 - [x] ~~§8.4.3 実際の敵ユニット生成・配置（§8.4.2方向＋§8.4.1距離→addUnitToCard）~~ 完成（cover探索・友軍重なり回避・PDF/VOF自動付与は未）

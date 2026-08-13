@@ -21,7 +21,8 @@ import {
   hasFixedInitiative, CO_STAFF_INITIATIVE_COMMANDS, applyCommandModifiers,
   getCommandsDrawn, setCommandsDrawn, getActivatorRole, COMMAND_ROLE_LABELS,
   finishImpulse, expendCommand, undoExpendCommand, canExpendCommand,
-  getSpentThisImpulse,
+  getSpentThisImpulse, isUnitEligibleNow, listActivationTargets,
+  activateSubordinate, ACTIVATE_COST,
 } from './command.js';
 import { drawActionCard } from './deck.js';
 import {
@@ -337,6 +338,14 @@ const TYPE_LABELS = {
   lat:         'LAT',
 };
 
+/** 右パネルに今表示しているユニット（インパルス変更時の再描画用） */
+let _rpUnit = null;
+
+// インパルスが進んだら、表示中ユニットの取得ボタン可否を描き直す
+document.addEventListener('impulse:changed', () => {
+  if (_rpUnit) updateRightPanelUnit(_rpUnit);
+});
+
 /**
  * 右パネルの「選択ユニット」セクションを更新する。
  * showContextMenu() から自動で呼ばれる。
@@ -345,6 +354,7 @@ const TYPE_LABELS = {
 export function updateRightPanelUnit(unit) {
   const el = document.getElementById('rpUnitInfo');
   if (!el) return;
+  _rpUnit = unit;   // インパルスが進んだときに描き直せるよう覚えておく
 
   const s      = getUnitStrength(unit.id);
   const state  = getUnitState(unit.id);
@@ -383,6 +393,7 @@ export function updateRightPanelUnit(unit) {
     const expendMax = getExpendLimit();
     const activated = getActivated(unit.id);
     const drawn     = getCommandsDrawn(unit.id);
+    const eligible  = isUnitEligibleNow(unit.id);   // 今のインパルスで取得できるか
     // 起動チェックは「上位HQに起動されうる役職」にだけ出す（§4.1.1 Command Reference Table）
     const actRole   = getActivatorRole(unit.id);
     const activatedHtml = actRole
@@ -402,7 +413,9 @@ export function updateRightPanelUnit(unit) {
         <div class="rp-cmd-info">繰越上限 ${carryMax} / 1インパルス消費上限 ${expendMax}</div>
         <div class="rp-cmd-spent" id="rpCmdSpent"></div>
         ${activatedHtml}
-        <button class="rp-draw-btn" id="rpCmdDraw" ${drawn ? 'disabled' : ''}>${_cmdDrawLabel(unit.id)}</button>
+        ${_activationTargetsHtml(unit.id)}
+        <button class="rp-draw-btn" id="rpCmdDraw" ${drawn || !eligible.ok ? 'disabled' : ''}>${_cmdDrawLabel(unit.id)}</button>
+        ${!drawn && !eligible.ok ? `<div class="rp-act-reason">${eligible.reason}</div>` : ''}
         <button class="rp-finish-btn" id="rpCmdFinish">⏹ インパルス終了（残りを Save）</button>
       </div>
     `;
@@ -447,6 +460,18 @@ function _bindCommandButtons(unitId) {
     if (minusEl) minusEl.disabled = !canExpendCommand(unitId);
   };
   _bindFinishButton(unitId, refresh);
+
+  // §4.2.1a 起動ボタン（CO HQ・BN HQ のみ表示される）
+  document.querySelectorAll('[data-activate]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const r = activateSubordinate(unitId, btn.dataset.activate);
+      if (!r.ok) return;
+      refresh();
+      updateRightPanelUnit(_rpUnit);   // 起動済み表示・残AP・消費カウンタを反映
+      document.dispatchEvent(new CustomEvent('board:changed'));
+    });
+  });
 
   document.getElementById('rpCmdMinus')?.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -515,6 +540,27 @@ function _bindCommandButtons(unitId) {
     }
     document.dispatchEvent(new CustomEvent('board:changed'));
   });
+}
+
+/**
+ * §4.2.1a Activate: 起動できる役職なら、対象一覧と「起動(1)」ボタンを組み立てる。
+ * 起動できない役職（PLT HQ・CO Staff・一般ユニット）では何も出さない。
+ * @param {string} unitId
+ * @returns {string}
+ */
+function _activationTargetsHtml(unitId) {
+  const targets = listActivationTargets(unitId);
+  if (!targets.length) return '';
+  const rows = targets.map(t => {
+    if (t.activated) {
+      return `<div class="rp-act-row"><span class="rp-act-name">${t.label}</span><span class="rp-act-done">✔ 起動済み</span></div>`;
+    }
+    return `<div class="rp-act-row">
+      <span class="rp-act-name">${t.label}</span>
+      <button class="rp-act-btn" data-activate="${t.id}" ${t.ok ? '' : `disabled title="${t.reason}"`}>起動 (${ACTIVATE_COST})</button>
+    </div>`;
+  }).join('');
+  return `<div class="rp-act-title">§4.2.1a 下位HQ/Staff を起動（1コマンド・自動成功）</div>${rows}`;
 }
 
 /**

@@ -15,7 +15,8 @@ import {
   resetImpulseFlags, resolveBNHQImpulse, getBNHQStatus, setBNHQStatus,
   BN_HQ_STATUS_LABELS, resolveGeneralInitiative, getSinglePlatoonMission,
   applyScenarioCommandSettings, getCurrentAP, changeCurrentAP,
-  getCommandsDrawn, setCommandsDrawn, GENERAL_INIT_UNIT_ID,
+  getCommandsDrawn, setCommandsDrawn, GENERAL_INIT_UNIT_ID, BN_HQ_UNIT_ID,
+  getCurrentImpulse, advanceImpulse, isUnitEligibleNow,
 } from './command.js';
 
 // ===== window へ公開（HTML の onclick から呼ぶため） =====
@@ -48,12 +49,46 @@ function nextPhase() {
   document.querySelector('.phase-indicator').textContent = '▶ ' + PHASES[phaseIdx];
   // クリーンアップ（§3.8）で全HQの起動・取得済みフラグを落とす（保有コマンドは残す）
   if (PHASES[phaseIdx] === 'クリーンアップ') {
-    resetImpulseFlags();
-    syncGeneralInitPanel();
+    resetImpulseFlags();   // 起動/取得済み/消費カウンタを落とし、インパルスも先頭へ戻す
+    syncImpulsePanel();
     document.dispatchEvent(new CustomEvent('board:changed'));
   }
 }
 window.nextPhase = nextPhase;
+
+// ===== インパルスの順序（§3.3.1 / §3.3.2）=====
+// 1つのインパルスを終えてから次へ進む（p.18）。今のインパルスに該当しないユニットの
+// 取得ボタンは無効化し、理由を表示する。
+function initImpulsePanel() {
+  const btn = document.getElementById('impulseNextBtn');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    advanceImpulse();
+    syncImpulsePanel();
+    document.dispatchEvent(new CustomEvent('board:changed'));
+  });
+  syncImpulsePanel();
+}
+
+/** インパルス表示と、それに連動する各ボタンの有効/無効を更新する */
+function syncImpulsePanel() {
+  const imp = getCurrentImpulse();
+  const now = document.getElementById('impulseNow');
+  const seg = document.getElementById('impulseSeg');
+  const next = document.getElementById('impulseNextBtn');
+  if (now) now.textContent = `${imp.index + 1}. ${imp.label}`;
+  if (seg) seg.textContent = imp.segment === 'activation' ? '起動セグメント' : 'イニシアチブ・セグメント';
+  if (next) {
+    next.disabled = imp.last;
+    next.textContent = imp.last ? 'コマンドフェーズ終了' : '次のインパルスへ ▶';
+  }
+  // BN HQ / General Initiative のボタンも今のインパルスに合わせる
+  const bnBtn = document.getElementById('bnHQResolveBtn');
+  if (bnBtn) bnBtn.disabled = !isUnitEligibleNow(BN_HQ_UNIT_ID).ok;
+  syncGeneralInitPanel();
+  // 右パネルで選択中のユニットがあれば再描画（取得ボタンの可否が変わるため）
+  document.dispatchEvent(new CustomEvent('impulse:changed'));
+}
 
 // ===== BN HQ インパルス（§3.3.1a / §4.1.1）=====
 // カードは引かない。盤外・通信可なら CO HQ を自動起動、盤上なら最大コマンドを付与する。
@@ -135,8 +170,11 @@ function syncGeneralInitPanel() {
   if (val)  val.textContent = getCurrentAP(GENERAL_INIT_UNIT_ID);
   if (draw) {
     const done = getCommandsDrawn(GENERAL_INIT_UNIT_ID);
-    draw.disabled = done;
-    draw.textContent = done ? '✔ このターン取得済み' : '🃏 カードを引いて General Initiative';
+    const eligible = isUnitEligibleNow(GENERAL_INIT_UNIT_ID).ok;
+    draw.disabled = done || !eligible;
+    draw.textContent = done ? '✔ このターン取得済み'
+      : eligible ? '🃏 カードを引いて General Initiative'
+      : '（General Initiative インパルスではない）';
   }
   if (note) {
     note.textContent = getSinglePlatoonMission()
@@ -197,10 +235,11 @@ initContactLevel();   // 活動レベルの購読開始＋初回算出
 document.addEventListener('board:changed', save);  // 盤面変更のたび自動保存
 
 // リセット（HTML ボタンから呼ぶ）
-window.resetPlayState = () => { resetPlay(scenario); syncBNHQPanel(); }; // プレイ状態だけ初期化（駒は残す）
+window.resetPlayState = () => { resetPlay(scenario); syncBNHQPanel(); syncImpulsePanel(); }; // プレイ状態だけ初期化（駒は残す）
 window.newGame        = () => { clearStorage(); location.reload(); };  // 全初期化
 initContextMenu();
 initCardContextMenu();
+initImpulsePanel();
 initBNHQPanel();
 initGeneralInitPanel();
 initZoom();

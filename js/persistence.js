@@ -22,7 +22,10 @@ import { cardVOFMap, renderCardVOF } from './vof.js';
 import { cardPDFMap, renderCardPDFs } from './pdf.js';
 import { cardPCMap, renderCardPC } from './pc.js';
 import { serializeCover, restoreCover, clearAllCover } from './cover.js';
-import { unitCommandMap, getBNHQStatus, setBNHQStatus, BN_HQ_STATUS } from './command.js';
+import {
+  unitCommandMap, getBNHQStatus, setBNHQStatus, BN_HQ_STATUS,
+  getImpulseIndex, setImpulseIndex, resetImpulse,
+} from './command.js';
 import { unitExperienceMap } from './campaign.js';
 import { getVisibility, setVisibility } from './ncm.js';
 import { recomputeActivityLevel } from './contact.js';
@@ -90,6 +93,7 @@ export function serialize() {
       detached: [...detachedLATsMap],
       visibility: getVisibility(),
       bnHQ:     getBNHQStatus(),
+      impulse:  getImpulseIndex(),
     },
   };
 }
@@ -146,6 +150,7 @@ function _applyPlay(play) {
   (play.detached ?? []).forEach(([p, l]) => detachedLATsMap.set(p, l));
   setVisibility(play.visibility ?? 0);
   if (play.bnHQ) setBNHQStatus(play.bnHQ);
+  setImpulseIndex(play.impulse ?? 0);
   // 描画
   cardVOFMap.forEach((_, c) => renderCardVOF(c));
   cardPDFMap.forEach((_, c) => renderCardPDFs(c));
@@ -192,6 +197,7 @@ export function resetPlay(scenario) {
   detachedLATsMap.clear();
   resetSquadPools();
   setBNHQStatus(BN_HQ_STATUS.OFF_MAP_COMM); // BN HQ は原則盤外から始まる（§4.1.1）
+  resetImpulse();                            // インパルスも先頭（BN HQ）へ
   setVisibility(scenario.visibility === 'limited' ? 1 : 0);
 
   // 全カード・全駒のマーカー/バッジを再描画（消去を反映）

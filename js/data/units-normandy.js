@@ -37,9 +37,11 @@ export const UNITS = {
   'A2': [
     { id:'US_CO_HQ',    type:'weapon_team', faction:'friendly', namedFireTeam:true, commandRole:'co_hq',
       src:'images/HQ_04-CO.png',       srcReduced:'images/HQ_04-COb.png',      label:'CO HQ' },
-    { id:'US_CO_XO',    type:'weapon_team', faction:'friendly', namedFireTeam:true, commandRole:'co_staff',
+    // staffRank: CO Staff 内の序列（§4.1.1 Command Reference Table p.18）。
+    // XO は「上位HQ以外の全ユニット」、1st Sgt は「上位HQと CO XO 以外」に命令できる。
+    { id:'US_CO_XO',    type:'weapon_team', faction:'friendly', namedFireTeam:true, commandRole:'co_staff', staffRank:'xo',
       src:'images/HQ_05-XO.png',       srcReduced:'images/HQ_05-XOb.png',      label:'CO XO' },
-    { id:'US_CO_1SGT',  type:'weapon_team', faction:'friendly', namedFireTeam:true, commandRole:'co_staff',
+    { id:'US_CO_1SGT',  type:'weapon_team', faction:'friendly', namedFireTeam:true, commandRole:'co_staff', staffRank:'1sgt',
       src:'images/HQ_06-1SGT.png',     srcReduced:'images/HQ_06-1SGTb.png',    label:'CO 1st SGT' },
   ],
   'B1': [

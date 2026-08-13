@@ -93,6 +93,33 @@ export function findUnitsByCommandRole(role) {
 }
 
 /**
+ * ユニット定義を引く（分離済み LAT＝Fire Team / Assault Team も探す）。
+ * @param {string} unitId
+ * @returns {object|null}
+ */
+export function findUnitDef(unitId) {
+  for (const units of Object.values(UNITS)) {
+    for (const u of units) {
+      if (u.id === unitId) return u;
+      if (u.fireteam?.id === unitId)    return u.fireteam;
+      if (u.assaultteam?.id === unitId) return u.assaultteam;
+    }
+  }
+  return null;
+}
+
+/**
+ * そのユニットが属する小隊のキー（'US_1PLT' 等）。中隊直轄・仮想ユニットは null。
+ * LAT は親分隊の小隊に属する。
+ * @param {string} unitId
+ * @returns {string|null}
+ */
+export function getPlatoonKey(unitId) {
+  const m = /^(US_\dPLT)_/.exec(unitId ?? '');
+  return m ? m[1] : null;
+}
+
+/**
  * AP を保持できるユニットか（commandRole を持つか）。
  * @param {string} unitId
  * @returns {boolean}
@@ -177,6 +204,83 @@ export function canBeActivated(unitId) {
   return getActivatorRole(unitId) !== null;
 }
 
+// ===== 命令の発令可否（Command Reference Table の「Can give other orders to」列）=====
+//
+// FOF.pdf p.18「Command Reference Table」右列
+//   BN HQ    : Any unit
+//   CO HQ    : Any unit except higher HQs
+//   CO XO    : Any unit except higher HQs
+//   1st Sgt  : Any unit except higher HQs and the CO XO
+//   GySgt    : Any unit except higher HQs, CO XO and 1st Sgt
+//   PLT HQ / Weapon Team HQ / Tank HQ : Any Unit attached to their own platoons. Any LAT.
+// ここでの「higher HQs」は自分より上位のHQユニットを指す（CO XO から見れば BN HQ と CO HQ）。
+// CO XO・1st Sgt・GySgt が個別に名指しで除外されているのは、これらが HQ ではなく Staff だから。
+// → 結果として「自分より階級が下のユニットにだけ命令できる」という単純な序列で再現できる。
+// また各インパルスの本文（p.18-19）に「orders to **itself** or any friendly subordinate units」
+// とあるとおり、自分自身への命令は常に可能。
+
+/** 命令系統の階級（小さいほど上位）。役職に無い一般ユニットは UNIT_RANK_OTHER。 */
+export const COMMAND_RANK = {
+  bn_hq: 0,
+  co_hq: 1,
+  co_xo: 2,
+  co_1sgt: 3,
+  co_gysgt: 4,
+  plt_hq: 5,
+};
+
+/** HQ/Staff ではない一般ユニットの階級 */
+export const UNIT_RANK_OTHER = 99;
+
+/**
+ * 命令系統上の階級を返す。CO Staff は staffRank（xo / 1sgt / gysgt）で細分する。
+ * @param {string} unitId
+ * @returns {number}
+ */
+export function getCommandRank(unitId) {
+  const role = getCommandRole(unitId);
+  if (!role) return UNIT_RANK_OTHER;
+  if (role === 'co_staff') {
+    const rank = findUnitDef(unitId)?.staffRank;
+    return COMMAND_RANK[`co_${rank}`] ?? COMMAND_RANK.co_xo;
+  }
+  return COMMAND_RANK[role] ?? UNIT_RANK_OTHER;
+}
+
+/** LAT（分離した Fire Team / Assault Team）か */
+function _isLAT(unitId) {
+  return findUnitDef(unitId)?.type === 'lat';
+}
+
+/**
+ * originator が target に命令（Activate 以外の通常アクション）を出せるか。
+ * @param {string} originatorId
+ * @param {string} targetId
+ * @returns {{ok:boolean, reason:string}}
+ */
+export function canGiveOrder(originatorId, targetId) {
+  const role = getCommandRole(originatorId);
+  if (!role) return { ok: false, reason: 'HQ/Staff ではないので発令者になれない' };
+  if (originatorId === targetId) return { ok: true, reason: '自分自身への命令' };
+  if (role === 'general') return { ok: true, reason: 'General Initiative（HQ不要）' };
+  if (role === 'bn_hq')   return { ok: true, reason: 'BN HQ は全ユニットに命令できる' };
+
+  if (role === 'plt_hq') {
+    // 「自分の小隊に属するユニット」＋「あらゆる LAT」
+    if (_isLAT(targetId)) return { ok: true, reason: 'LAT には小隊を問わず命令できる' };
+    const mine = getPlatoonKey(originatorId);
+    const theirs = getPlatoonKey(targetId);
+    return mine && mine === theirs
+      ? { ok: true,  reason: '自分の小隊のユニット' }
+      : { ok: false, reason: 'PLT HQ は自分の小隊のユニットと LAT にしか命令できない' };
+  }
+
+  // CO HQ / CO Staff: 自分より下位の階級にだけ命令できる
+  return getCommandRank(targetId) > getCommandRank(originatorId)
+    ? { ok: true,  reason: '下位のユニット' }
+    : { ok: false, reason: '自分と同格以上のHQ/Staffには命令できない' };
+}
+
 // ===== 起動(Activated) / 取得済み(Drawn) =====
 //
 // この2つはルール上まったく別の概念なので別フラグで持つ:
@@ -227,6 +331,7 @@ export function setCommandsDrawn(unitId, v) {
  * 保有コマンド（Saved Commands）はここでは消さない。
  */
 export function resetImpulseFlags() {
+  resetImpulse();   // インパルスを BN HQ に戻す
   for (const [unitId, entry] of unitCommandMap) {
     entry.activated = false;
     entry.drawn = false;
@@ -569,4 +674,153 @@ export function expendCommand(unitId) {
 export function undoExpendCommand(unitId) {
   changeCurrentAP(unitId, +1);
   setSpentThisImpulse(unitId, getSpentThisImpulse(unitId) - 1);
+}
+
+// ===== §4.2.1a Activate a subordinate HQ or Staff =====
+//
+// FOF.pdf p.22 アクション表 a.
+//   Cost 1 ／ Draw: Auto（判定不要・必ず成功）
+//   Originator: CO HQ, BN HQ ／ Recipient: CO HQ→任意の下位HQ・Staff、BN HQ→CO HQ のみ
+//   「Only the BN HQ can Activate the CO HQ. Only the CO HQ can Activate PLT HQs or CO Staff.」
+// ※ 同項には「発令者・対象とも command side を向いていること（1.2.3B, 3.3.1）」ともあるが、
+//    駒の表裏（command side / Fire Team side）は未実装なのでここではチェックしない。
+
+/** Activate アクションのコマンド消費量 */
+export const ACTIVATE_COST = 1;
+
+/**
+ * originator が target を Activate できるか。
+ * @param {string} originatorId
+ * @param {string} targetId
+ * @returns {{ok:boolean, reason:string}}
+ */
+export function canActivateTarget(originatorId, targetId) {
+  const role = getCommandRole(originatorId);
+  const targets = CAN_ACTIVATE[role] ?? [];
+  if (!targets.length) {
+    return { ok: false, reason: `${COMMAND_ROLE_LABELS[role] ?? '該当ユニット'} は誰も起動できない` };
+  }
+  const targetRole = getCommandRole(targetId);
+  if (!targetRole) return { ok: false, reason: 'HQ/Staff ではないので起動できない' };
+  if (!targets.includes(targetRole)) {
+    return { ok: false, reason: `${COMMAND_ROLE_LABELS[role]} が起動できるのは ${targets.map(t => COMMAND_ROLE_LABELS[t]).join('・')} のみ` };
+  }
+  if (getActivated(targetId)) return { ok: false, reason: 'すでに起動済み' };
+  if (getCurrentAP(originatorId) < ACTIVATE_COST) return { ok: false, reason: 'コマンドが足りない' };
+  if (!canExpendCommand(originatorId)) return { ok: false, reason: 'このインパルスの消費上限に達している' };
+  return { ok: true, reason: '' };
+}
+
+/**
+ * 下位HQ/Staff を Activate する（1コマンド消費・自動成功）。
+ * @param {string} originatorId
+ * @param {string} targetId
+ * @returns {{ok:boolean, reason:string}}
+ */
+export function activateSubordinate(originatorId, targetId) {
+  const check = canActivateTarget(originatorId, targetId);
+  if (!check.ok) return check;
+  expendCommand(originatorId);
+  setActivated(targetId, true);
+  return { ok: true, reason: '' };
+}
+
+/**
+ * originator が今 Activate できる相手を列挙する（できない相手も理由つきで返す）。
+ * @param {string} originatorId
+ * @returns {Array<{id:string, label:string, ok:boolean, reason:string, activated:boolean}>}
+ */
+export function listActivationTargets(originatorId) {
+  const role = getCommandRole(originatorId);
+  const roles = CAN_ACTIVATE[role] ?? [];
+  const out = [];
+  for (const r of roles) {
+    for (const id of findUnitsByCommandRole(r)) {
+      const check = canActivateTarget(originatorId, id);
+      out.push({
+        id,
+        label: findUnitDef(id)?.label ?? id,
+        ok: check.ok,
+        reason: check.reason,
+        activated: getActivated(id),
+      });
+    }
+  }
+  return out;
+}
+
+// ===== §3.3 インパルスの順序 =====
+//
+// FOF.pdf p.15-16 §3.3.1／§3.3.2。
+// 「Complete the instructions for one Segment/Impulse before moving on to the next.」（p.18）
+// PLT HQ どうしの順番は自由（p.19「PLT HQs do not need to be selected in number order.」）。
+
+export const IMPULSE_SEQUENCE = [
+  { key: 'bn_hq',                label: 'BN HQ インパルス',                    segment: 'activation' },
+  { key: 'co_hq_activation',     label: 'CO HQ インパルス（起動）',             segment: 'activation' },
+  { key: 'plt_staff_activation', label: 'PLT HQ / CO Staff インパルス（起動）', segment: 'activation' },
+  { key: 'co_hq_initiative',     label: 'CO HQ イニシアチブ',                  segment: 'initiative' },
+  { key: 'plt_initiative',       label: 'PLT HQ イニシアチブ',                 segment: 'initiative' },
+  { key: 'co_staff_initiative',  label: 'CO Staff イニシアチブ',               segment: 'initiative' },
+  { key: 'general_initiative',   label: 'General Initiative',                  segment: 'initiative' },
+];
+
+let _impulseIdx = 0;
+
+/** @returns {{key:string, label:string, segment:string, index:number, last:boolean}} */
+export function getCurrentImpulse() {
+  return { ...IMPULSE_SEQUENCE[_impulseIdx], index: _impulseIdx, last: _impulseIdx === IMPULSE_SEQUENCE.length - 1 };
+}
+
+/** 次のインパルスへ進む（最後まで来たらそこで止まる） */
+export function advanceImpulse() {
+  if (_impulseIdx < IMPULSE_SEQUENCE.length - 1) _impulseIdx++;
+  return getCurrentImpulse();
+}
+
+/** インパルスを先頭（BN HQ）へ戻す */
+export function resetImpulse() { _impulseIdx = 0; }
+
+/** @param {number} i */
+export function setImpulseIndex(i) {
+  if (Number.isInteger(i) && i >= 0 && i < IMPULSE_SEQUENCE.length) _impulseIdx = i;
+}
+
+/** @returns {number} */
+export function getImpulseIndex() { return _impulseIdx; }
+
+/**
+ * 今のインパルスでそのユニットがコマンドを取得できるか。
+ * @param {string} unitId
+ * @returns {{ok:boolean, reason:string}}
+ */
+export function isUnitEligibleNow(unitId) {
+  const key  = getCurrentImpulse().key;
+  const role = getCommandRole(unitId);
+  const act  = getActivated(unitId);
+  const NG = (r) => ({ ok: false, reason: r });
+
+  switch (key) {
+    case 'bn_hq':
+      return unitId === BN_HQ_UNIT_ID ? { ok: true, reason: '' } : NG('今は BN HQ インパルス');
+    case 'co_hq_activation':
+      if (role !== 'co_hq') return NG('今は CO HQ インパルス（起動）');
+      return act ? { ok: true, reason: '' } : NG('起動されていない（イニシアチブ・セグメントで取得する）');
+    case 'plt_staff_activation':
+      if (role !== 'plt_hq' && role !== 'co_staff') return NG('今は PLT HQ / CO Staff インパルス（起動）');
+      return act ? { ok: true, reason: '' } : NG('起動されていない（イニシアチブ・セグメントで取得する）');
+    case 'co_hq_initiative':
+      if (role !== 'co_hq') return NG('今は CO HQ イニシアチブ');
+      return act ? NG('起動セグメントで取得済みの扱い（イニシアチブは未起動のみ）') : { ok: true, reason: '' };
+    case 'plt_initiative':
+      if (role !== 'plt_hq') return NG('今は PLT HQ イニシアチブ');
+      return act ? NG('起動セグメントで取得済みの扱い（イニシアチブは未起動のみ）') : { ok: true, reason: '' };
+    case 'co_staff_initiative':
+      if (role !== 'co_staff') return NG('今は CO Staff イニシアチブ');
+      return act ? NG('起動セグメントで取得済みの扱い（イニシアチブは未起動のみ）') : { ok: true, reason: '' };
+    case 'general_initiative':
+      return unitId === GENERAL_INIT_UNIT_ID ? { ok: true, reason: '' } : NG('今は General Initiative');
+    default:
+      return NG('不明なインパルス');
+  }
 }
