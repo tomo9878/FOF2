@@ -103,7 +103,8 @@ HIT判定カードと結果判定カードの間など、連続ドロー中は�
 - [ ] Concentrate Fire / Grenade Miss / Demo Miss フラグ（cardVOFMap 拡張）
 - [x] ~~コマンドシステム簡略版UI（HQ選択→AP表示＋手動±＋カード引き取得）~~ 完成
 - [x] ~~コマンドフェーズの起動セグメント（HQ起動順・配下への配分・消費上限チェック）~~ 完成
-- [ ] 駒の表裏（command side / Fire Team side・§1.2.3B）— Activate の前提条件チェックに必要
+- [ ] **§4.3 通信と §4.1.4 Fire Team 面 → 実装計画は COMMUNICATION_SPEC.md（ルール調査済み・Step0〜6）**
+- [ ] 駒の表裏（command side / Fire Team side・§1.2.3B）— Activate の前提条件チェックに必要（Step0。判定は `namedFireTeam` かつ `steps < maxSteps` で可能）
 - [ ] Attachment の小隊割当（§2.3.2 Mission Log）— PLT HQ の命令範囲判定に必要（今はユニットIDの `US_nPLT_` 接頭辞で小隊を判定している）
 - [x] ~~BN HQ の箱~~ 完成（盤面駒ではなく仮想ユニット `BN_HQ` として実装。盤上に上位HQリーダーの駒が要る場合は別途ユニット定義が必要）
 - [x] ~~PC解決ロジック（§8.2.4接触判定＋§8.3タイプ判定）~~ 完成
