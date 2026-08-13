@@ -26,6 +26,7 @@ import { unitCommandMap } from './command.js';
 import { unitExperienceMap } from './campaign.js';
 import { getVisibility, setVisibility } from './ncm.js';
 import { recomputeActivityLevel } from './contact.js';
+import { resetSquadPools } from './enemy-contact.js';
 
 const KEY = 'fof_save';
 const SETUP_VERSION = 1;
@@ -185,6 +186,7 @@ export function resetPlay(scenario) {
   unitNCMAdjustMap.clear();
   unitCommandMap.clear();
   detachedLATsMap.clear();
+  resetSquadPools();
   setVisibility(scenario.visibility === 'limited' ? 1 : 0);
 
   // 全カード・全駒のマーカー/バッジを再描画（消去を反映）

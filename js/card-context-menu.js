@@ -15,6 +15,7 @@ import {
 import { resolveCombatCard, getUnitIdsOnCard } from './combat.js';
 import { getPCResolutionPlan, startPCResolution, resolvePCDrawStep, finishPCResolution } from './pc-resolve.js';
 import { resolveEnemyContactType } from './enemy-contact.js';
+import { resolveDirection, placeResolvedUnits } from './enemy-placement.js';
 import { isDrawLocked, setDrawLock } from './context-menu.js';
 
 let _currentCoord = null;
@@ -430,14 +431,46 @@ function _renderPCPanel() {
   document.getElementById('pcResolveBtn')?.addEventListener('click', _onPCAutoConfirm);
   document.getElementById('pcDrawBtn')?.addEventListener('click', _onPCDraw);
   document.getElementById('pcTypeDrawBtn')?.addEventListener('click', _onPCTypeDraw);
+  document.getElementById('pcPlaceBtn')?.addEventListener('click', _onPlaceUnits);
 }
 
-/** 接触成立後（§8.3 種類判定）のステップ表示: 未判定ならボタン、判定済みなら結果 */
+/** 接触成立後（§8.3種類判定→§8.4配置）のステップ表示 */
 function _typeStepHtml(state) {
-  if (state.step !== 'done') {
+  if (state.step === 'contact_made') {
     return `<button class="rp-draw-btn" id="pcTypeDrawBtn">🃏 カードを引く（種類判定 §8.3）</button>`;
   }
-  return `${_enemyTypeHtml(state.enemyType)}<div class="rp-cs-done">✓ 解決完了</div>`;
+
+  let html = _enemyTypeHtml(state.enemyType);
+  if (state.step === 'type_resolved') {
+    html += `<button class="rp-draw-btn" id="pcPlaceBtn">🃏 カードを引く（配置方向 §8.4.2）</button>`;
+  } else if (state.step === 'done') {
+    html += _placementsHtml(state.direction, state.placements);
+    html += `<div class="rp-cs-done">✓ 解決完了</div>`;
+  }
+  return html;
+}
+
+/** §8.4 配置結果（方向判定＋各ユニットの配置可否）を表示用HTMLに変換する */
+function _placementsHtml(direction, placements) {
+  if (!direction?.direction || !placements) return '';
+  const dirLabel = { front: 'Front', left_front: 'Left Front', right_front: 'Right Front' }[direction.direction]
+    ?? direction.direction;
+  let html = `
+    <div class="rp-cs-card">
+      方向判定: カード #${direction.card.number} → R#${direction.r} → <b>${dirLabel}</b>
+    </div>
+  `;
+  html += placements.map(p => {
+    if (p.placed) {
+      const detail = p.unitId
+        ? `${p.label ?? p.unitId} を ${p.coord}（距離${p.distance}）に配置`
+        : `${p.vofType} マーカーを ${p.coord}（距離${p.distance}）に配置`;
+      return `<div class="rp-cs-card" style="color:#7ad47a">✓ ${p.name}: ${detail}</div>`;
+    }
+    const where = p.coord ? `（推定 ${p.coord}）` : '';
+    return `<div class="rp-cs-card" style="color:#d4a05a">△ ${p.name}: ${p.reason ?? '未配置'}${where}</div>`;
+  }).join('');
+  return html;
 }
 
 /** choiceResults（武器種別・FO種別等の追加判定）を表示用HTMLに変換する */
@@ -494,6 +527,23 @@ function _onPCDraw() {
 function _onPCTypeDraw() {
   if (!_pcState || _pcState.step !== 'contact_made') return;
   _pcState.enemyType = resolveEnemyContactType(_pcState.letter);
+  if (_pcState.enemyType?.package) {
+    _pcState.step = 'type_resolved'; // 続けて§8.4配置（方向ドロー）へ
+  } else {
+    _pcState.step = 'done'; // 該当パッケージなし → ここで終了
+    setDrawLock(false);
+  }
+  _renderPCPanel();
+}
+
+/** §8.4 配置ドロー（方向R#を1枚引き、距離解決とあわせて実際に配置する） */
+function _onPlaceUnits() {
+  if (!_pcState || _pcState.step !== 'type_resolved') return;
+  const direction = resolveDirection();
+  _pcState.direction = direction;
+  _pcState.placements = direction.direction
+    ? placeResolvedUnits(_pcState.coord, direction.direction, _pcState.enemyType.resolvedUnits)
+    : [];
   _pcState.step = 'done';
   setDrawLock(false);
   _renderPCPanel();

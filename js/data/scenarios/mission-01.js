@@ -85,6 +85,26 @@ export default {
   // 出典: FoF Deluxe Normandy Campaign booklet, Mission 1 - Trévières Offensive
   tables: {
 
+    // ── 敵「Squad」袋引きプール ──
+    // 出典: campaign PDF Mission1 Enemy節「Use the four Grenadier squads marked "Gr" (Gp 1-4).
+    // Draw one at random each time a squad is placed.」（p.17付近）。
+    // Enemy Force Package の units で squadPool を持つものは、ここから盤上未使用の1体を
+    // ランダムに引く（enemy-contact.js の drawSquadFromPool）。
+    squadPools: {
+      grenadier: ['GE_GR_1', 'GE_GR_2', 'GE_GR_3', 'GE_GR_4'],
+    },
+
+    // ── 装備プール（順番に「次の未使用個体」を割り当てるだけ。ランダム抽選ではない）──
+    // HMG/LMG/迫撃砲/スポッターは同一性能の複数個体（番号違い）。どの番号が来るかに
+    // ルール上の意味はないため、袋引きと違い先頭から順に割り当てる。
+    equipmentPools: {
+      hmg:         ['GE_HMG_3', 'GE_HMG_4'],
+      lmg:         ['GE_LMG_1', 'GE_LMG_2', 'GE_LMG_3', 'GE_LMG_4', 'GE_LMG_5'],
+      mortar:      ['GE_Mtr81_1'],
+      spotter_arty:['GE_Spotter_Arty1'],
+      spotter_mtr: ['GE_Spotter_Mtr2'],
+    },
+
     // §3.1 友軍 上位HQイベント表（denom=10、ターン範囲2列）
     friendlyHigherHQEvents: {
       denom: 10,
@@ -209,8 +229,8 @@ export default {
             ] } },
           ],
           units: [
-            { name: 'Mines',  distanceSpec: 'point_blank' },
-            { name: 'Sniper', distanceSpec: 'max_los_range', variantOf: 'sniper_added', whenValue: 'yes' },
+            { name: 'Mines',  kind: 'marker', vofType: 'Mines', distanceSpec: 'point_blank' },
+            { name: 'Sniper', kind: 'unit', distanceSpec: 'max_los_range', variantOf: 'sniper_added', whenValue: 'yes' },
           ] },
         { id: 2,  label: 'Incoming!', detail: 'Artillery –4 or Mortar –3. Spotter in Trench',
           flags: { pdfVof: true, spotted: false },
@@ -223,19 +243,21 @@ export default {
             ] } },
           ],
           units: [
-            { name: 'Incoming VOF', distanceSpec: 'point_blank' },
-            { name: 'Spotter',      distanceSpec: 'max_los' },
+            { name: 'Incoming VOF', kind: 'marker', distanceSpec: 'point_blank',
+              vofTypeByChoice: { key: 'fo_type', map: { artillery: 'Incoming-4', mortar: 'Incoming-3' } } },
+            { name: 'Spotter', kind: 'unit', distanceSpec: 'max_los',
+              equipmentPoolByChoice: { key: 'fo_type', map: { artillery: 'spotter_arty', mortar: 'spotter_mtr' } } },
           ] },
         { id: 3,  label: 'Sniper!', detail: 'Sniper in Basic +1 Cover',
           flags: { pdfVof: true, spotted: false },
           placement: 'Max LOS/Range.',
-          units: [{ name: 'Sniper', distanceSpec: 'max_los_range' }] },
+          units: [{ name: 'Sniper', kind: 'unit', distanceSpec: 'max_los_range' }] },
         { id: 4,  label: 'Mines and HMG Nest', detail: 'Mines / HMG with 8 ammo* in Foxholes',
           flags: { pdfVof: true, spotted: true },
           placement: 'Mines on triggering card. HMG at max LOS/Range.',
           units: [
-            { name: 'Mines', distanceSpec: 'point_blank' },
-            { name: 'HMG',   distanceSpec: 'max_los_range' },
+            { name: 'Mines', kind: 'marker', vofType: 'Mines', distanceSpec: 'point_blank' },
+            { name: 'HMG',   kind: 'unit', equipmentPool: 'hmg', distanceSpec: 'max_los_range' },
           ] },
         { id: 5,  label: 'MG Nest', detail: 'LMG with 6 ammo in Foxholes or HMG with 8 ammo* in Foxholes',
           flags: { pdfVof: true },
@@ -248,12 +270,12 @@ export default {
             ] } },
           ],
           units: [
-            { name: 'LMG', variantOf: 'weapon', whenValue: 'lmg', spotted: false,
+            { name: 'LMG', kind: 'unit', equipmentPool: 'lmg', variantOf: 'weapon', whenValue: 'lmg', spotted: false,
               distanceSpec: { denom: 10, rows: [
                 { value: 'point_blank',   ranges: { default: [1, 2] } },
                 { value: 'max_los_range', ranges: { default: [3, 10] } },
               ] } },
-            { name: 'HMG', variantOf: 'weapon', whenValue: 'hmg', spotted: true,
+            { name: 'HMG', kind: 'unit', equipmentPool: 'hmg', variantOf: 'weapon', whenValue: 'hmg', spotted: true,
               distanceSpec: 'max_los_range' },
           ] },
         { id: 6,  label: 'Strong Point', detail: "Squad in Trench / Squad in Trench. Add HMG with 8 ammo* in Bunker to one squad's card on R#1/2",
@@ -271,7 +293,10 @@ export default {
               { value: 'squad2', ranges: { default: [2, 2] } },
             ] } },
           ],
-          units: [{ name: 'Squad 1' }, { name: 'Squad 2' }] },
+          units: [
+            { name: 'Squad 1', kind: 'unit', squadPool: 'grenadier' },
+            { name: 'Squad 2', kind: 'unit', squadPool: 'grenadier' },
+          ] },
         { id: 7,  label: 'Defensive Position', detail: 'Squad in Trench / Squad + Leader (only if available) in Trench',
           flags: { pdfVof: true, spotted: false },
           placement: 'R#1-2/10 Both at Close Range. R#3-10/10 Both at max LOS/Range.',
@@ -279,27 +304,33 @@ export default {
             { value: 'close',         ranges: { default: [1, 2] } },
             { value: 'max_los_range', ranges: { default: [3, 10] } },
           ] },
-          units: [{ name: 'Squad' }, { name: 'Squad + Leader' }] },
+          // Leader追加（only if available）は自動化せず、分隊配置後に人間が判断して手動で追加する
+          units: [
+            { name: 'Squad', kind: 'unit', squadPool: 'grenadier' },
+            { name: 'Squad + Leader', kind: 'unit', squadPool: 'grenadier' },
+          ] },
         { id: 8,  label: 'Pillbox', detail: 'HMG with 8 ammo* in Pillbox',
           flags: { pdfVof: true, spotted: false },
           placement: 'Max LOS/Range.',
-          units: [{ name: 'HMG', distanceSpec: 'max_los_range' }] },
+          units: [{ name: 'HMG', kind: 'unit', equipmentPool: 'hmg', distanceSpec: 'max_los_range' }] },
         { id: 9,  label: 'Mortar Team', detail: '81mm Mortar Team with 6 ammo in Foxholes',
           flags: { pdfVof: true, spotted: false },
           placement: 'Max LOS/Range.',
-          units: [{ name: 'Mortar Team', distanceSpec: 'max_los_range' }] },
+          units: [{ name: 'Mortar Team', kind: 'unit', equipmentPool: 'mortar', distanceSpec: 'max_los_range' }] },
         { id: 10, label: 'FLAK 36 AA Gun', detail: '88mm with 6 ammo in Trench',
           flags: { pdfVof: true, spotted: true },
           placement: 'Max LOS/Range.',
-          units: [{ name: 'FLAK 36', distanceSpec: 'max_los_range' }] },
+          // FLAK 36 はまだ units-normandy.js に未定義（駒なし）。配置は手動対応。
+          units: [{ name: 'FLAK 36', kind: 'unit', distanceSpec: 'max_los_range' }] },
         { id: 11, label: 'Patrol', detail: 'Squad infiltration attempt - CSR 6',
           flags: { pdfVof: false, spotted: true },
           placement: 'Max LOS.',
-          units: [{ name: 'Patrol Squad', distanceSpec: 'max_los' }] },
+          // Patrol Squad もまだ未定義。配置は手動対応。
+          units: [{ name: 'Patrol Squad', kind: 'unit', distanceSpec: 'max_los' }] },
         { id: 12, label: 'Base of Fire', detail: 'LMG with 6 ammo out of cover',
           flags: { pdfVof: true, spotted: true },
           placement: 'Max LOS/Range.',
-          units: [{ name: 'LMG', distanceSpec: 'max_los_range' }] },
+          units: [{ name: 'LMG', kind: 'unit', equipmentPool: 'lmg', distanceSpec: 'max_los_range' }] },
       ],
     },
 

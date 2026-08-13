@@ -90,30 +90,34 @@ export const UNITS = {
   // ──────────────────────────────────────────────────────────────────────────────
 
   // ── Heer Grenadier 分隊（擲弾兵）──
+  // rating: カード印字の A(Automatic Weapons)/S(Standard) 格付け（Unit Breakdown chart, campaign PDF p.48 で画像確認）。
+  // 352nd Division Grenadier (Gp 1-4): 1-3=A, 4=S。
+  // "Use the four Grenadier squads marked 'Gr' (Gp 1-4). Draw one at random each time a squad is
+  // placed."（campaign PDF Mission1 Enemy節）→ enemy-contact.js の drawSquadFromPool() で解決する。
   'B3': [
     {
-      id: 'GE_GR_1', type: 'squad', faction: 'german',
+      id: 'GE_GR_1', type: 'squad', faction: 'german', rating: 'A',
       src: 'images/GE_GR_1Gp.png', srcReduced: 'images/GE_GR_1Gp b.png',
       label: '擲弾兵 第1分隊',
       fireteam:    { id:'GE_GR_1_FT', src:'images/GE_LAT_Fireteam_SC.png',        label:'GR ファイアチーム',  type:'lat', faction:'german' },
       assaultteam: { id:'GE_GR_1_AT', src:'images/GE_LAT_Assault Team.png',        label:'GR 突撃チーム',      type:'lat', faction:'german' },
     },
     {
-      id: 'GE_GR_2', type: 'squad', faction: 'german',
+      id: 'GE_GR_2', type: 'squad', faction: 'german', rating: 'A',
       src: 'images/GE_GR_2Gp.png', srcReduced: 'images/GE_GR_2Gp b.png',
       label: '擲弾兵 第2分隊',
       fireteam:    { id:'GE_GR_2_FT', src:'images/GE_LAT_Fireteam_SC.png',        label:'GR ファイアチーム',  type:'lat', faction:'german' },
       assaultteam: { id:'GE_GR_2_AT', src:'images/GE_LAT_Assault Team.png',        label:'GR 突撃チーム',      type:'lat', faction:'german' },
     },
     {
-      id: 'GE_GR_3', type: 'squad', faction: 'german',
+      id: 'GE_GR_3', type: 'squad', faction: 'german', rating: 'A',
       src: 'images/GE_GR_3Gp.png', srcReduced: 'images/GE_GR_3Gp b.png',
       label: '擲弾兵 第3分隊',
       fireteam:    { id:'GE_GR_3_FT', src:'images/GE_LAT_Fireteam_SC.png',        label:'GR ファイアチーム',  type:'lat', faction:'german' },
       assaultteam: { id:'GE_GR_3_AT', src:'images/GE_LAT_Assault Team.png',        label:'GR 突撃チーム',      type:'lat', faction:'german' },
     },
     {
-      id: 'GE_GR_4', type: 'squad', faction: 'german',
+      id: 'GE_GR_4', type: 'squad', faction: 'german', rating: 'S',
       src: 'images/GE_GR_4Gp.png', srcReduced: 'images/GE_GR_4Gp b.png',
       label: '擲弾兵 第4分隊',
       fireteam:    { id:'GE_GR_4_FT', src:'images/GE_LAT_Fireteam_SC.png',        label:'GR ファイアチーム',  type:'lat', faction:'german' },
@@ -122,44 +126,47 @@ export const UNITS = {
   ],
 
   // ── Fallschirmjäger 分隊（落下傘猟兵）──
+  // rating: 1-4=A（FG42自動小銃）, 5-6=A/S（Unit Breakdown chart, campaign PDF p.48 で画像確認）。
+  // Mission2以降「Use the six Fallschirmjäger squads marked 'FJ' (Gp 1-6). Draw one at random
+  // each time a squad is placed.」で使用。
   'C3': [
     {
-      id: 'GE_FJ_1', type: 'squad', faction: 'german',
+      id: 'GE_FJ_1', type: 'squad', faction: 'german', rating: 'A',
       src: 'images/GE_FJ_1Gp.png', srcReduced: 'images/GE_FJ_1Gp b.png',
       label: '落下傘猟兵 第1分隊',
       fireteam:    { id:'GE_FJ_1_FT', src:'images/GE_LAT_Fireteam_ASC.png',       label:'FJ ファイアチーム',  type:'lat', faction:'german' },
       assaultteam: { id:'GE_FJ_1_AT', src:'images/GE_LAT_Assault Team_FG42.png',  label:'FJ 突撃チーム(FG42)',type:'lat', faction:'german' },
     },
     {
-      id: 'GE_FJ_2', type: 'squad', faction: 'german',
+      id: 'GE_FJ_2', type: 'squad', faction: 'german', rating: 'A',
       src: 'images/GE_FJ_2Gp.png', srcReduced: 'images/GE_FJ_2Gp b.png',
       label: '落下傘猟兵 第2分隊',
       fireteam:    { id:'GE_FJ_2_FT', src:'images/GE_LAT_Fireteam_ASC.png',       label:'FJ ファイアチーム',  type:'lat', faction:'german' },
       assaultteam: { id:'GE_FJ_2_AT', src:'images/GE_LAT_Assault Team_FG42.png',  label:'FJ 突撃チーム(FG42)',type:'lat', faction:'german' },
     },
     {
-      id: 'GE_FJ_3', type: 'squad', faction: 'german',
+      id: 'GE_FJ_3', type: 'squad', faction: 'german', rating: 'A',
       src: 'images/GE_FJ_3Gp.png', srcReduced: 'images/GE_FJ_3Gp b.png',
       label: '落下傘猟兵 第3分隊',
       fireteam:    { id:'GE_FJ_3_FT', src:'images/GE_LAT_Fireteam_ASC.png',       label:'FJ ファイアチーム',  type:'lat', faction:'german' },
       assaultteam: { id:'GE_FJ_3_AT', src:'images/GE_LAT_Assault Team_FG42.png',  label:'FJ 突撃チーム(FG42)',type:'lat', faction:'german' },
     },
     {
-      id: 'GE_FJ_4', type: 'squad', faction: 'german',
+      id: 'GE_FJ_4', type: 'squad', faction: 'german', rating: 'A',
       src: 'images/GE_FJ_4Gp.png', srcReduced: 'images/GE_FJ_4Gp b.png',
       label: '落下傘猟兵 第4分隊',
       fireteam:    { id:'GE_FJ_4_FT', src:'images/GE_LAT_Fireteam_ASC.png',       label:'FJ ファイアチーム',  type:'lat', faction:'german' },
       assaultteam: { id:'GE_FJ_4_AT', src:'images/GE_LAT_Assault Team_FG42.png',  label:'FJ 突撃チーム(FG42)',type:'lat', faction:'german' },
     },
     {
-      id: 'GE_FJ_5', type: 'squad', faction: 'german',
+      id: 'GE_FJ_5', type: 'squad', faction: 'german', rating: 'A/S',
       src: 'images/GE_FJ_5Gp.png', srcReduced: 'images/GE_FJ_5Gp b.png',
       label: '落下傘猟兵 第5分隊',
       fireteam:    { id:'GE_FJ_5_FT', src:'images/GE_LAT_Fireteam_ASC.png',       label:'FJ ファイアチーム',  type:'lat', faction:'german' },
       assaultteam: { id:'GE_FJ_5_AT', src:'images/GE_LAT_Assault Team_FG42.png',  label:'FJ 突撃チーム(FG42)',type:'lat', faction:'german' },
     },
     {
-      id: 'GE_FJ_6', type: 'squad', faction: 'german',
+      id: 'GE_FJ_6', type: 'squad', faction: 'german', rating: 'A/S',
       src: 'images/GE_FJ_6Gp.png', srcReduced: 'images/GE_FJ_6Gp b.png',
       label: '落下傘猟兵 第6分隊',
       fireteam:    { id:'GE_FJ_6_FT', src:'images/GE_LAT_Fireteam_ASC.png',       label:'FJ ファイアチーム',  type:'lat', faction:'german' },
