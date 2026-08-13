@@ -20,7 +20,8 @@ import {
   getCarryoverMax, getExpendLimit, getActivated, setActivated,
   hasFixedInitiative, CO_STAFF_INITIATIVE_COMMANDS, applyCommandModifiers,
   getCommandsDrawn, setCommandsDrawn, getActivatorRole, COMMAND_ROLE_LABELS,
-  finishImpulse,
+  finishImpulse, expendCommand, undoExpendCommand, canExpendCommand,
+  getSpentThisImpulse,
 } from './command.js';
 import { drawActionCard } from './deck.js';
 import {
@@ -399,6 +400,7 @@ export function updateRightPanelUnit(unit) {
           <button class="rp-cmd-btn" id="rpCmdPlus">＋</button>
         </div>
         <div class="rp-cmd-info">繰越上限 ${carryMax} / 1インパルス消費上限 ${expendMax}</div>
+        <div class="rp-cmd-spent" id="rpCmdSpent"></div>
         ${activatedHtml}
         <button class="rp-draw-btn" id="rpCmdDraw" ${drawn ? 'disabled' : ''}>${_cmdDrawLabel(unit.id)}</button>
         <button class="rp-finish-btn" id="rpCmdFinish">⏹ インパルス終了（残りを Save）</button>
@@ -430,21 +432,37 @@ export function updateRightPanelUnit(unit) {
 
 function _bindCommandButtons(unitId) {
   const valEl = document.getElementById('rpCmdVal');
-  const refresh = () => { if (valEl) valEl.textContent = getCurrentAP(unitId); };
+  // AP 表示と「このインパルス消費 n/上限」表示、－ボタンの有効/無効をまとめて更新する
+  const refresh = () => {
+    if (valEl) valEl.textContent = getCurrentAP(unitId);
+    const spentEl = document.getElementById('rpCmdSpent');
+    const minusEl = document.getElementById('rpCmdMinus');
+    const spent = getSpentThisImpulse(unitId);
+    const limit = getExpendLimit();
+    if (spentEl) {
+      const capped = spent >= limit;
+      spentEl.textContent = `このインパルス消費 ${spent} / ${limit}${capped ? '（上限）' : ''}`;
+      spentEl.classList.toggle('rp-cmd-spent-max', capped);
+    }
+    if (minusEl) minusEl.disabled = !canExpendCommand(unitId);
+  };
   _bindFinishButton(unitId, refresh);
 
   document.getElementById('rpCmdMinus')?.addEventListener('click', (e) => {
     e.stopPropagation();
-    changeCurrentAP(unitId, -1);   // 命令1つ分を人間が消費
+    // 命令1つ分を人間が消費。§4.1.3 の消費上限（昼6・夜4）を超えたら受け付けない
+    if (!expendCommand(unitId).ok) return;
     refresh();
     document.dispatchEvent(new CustomEvent('board:changed')); // 自動保存
   });
   document.getElementById('rpCmdPlus')?.addEventListener('click', (e) => {
     e.stopPropagation();
-    changeCurrentAP(unitId, +1);   // 手動補正
+    undoExpendCommand(unitId);   // 押し間違いの取り消し（消費カウンタも戻す）
     refresh();
     document.dispatchEvent(new CustomEvent('board:changed'));
   });
+
+  refresh();
   // 「CO HQに起動された」チェック（誰を起動するかは人間が管理）
   document.getElementById('rpCmdActivated')?.addEventListener('change', (e) => {
     e.stopPropagation();

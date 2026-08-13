@@ -230,6 +230,7 @@ export function resetImpulseFlags() {
   for (const [unitId, entry] of unitCommandMap) {
     entry.activated = false;
     entry.drawn = false;
+    entry.spent = 0;
     // save できないコマンド（BN HQ・General Initiative）は使い残しても消える
     if (NO_SAVE_UNIT_IDS.has(unitId)) entry.currentAP = 0;
   }
@@ -503,5 +504,69 @@ export function finishImpulse(unitId) {
   const saved  = Math.min(before, max);
   setCurrentAP(unitId, saved);
   setCommandsDrawn(unitId, true);   // このターンのインパルスは終了
+  setSpentThisImpulse(unitId, 0);   // 次のインパルスに向けて消費カウンタを戻す
   return { before, saved, lost: before - saved, max };
+}
+
+// ===== §4.1.3 1インパルスの消費上限 =====
+//
+// FOF.pdf p.20 §4.1.3「Command Limitations」
+//   「During a daytime mission, the maximum number of Commands that any HQ or Staff
+//     can expend in one Impulse is six. In any mission with Limited Visibility, the
+//     maximum is four.」
+// 繰越上限（練度依存・最大9）とは別物で、**貯めた分を1インパルスで吐き切ることはできない**。
+// ※ General Initiative は HQ/Staff が消費するものではないので、この上限の対象外として扱う
+//    （ルール本文は "any HQ or Staff" と限定しており、General Initiative Impulse は
+//      そもそも発令者にHQ/Staffを要求しない・p.20）。
+
+/**
+ * このインパルスで既に消費したコマンド数。
+ * @param {string} unitId
+ * @returns {number}
+ */
+export function getSpentThisImpulse(unitId) {
+  return unitCommandMap.get(unitId)?.spent ?? 0;
+}
+
+/**
+ * @param {string} unitId
+ * @param {number} n
+ */
+export function setSpentThisImpulse(unitId, n) {
+  if (!unitCommandMap.has(unitId)) unitCommandMap.set(unitId, { currentAP: 0 });
+  unitCommandMap.get(unitId).spent = Math.max(0, n);
+}
+
+/**
+ * あと1コマンド消費できるか（保有があり、かつ消費上限に達していない）。
+ * @param {string} unitId
+ * @returns {boolean}
+ */
+export function canExpendCommand(unitId) {
+  if (unitId === GENERAL_INIT_UNIT_ID) return getCurrentAP(unitId) > 0; // 上限の対象外
+  return getCurrentAP(unitId) > 0 && getSpentThisImpulse(unitId) < getExpendLimit();
+}
+
+/**
+ * コマンドを1つ消費する（上限に達していれば何もしない）。
+ * @param {string} unitId
+ * @returns {{ok:boolean, spent:number, limit:number, ap:number}}
+ */
+export function expendCommand(unitId) {
+  const limit = getExpendLimit();
+  if (!canExpendCommand(unitId)) {
+    return { ok: false, spent: getSpentThisImpulse(unitId), limit, ap: getCurrentAP(unitId) };
+  }
+  changeCurrentAP(unitId, -1);
+  setSpentThisImpulse(unitId, getSpentThisImpulse(unitId) + 1);
+  return { ok: true, spent: getSpentThisImpulse(unitId), limit, ap: getCurrentAP(unitId) };
+}
+
+/**
+ * 消費の取り消し（押し間違いの手動補正）。コマンドを戻し消費カウンタも1つ減らす。
+ * @param {string} unitId
+ */
+export function undoExpendCommand(unitId) {
+  changeCurrentAP(unitId, +1);
+  setSpentThisImpulse(unitId, getSpentThisImpulse(unitId) - 1);
 }
