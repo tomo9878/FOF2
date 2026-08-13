@@ -62,6 +62,11 @@
 - コマンド(AP)取得UI：HQ選択→右パネルでAP表示＋手動±＋「カード引いてコマンド取得」：完成（取得=自動／消費=人間が±）
   - §4.1.2 の修正を全実装（Pinned−1 / Green−1 / Vet+1 / Cover+1 / VOF S−1・A−2・H/S!/Grenade/Incoming/AirStrike−3 / No Contact+1）＋最低値クランプ（起動=1・イニシアチブ=0）。取得時に内訳を表示
   - CO Staff のイニシアチブは例外で**カードを引かず固定1・修正適用外**（FOF.pdf p.19 §4.1.1 / p.20 §4.1.2）
+  - 指揮系統 `CAN_ACTIVATE`（§4.1.1 Command Reference Table p.18）: BN HQ→CO HQ／CO HQ→CO Staff・全下位HQ／CO Staff・PLT HQ は誰も起動できない。右パネルの起動チェックは起動されうる役職にだけ出る
+  - `activated`（上位HQに起動された）と `drawn`（このターン取得済み）は別フラグ。クリーンアップフェーズで `resetImpulseFlags()` が両方を落とす（保有APは残す）
+  - 「⏹ インパルス終了（残りを Save）」で `finishImpulse()` が残りAPを繰越上限（§4.1.3）で切り捨て保存。超過分は破棄
+- General Initiative インパルス §3.3.2d（右パネル「⭐ General Initiative」）：人間がカードを引き★をそのまま取得（§4.1.2の修正なし）。単一小隊ミッションは半分・切り捨て。HQ不要・通信不要・繰越不可。共有プールは仮想ユニット `GENERAL_INIT`：完成
+- BN HQ インパルス §3.3.1a/§4.1.1（右パネル「🏛 BN HQ インパルス」）：状態4種から解決。盤外＋通信可→CO HQ自動起動（カード非消費）／盤上→最大6・4を仮想ユニット `BN_HQ` に付与（繰越不可・クリーンアップで破棄）／通信不通・使用不能→起動なし：完成
 - 状態保存・復元（localStorage・persistence.js）：完成。リロードで駒配置・マーカー・状態が残る
   - 2層version（setup層=マップ/駒/練度・保持／play層=VOF/PC/状態/AP・壊れやすい）
   - ★スキーマ変更時は persistence.js の SETUP_VERSION / PLAY_VERSION を +1（PLAY上げれば駒配置は残しplay層だけ破棄）
@@ -94,7 +99,7 @@ HIT判定カードと結果判定カードの間など、連続ドロー中は�
 - [ ] Concentrate Fire / Grenade Miss / Demo Miss フラグ（cardVOFMap 拡張）
 - [x] ~~コマンドシステム簡略版UI（HQ選択→AP表示＋手動±＋カード引き取得）~~ 完成
 - [ ] コマンドフェーズの起動セグメント（HQ起動順・配下への配分・消費上限チェック）
-- [ ] BN HQ ユニット定義の追加（commandRole:'bn_hq' を付けるだけで箱が機能する）
+- [x] ~~BN HQ の箱~~ 完成（盤面駒ではなく仮想ユニット `BN_HQ` として実装。盤上に上位HQリーダーの駒が要る場合は別途ユニット定義が必要）
 - [x] ~~PC解決ロジック（§8.2.4接触判定＋§8.3タイプ判定）~~ 完成
 - [x] ~~§8.4.3 実際の敵ユニット生成・配置（§8.4.2方向＋§8.4.1距離→addUnitToCard）~~ 完成（cover探索・友軍重なり回避・PDF/VOF自動付与は未）
 - [x] ~~§8.4.2 方向判定と§8.4.1距離判定の実戦UI接続~~ 完成（PC解決フローの「配置方向ドロー」ボタン）
