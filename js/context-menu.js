@@ -22,7 +22,7 @@ import {
   getCommandsDrawn, setCommandsDrawn, getActivatorRole, COMMAND_ROLE_LABELS,
   finishImpulse, expendCommand, undoExpendCommand, canExpendCommand,
   getSpentThisImpulse, isUnitEligibleNow, listActivationTargets,
-  activateSubordinate, ACTIVATE_COST,
+  activateSubordinate, ACTIVATE_COST, isOnCommandSide,
 } from './command.js';
 import { drawActionCard } from './deck.js';
 import {
@@ -412,6 +412,7 @@ export function updateRightPanelUnit(unit) {
         </div>
         <div class="rp-cmd-info">繰越上限 ${carryMax} / 1インパルス消費上限 ${expendMax}</div>
         <div class="rp-cmd-spent" id="rpCmdSpent"></div>
+        ${isOnCommandSide(unit.id) ? '' : '<div class="rp-cmd-ftside">⚠ Fire Team 面：起動されず、自分にしか命令できない（§4.1.4）</div>'}
         ${activatedHtml}
         ${_activationTargetsHtml(unit.id)}
         <button class="rp-draw-btn" id="rpCmdDraw" ${drawn || !eligible.ok ? 'disabled' : ''}>${_cmdDrawLabel(unit.id)}</button>

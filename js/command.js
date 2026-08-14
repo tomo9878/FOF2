@@ -16,7 +16,7 @@ import { getVisibility } from './ncm.js';
 import { UNITS } from './data/units-normandy.js';
 import { getUnitExperience } from './campaign.js';
 import { cardVOFMap } from './vof.js';
-import { unitCoordMap, getUnitState } from './state.js';
+import { unitCoordMap, getUnitState, getUnitStrength } from './state.js';
 import { getUnitCoverSlot } from './cover.js';
 import { getActivityLevel } from './contact.js';
 
@@ -204,6 +204,50 @@ export function canBeActivated(unitId) {
   return getActivatorRole(unitId) !== null;
 }
 
+// ===== §4.1.4 Fire Team 面 / command side =====
+//
+// FOF.pdf p.20 §4.1.4「Effect of Combat Hits on HQ & Staff Units」
+//   ・Litter Team / Paralyzed Team / Casualty になった HQ・Staff の
+//     **保存コマンドは全て失われる**（§6.4.3）
+//   ・**Fire Team 面**に裏返った HQ・Staff は保存コマンドを保持するが、
+//     command side に rally で戻るまで **自分自身にしか命令できない**
+//   ・**Fire Team 面の HQ・Staff は上位HQに Activate されない**
+//     （イニシアチブで引くしかない）
+// また §4.2.1a（p.22）は Activate について
+//   「Both the Originator and the Recipient must be on their command sides」
+// と定めており、起動する側・される側の両方が command side である必要がある。
+//
+// 実装メモ: 「Fire Team 面」は新しい状態ではなく、既存の強度管理の裏面そのもの。
+// namedFireTeam を持つ駒が steps を1つ失うと state.js が srcReduced（B面）に
+// 差し替える（state.js setUnitSteps）。よって steps < maxSteps が Fire Team 面。
+
+/**
+ * その駒が command side（表面）を向いているか。
+ * 裏面を持たない駒・仮想ユニットは常に true。
+ * @param {string} unitId
+ * @returns {boolean}
+ */
+export function isOnCommandSide(unitId) {
+  if (unitId in VIRTUAL_COMMAND_UNITS) return true;  // 盤面に駒を持たない
+  const s = getUnitStrength(unitId);
+  if (!s?.namedFireTeam) return true;                // 裏面（Fire Team 面）が無い駒
+  return s.steps === s.maxSteps;
+}
+
+/**
+ * Litter / Paralyzed / Casualty 化した HQ・Staff の保存コマンドを失わせる（§4.1.4）。
+ * hit.js から呼ぶ。
+ * @param {string} unitId
+ */
+export function loseSavedCommands(unitId) {
+  if (!unitCommandMap.has(unitId)) return;
+  const entry = unitCommandMap.get(unitId);
+  entry.currentAP = 0;
+  entry.activated = false;
+  entry.drawn = false;
+  entry.spent = 0;
+}
+
 // ===== 命令の発令可否（Command Reference Table の「Can give other orders to」列）=====
 //
 // FOF.pdf p.18「Command Reference Table」右列
@@ -262,6 +306,10 @@ export function canGiveOrder(originatorId, targetId) {
   const role = getCommandRole(originatorId);
   if (!role) return { ok: false, reason: 'HQ/Staff ではないので発令者になれない' };
   if (originatorId === targetId) return { ok: true, reason: '自分自身への命令' };
+  // §4.1.4: Fire Team 面の HQ/Staff は command side に戻るまで自分にしか命令できない
+  if (!isOnCommandSide(originatorId)) {
+    return { ok: false, reason: 'Fire Team 面のため自分自身にしか命令できない（rally で表に戻す）' };
+  }
   if (role === 'general') return { ok: true, reason: 'General Initiative（HQ不要）' };
   if (role === 'bn_hq')   return { ok: true, reason: 'BN HQ は全ユニットに命令できる' };
 
@@ -422,11 +470,17 @@ export function resolveBNHQImpulse() {
   }
 
   if (status === BN_HQ_STATUS.OFF_MAP_COMM) {
+    const blocked = [];
     for (const id of findUnitsByCommandRole('co_hq')) {
+      // §4.1.4: Fire Team 面の CO HQ は上位HQに起動されない
+      if (!isOnCommandSide(id)) { blocked.push(id); continue; }
       setActivated(id, true);
       result.activatedCOHQ.push(id);
     }
-    result.note = 'BN HQ は盤外だが通信可のため CO HQ を自動起動（カードは引かない）';
+    result.note = result.activatedCOHQ.length
+      ? 'BN HQ は盤外だが通信可のため CO HQ を自動起動（カードは引かない）'
+      : 'CO HQ が Fire Team 面のため起動されない。CO HQ イニシアチブ・インパルスで引く';
+    if (blocked.length) result.blockedFireTeamSide = blocked;
     return result;
   }
 
@@ -706,6 +760,14 @@ export function canActivateTarget(originatorId, targetId) {
     return { ok: false, reason: `${COMMAND_ROLE_LABELS[role]} が起動できるのは ${targets.map(t => COMMAND_ROLE_LABELS[t]).join('・')} のみ` };
   }
   if (getActivated(targetId)) return { ok: false, reason: 'すでに起動済み' };
+  // §4.2.1a: 発令者・対象とも command side であること。
+  // §4.1.4: Fire Team 面の HQ/Staff は起動されず、イニシアチブで引くしかない。
+  if (!isOnCommandSide(originatorId)) {
+    return { ok: false, reason: '自分が Fire Team 面なので起動アクションを出せない' };
+  }
+  if (!isOnCommandSide(targetId)) {
+    return { ok: false, reason: '対象が Fire Team 面（起動されない・イニシアチブで引く）' };
+  }
   if (getCurrentAP(originatorId) < ACTIVATE_COST) return { ok: false, reason: 'コマンドが足りない' };
   if (!canExpendCommand(originatorId)) return { ok: false, reason: 'このインパルスの消費上限に達している' };
   return { ok: true, reason: '' };

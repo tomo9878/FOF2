@@ -6,12 +6,13 @@ import {
   _trackLAT,
 } from './state.js';
 import { addUnitToCard, removeUnitFromCard } from './grid.js';
+import { loseSavedCommands } from './command.js';
 
 // ===== Combo Hit Helpers =====
 export const _HIT_INFO = {
   A: { src: 'images/LAT_Assault Team-W.png',       label: 'アサルトチーム',  tag: 'AT' },
   F: { src: 'images/LAT_Fire Team-W.png',           label: 'ファイアチーム',  tag: 'FT' },
-  L: { src: 'images/LAT_Litter-W.png',              label: 'リッター',        tag: 'LT' },
+  L: { src: 'images/Counter LAT - Litter Team.png', label: 'リッター',        tag: 'LT' },
   P: { src: 'images/Counter LAT - Paralyzed.png',   label: 'パラライズ',      tag: 'PT' },
   C: { src: 'images/Counter LAT - Casualty.png',    label: 'カジュアルティ',  tag: 'CT' },
 };
@@ -150,7 +151,9 @@ export function hitF(unit) {
  * Hit: L（Litter ヒット）
  */
 export function hitL(unit) {
-  const LITTER_SRC   = 'images/LAT_Litter-W.png';
+  // Paralyzed / Casualty と同じ "Counter LAT - *" シリーズを使う
+  // （旧 'images/LAT_Litter-W.png' は存在せず 404 になっていた）
+  const LITTER_SRC   = 'images/Counter LAT - Litter Team.png';
   const LITTER_LABEL = 'リッター';
 
   // ── LAT：どんな種類でも Litter に変化 ──
@@ -179,6 +182,7 @@ export function hitL(unit) {
   if (s?.namedFireTeam) {
     const ltId  = unit.id + '_HIT_LT';
     const ltDef = { id: ltId, src: LITTER_SRC, label: LITTER_LABEL, type: 'lat', faction: unit.faction };
+    loseSavedCommands(unit.id);   // §4.1.4 Litter 化した HQ/Staff の保存コマンドは失われる
     removeUnitFromCard(unit.id);
     addUnitToCard(coord, ltDef);
     pinUnit(ltId);
@@ -246,6 +250,7 @@ export function hitP(unit) {
   if (s?.namedFireTeam) {
     const ptId  = unit.id + '_HIT_PT';
     const ptDef = { id: ptId, src: PARALYZE_SRC, label: PARALYZE_LABEL, type: 'lat', faction: unit.faction };
+    loseSavedCommands(unit.id);   // §4.1.4 Paralyzed 化した HQ/Staff の保存コマンドは失われる
     removeUnitFromCard(unit.id);
     addUnitToCard(coord, ptDef);
     pinUnit(ptId);
@@ -313,6 +318,7 @@ export function hitC(unit) {
   if (s?.namedFireTeam) {
     const ctId  = unit.id + '_HIT_CT';
     const ctDef = { id: ctId, src: CASUALTY_SRC, label: CASUALTY_LABEL, type: 'lat', faction: unit.faction };
+    loseSavedCommands(unit.id);   // §4.1.4 Casualty 化した HQ/Staff の保存コマンドは失われる
     removeUnitFromCard(unit.id);
     addUnitToCard(coord, ctDef);
     pinUnit(ctId);
@@ -416,8 +422,10 @@ export function hitCombo(unit, l1, l2) {
       if (s.steps === s.maxSteps) setUnitSteps(unit.id, s.steps - 1);
       pinUnit(unit.id);
     } else {
+      // L / P / C は駒そのものが LAT に置き換わる → §4.1.4 保存コマンドを失う
       const info = _HIT_INFO[l1];
       const latId = _cid(unit.id, info.tag);
+      loseSavedCommands(unit.id);
       removeUnitFromCard(unit.id);
       addUnitToCard(coord, { id: latId, src: info.src, label: info.label, type: 'lat', faction: unit.faction });
       pinUnit(latId);

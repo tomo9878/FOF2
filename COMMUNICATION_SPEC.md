@@ -80,14 +80,18 @@
 
 見積の目安: S=1セッション未満 / M=1セッション / L=複数セッション
 
-### Step 0: §4.1.4 Fire Team 面チェック 〈S・通信と独立〉
+### Step 0: §4.1.4 Fire Team 面チェック 〈S・通信と独立〉 — ✅ 完了
 - `command.js` に `isOnCommandSide(unitId)` を追加
-  （`namedFireTeam` かつ `steps < maxSteps` なら false）
-- `canActivateTarget()` に「対象が Fire Team 面なら起動不可」を追加（§4.1.4）
-- `canGiveOrder()` に「発令者が Fire Team 面なら自分にしか命令できない」を追加
-- HQ/Staff が Casualty / Litter / Paralyzed になったとき保存コマンドを0にする
-  → `hit.js` 側のフック要確認
-- **これを入れると起動セグメントが仕様上ほぼ閉じる**
+  （`namedFireTeam` かつ `steps < maxSteps` なら false。仮想ユニットは常に true）
+- `canActivateTarget()`：**発令者・対象のどちらかが Fire Team 面なら起動不可**
+  （§4.2.1a「Both the Originator and the Recipient must be on their command sides」＋ §4.1.4）
+- `canGiveOrder()`：発令者が Fire Team 面なら自分自身にしか命令できない
+- `resolveBNHQImpulse()`：Fire Team 面の CO HQ は BN HQ に自動起動されない
+- `loseSavedCommands()` を追加し、`hit.js` の hitL / hitP / hitC と hitCombo の
+  L/P/C 分岐（namedFireTeam の駒が LAT に置き換わる箇所）から呼ぶ
+- 右パネルに「⚠ Fire Team 面」警告を表示
+- 副産物: `hit.js` の Litter 画像パスが `images/LAT_Litter-W.png` で **404** だったのを
+  `images/Counter LAT - Litter Team.png`（P/C と同じ Counter LAT シリーズ）に修正
 
 ### Step 1: 通信の骨格 + Visual-Verbal 〈S〉
 - 新規 `js/comm.js`：`canCommunicate(fromId, toId) → {ok, via, reason}`
@@ -148,7 +152,11 @@
 
 ## 4. 未確認・要調査
 
-- Casualty / Litter Team / Paralyzed Team の実装状況（§6.4.3）と、
-  §4.1.4 の「保存コマンド喪失」をどこにフックするか
+- ~~Casualty / Litter Team / Paralyzed Team の実装状況（§6.4.3）と、
+  §4.1.4 の「保存コマンド喪失」をどこにフックするか~~
+  → 解決。namedFireTeam の駒に L/P/C ヒットが入ると `hit.js` が駒を除去して
+  LAT カウンターに置き換えるので、その直前に `loseSavedCommands()` を呼べばよい
+- Fire Team 面から command side へ戻す **rally**（§6.5 / §4.2.3）が未実装。
+  今は強度を戻す手段が右パネルの手動操作しかない
 - §13 Urban の Building Area（Visual-Verbal のエリア判定に影響）は当面対象外でよいか
 - 電話線の切断条件（§4.3.4 後半）と §4.2.1k Repair の詳細は未抽出
