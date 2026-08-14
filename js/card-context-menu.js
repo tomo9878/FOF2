@@ -19,7 +19,8 @@ import { resolveDirection, placeResolvedUnits } from './enemy-placement.js';
 import { isDrawLocked, setDrawLock } from './context-menu.js';
 import {
   phoneLineMap, getPhoneLineStock, isStagingArea,
-  layPhoneLine, removePhoneLine, cutPhoneLine, repairPhoneLine,
+  layPhoneLine, removePhoneLine, cutPhoneLine,
+  canRepairPhoneLine, repairPhoneLineAction,
 } from './phone.js';
 
 let _currentCoord = null;
@@ -69,8 +70,13 @@ function _refreshPhoneLineSection(coord) {
   if (stockEl) stockEl.textContent = `（残り ${getPhoneLineStock()}本）${line ? (line.cut ? ' — このカード: 切断' : ' — このカード: 敷設済み') : ''}`;
   layBtn.disabled = !!line || getPhoneLineStock() <= 0 || isStagingArea(coord);
   cutBtn.disabled = !line || line.cut;
-  repBtn.disabled = !line || !line.cut;
   rmBtn.disabled  = !line;
+  // §4.2.1k: 同カードの HQ/Staff が1コマンド払い、同カードの Good Order ユニットが直す
+  const rep = canRepairPhoneLine(coord);
+  repBtn.disabled = !rep.ok;
+  repBtn.title = rep.ok
+    ? `§4.2.1k 修理（${rep.originatorId} が1コマンド消費 / 実行: ${rep.recipientId}）`
+    : `修理不可: ${rep.reason}`;
 }
 
 // ===== VOF ボタン状態更新 =====
@@ -253,7 +259,7 @@ export function initCardContextMenu() {
   };
   document.getElementById('cardCmPhoneLay')?.addEventListener('click', phoneAction(layPhoneLine));
   document.getElementById('cardCmPhoneCut')?.addEventListener('click', phoneAction(cutPhoneLine));
-  document.getElementById('cardCmPhoneRepair')?.addEventListener('click', phoneAction(repairPhoneLine));
+  document.getElementById('cardCmPhoneRepair')?.addEventListener('click', phoneAction(repairPhoneLineAction));
   document.getElementById('cardCmPhoneRemove')?.addEventListener('click', phoneAction(removePhoneLine));
 
   // ── Crossfire トグル ──

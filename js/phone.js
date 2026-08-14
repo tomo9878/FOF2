@@ -34,6 +34,8 @@ import { unitCoordMap, getUnitState } from './state.js';
 import { cardVOFMap } from './vof.js';
 import { rollR } from './data/scenario-tables.js';
 import { RT_MODELS, NETWORK_DEF } from './data/radios.js';
+import { UNITS } from './data/units-normandy.js';
+import { getCommandRole, getCurrentAP, canExpendCommand, expendCommand } from './command.js';
 
 /** coord → { cut:boolean } 電話線マーカー（1カードにつき1本） */
 export const phoneLineMap = new Map();
@@ -99,9 +101,7 @@ export function cutPhoneLine(coord) {
 }
 
 /**
- * §4.2.1k Repair a Cut Phone Line: 切れた電話線を元に戻す。
- * 発令者は同じカードにいる HQ/Staff、対象は同じカードの Good Order ユニット。
- * （発令者・対象のチェックは呼び出し側で行う）
+ * 電話線を修理する（表に戻す）。ルール上の可否は canRepairPhoneLine() で判定する。
  * @param {string} coord
  */
 export function repairPhoneLine(coord) {
@@ -110,6 +110,70 @@ export function repairPhoneLine(coord) {
   l.cut = false;
   renderPhoneLine(coord);
   return true;
+}
+
+// ===== §4.2.1k Repair a Cut Phone Line =====
+//
+// FOF.pdf p.22 アクション表 k.
+//   コスト1 ／ Auto ／ 発令者「Any HQ or Staff **on the same card as the cut line**」
+//   対象「A Good Order unit **on the same card as** a cut phone line」
+
+/** そのカードにいるユニットIDを列挙する */
+function _unitsOnCard(coord) {
+  const ids = [];
+  for (const [id, c] of unitCoordMap) if (c === coord) ids.push(id);
+  return ids;
+}
+
+/** Good Order Unit か（用語集 p.7: LAT でなく Pinned でない） */
+function _isGoodOrderUnit(unitId) {
+  for (const arr of Object.values(UNITS)) {
+    for (const u of arr) {
+      if (u.id === unitId) return u.type !== 'lat' && !getUnitState(unitId).pinned;
+      if (u.fireteam?.id === unitId || u.assaultteam?.id === unitId) return false; // LAT
+    }
+  }
+  return false;   // 定義に無い駒（LAT カウンター等）は Good Order とみなさない
+}
+
+/**
+ * そのカードの切れた電話線を修理できるか（§4.2.1k）。
+ * @param {string} coord
+ * @returns {{ok:boolean, reason:string, originatorId:string|null, recipientId:string|null}}
+ */
+export function canRepairPhoneLine(coord) {
+  const NG = (reason) => ({ ok: false, reason, originatorId: null, recipientId: null });
+  const line = phoneLineMap.get(coord);
+  if (!line)     return NG('このカードに電話線がない');
+  if (!line.cut) return NG('この電話線は切れていない');
+
+  const onCard = _unitsOnCard(coord);
+  // 発令者: 同じカードにいる HQ/Staff で、コマンドが払えること
+  const originatorId = onCard.find(id =>
+    getCommandRole(id) && getCurrentAP(id) >= 1 && canExpendCommand(id));
+  if (!originatorId) {
+    return NG(onCard.some(id => getCommandRole(id))
+      ? '同じカードの HQ/Staff にコマンドが無い（または消費上限）'
+      : '同じカードに HQ/Staff がいない');
+  }
+  // 対象: 同じカードの Good Order ユニット
+  const recipientId = onCard.find(id => _isGoodOrderUnit(id));
+  if (!recipientId) return NG('同じカードに Good Order のユニットがいない');
+
+  return { ok: true, reason: '', originatorId, recipientId };
+}
+
+/**
+ * §4.2.1k を実行する（1コマンド消費・自動成功）。
+ * @param {string} coord
+ * @returns {{ok:boolean, reason:string, originatorId:string|null}}
+ */
+export function repairPhoneLineAction(coord) {
+  const check = canRepairPhoneLine(coord);
+  if (!check.ok) return { ok: false, reason: check.reason, originatorId: null };
+  expendCommand(check.originatorId);
+  repairPhoneLine(coord);
+  return { ok: true, reason: '', originatorId: check.originatorId };
 }
 
 /**
