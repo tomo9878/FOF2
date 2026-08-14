@@ -18,6 +18,7 @@ import {
   getCommandsDrawn, setCommandsDrawn, GENERAL_INIT_UNIT_ID, BN_HQ_UNIT_ID,
   getCurrentImpulse, advanceImpulse, isUnitEligibleNow,
 } from './command.js';
+import { resolveRunnerDeliveries } from './runner.js';
 
 // ===== window へ公開（HTML の onclick から呼ぶため） =====
 window.changeZoom = changeZoom;
@@ -63,21 +64,33 @@ function initImpulsePanel() {
   const btn = document.getElementById('impulseNextBtn');
   if (!btn) return;
   btn.addEventListener('click', () => {
-    advanceImpulse();
-    syncImpulsePanel();
+    const imp = advanceImpulse();
+    // §4.3.2: CO HQ インパルスの冒頭で、配達中のランナーを解決する
+    if (imp.key === 'co_hq_activation') {
+      const results = resolveRunnerDeliveries();
+      if (results.length) {
+        const seg = document.getElementById('impulseSeg');
+        if (seg) seg.textContent = results
+          .map(r => `伝令: ${r.delivered ? '✔' : '✕'} ${r.reason}`).join(' / ');
+      }
+    }
+    syncImpulsePanel(imp.key === 'co_hq_activation');
     document.dispatchEvent(new CustomEvent('board:changed'));
   });
   syncImpulsePanel();
 }
 
-/** インパルス表示と、それに連動する各ボタンの有効/無効を更新する */
-function syncImpulsePanel() {
+/**
+ * インパルス表示と、それに連動する各ボタンの有効/無効を更新する。
+ * @param {boolean} [keepSegText=false] - 伝令の結果表示を残したいときは true
+ */
+function syncImpulsePanel(keepSegText = false) {
   const imp = getCurrentImpulse();
   const now = document.getElementById('impulseNow');
   const seg = document.getElementById('impulseSeg');
   const next = document.getElementById('impulseNextBtn');
   if (now) now.textContent = `${imp.index + 1}. ${imp.label}`;
-  if (seg) seg.textContent = imp.segment === 'activation' ? '起動セグメント' : 'イニシアチブ・セグメント';
+  if (seg && !keepSegText) seg.textContent = imp.segment === 'activation' ? '起動セグメント' : 'イニシアチブ・セグメント';
   if (next) {
     next.disabled = imp.last;
     next.textContent = imp.last ? 'コマンドフェーズ終了' : '次のインパルスへ ▶';

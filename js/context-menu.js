@@ -24,6 +24,11 @@ import {
   getSpentThisImpulse, isUnitEligibleNow, listActivationTargets,
   activateSubordinate, ACTIVATE_COST, isOnCommandSide,
 } from './command.js';
+import {
+  listRunners, RUNNER_STATUS, RUNNER_ACTION_COST, MAX_RUNNERS,
+  canCreateRunner, createRunner, canDispatchRunner, dispatchRunner,
+  canDismissRunner, dismissRunner, isGoodOrder,
+} from './runner.js';
 import { drawActionCard } from './deck.js';
 import {
   COVER_TYPES,
@@ -415,6 +420,7 @@ export function updateRightPanelUnit(unit) {
         ${isOnCommandSide(unit.id) ? '' : '<div class="rp-cmd-ftside">⚠ Fire Team 面：起動されず、自分にしか命令できない（§4.1.4）</div>'}
         ${activatedHtml}
         ${_activationTargetsHtml(unit.id)}
+        ${_runnerHtml(unit.id)}
         <button class="rp-draw-btn" id="rpCmdDraw" ${drawn || !eligible.ok ? 'disabled' : ''}>${_cmdDrawLabel(unit.id)}</button>
         ${!drawn && !eligible.ok ? `<div class="rp-act-reason">${eligible.reason}</div>` : ''}
         <button class="rp-finish-btn" id="rpCmdFinish">⏹ インパルス終了（残りを Save）</button>
@@ -461,6 +467,7 @@ function _bindCommandButtons(unitId) {
     if (minusEl) minusEl.disabled = !canExpendCommand(unitId);
   };
   _bindFinishButton(unitId, refresh);
+  _bindRunnerButtons(unitId, refresh);
 
   // §4.2.1a 起動ボタン（CO HQ・BN HQ のみ表示される）
   document.querySelectorAll('[data-activate]').forEach(btn => {
@@ -562,6 +569,141 @@ function _activationTargetsHtml(unitId) {
     </div>`;
   }).join('');
   return `<div class="rp-act-title">§4.2.1a 下位HQ/Staff を起動（1コマンド・自動成功）</div>${rows}`;
+}
+
+/**
+ * 盤上にいるユニットを列挙する（LAT・敵は除く）。
+ * @param {(u:object)=>boolean} pred
+ * @returns {Array<{id:string,label:string}>}
+ */
+function _boardUnits(pred) {
+  const out = [];
+  for (const arr of Object.values(UNITS)) {
+    for (const u of arr) {
+      if (u.faction !== 'friendly') continue;
+      if (!unitCoordMap.has(u.id)) continue;
+      if (pred(u)) out.push({ id: u.id, label: u.label });
+    }
+  }
+  return out;
+}
+
+/** select 要素を組み立てる */
+function _selectHtml(id, items, empty) {
+  if (!items.length) return `<div class="rp-act-reason">${empty}</div>`;
+  return `<select class="rp-bnhq-select" id="${id}">`
+    + items.map(i => `<option value="${i.id}">${i.label}</option>`).join('')
+    + '</select>';
+}
+
+/**
+ * §4.3.2 / §4.2.1f-h ランナー。CO HQ のときだけ表示する。
+ * @param {string} unitId
+ * @returns {string}
+ */
+function _runnerHtml(unitId) {
+  if (getCommandRole(unitId) !== 'co_hq') return '';
+  const runners = listRunners();
+  const inBox = runners.filter(r => r.status === RUNNER_STATUS.IN_BOX);
+
+  const rows = runners.map(r => {
+    if (r.status === RUNNER_STATUS.NONE) {
+      return `<div class="rp-act-row"><span class="rp-act-name">${r.label}</span><span class="rp-act-reason">未作成</span></div>`;
+    }
+    if (r.status === RUNNER_STATUS.IN_BOX) {
+      return `<div class="rp-act-row"><span class="rp-act-name">${r.label}</span><span class="rp-act-done">CO HQ 箱</span></div>`;
+    }
+    const tgt = _unitLabel(r.targetId);
+    return `<div class="rp-act-row"><span class="rp-act-name">${r.label}</span><span class="rp-act-done">配達中 → ${tgt}</span></div>`;
+  }).join('');
+
+  // 作成の対価を払えるユニット（Good Order・ステップに余裕あり）
+  const payers = _boardUnits(u => isGoodOrder(u.id) && (getUnitStrength(u.id)?.steps ?? 0) > 2);
+  // 派遣先（盤上の PLT HQ / CO Staff）
+  const targets = _boardUnits(u => ['plt_hq', 'co_staff'].includes(u.commandRole));
+  // 解散時にステップを受け取れるユニット
+  const healers = _boardUnits(u => {
+    const s = getUnitStrength(u.id);
+    return isGoodOrder(u.id) && s && s.steps < s.maxSteps;
+  });
+
+  return `
+    <div class="rp-act-title">§4.3.2 伝令（最大${MAX_RUNNERS}体・各アクション${RUNNER_ACTION_COST}コマンド）</div>
+    ${rows}
+    <div class="rp-runner-form">
+      <div class="rp-act-reason">作成（対象を1ステップ減らす）</div>
+      ${_selectHtml('rnCreateSel', payers, '払えるユニットが盤上にいない')}
+      <button class="rp-act-btn" id="rnCreateBtn">伝令を作成 (${RUNNER_ACTION_COST})</button>
+    </div>
+    ${inBox.length ? `
+    <div class="rp-runner-form">
+      <div class="rp-act-reason">派遣（翌ターン起動したい相手のカードへ）</div>
+      ${_selectHtml('rnDispatchSel', targets, '派遣先の PLT HQ / CO Staff が盤上にいない')}
+      <button class="rp-act-btn" id="rnDispatchBtn">派遣 (${RUNNER_ACTION_COST})</button>
+    </div>
+    <div class="rp-runner-form">
+      <div class="rp-act-reason">解散（1ステップ戻す）</div>
+      ${_selectHtml('rnDismissSel', healers, 'ステップを受け取れるユニットがいない')}
+      <button class="rp-act-btn" id="rnDismissBtn">解散 (${RUNNER_ACTION_COST})</button>
+    </div>` : ''}
+  `;
+}
+
+/** ユニットIDから表示名 */
+function _unitLabel(unitId) {
+  for (const arr of Object.values(UNITS)) {
+    const u = arr.find(x => x.id === unitId);
+    if (u) return u.label;
+  }
+  return unitId ?? '―';
+}
+
+/**
+ * ランナー操作のボタンを束ねる。
+ * @param {string} unitId - CO HQ
+ * @param {Function} refresh
+ */
+function _bindRunnerButtons(unitId, refresh) {
+  const rerender = () => { refresh(); updateRightPanelUnit(_rpUnit); document.dispatchEvent(new CustomEvent('board:changed')); };
+  const firstInBox = () => listRunners().find(r => r.status === RUNNER_STATUS.IN_BOX)?.id ?? null;
+
+  document.getElementById('rnCreateBtn')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const sel = document.getElementById('rnCreateSel');
+    if (!sel) return;
+    const r = createRunner(unitId, sel.value);
+    if (!r.ok) { _flash('rnCreateBtn', r.reason); return; }
+    rerender();
+  });
+
+  document.getElementById('rnDispatchBtn')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const sel = document.getElementById('rnDispatchSel');
+    const runnerId = firstInBox();
+    if (!sel || !runnerId) return;
+    const r = dispatchRunner(unitId, runnerId, sel.value);
+    if (!r.ok) { _flash('rnDispatchBtn', r.reason); return; }
+    rerender();
+  });
+
+  document.getElementById('rnDismissBtn')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const sel = document.getElementById('rnDismissSel');
+    const runnerId = firstInBox();
+    if (!sel || !runnerId) return;
+    const r = dismissRunner(unitId, runnerId, sel.value);
+    if (!r.ok) { _flash('rnDismissBtn', r.reason); return; }
+    rerender();
+  });
+}
+
+/** ボタンに理由を一時表示する */
+function _flash(btnId, msg) {
+  const b = document.getElementById(btnId);
+  if (!b) return;
+  const orig = b.textContent;
+  b.textContent = msg;
+  setTimeout(() => { if (b) b.textContent = orig; }, 2500);
 }
 
 /**

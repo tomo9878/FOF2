@@ -135,12 +135,24 @@
 - 切断（§4.3.4 の phone line 切断）と修理（§4.2.1k Repair a Cut Phone）
 - **ここが一番重い。Step 2 まで終われば通信の8割は動くので後回しでよい**
 
-### Step 4: ランナー 〈M〉
-- `US_RUNNER_1/2` の駒は `units-normandy.js` に定義済み
-- CO HQ の Dispatch（§4.2.1g・1コマンド）／ Dismiss（§4.2.1h）アクション
-- 「翌ターンの CO HQ インパルスで対象を Activate」の予約状態を持たせる
-- Combat Effects Segment で Hit / Pinned を受けたら失敗、対象が Fire Team 面でも失敗
-- ノルマンディーは開始時ゼロなので、まず §4.2.1f「既存ユニットからランナーを作る」が要る
+### Step 4: ランナー 〈M〉 — ✅ 完了（Step3 より先に実施）
+- 新規 `js/runner.js`。`US_RUNNER_1/2` の駒は `units-normandy.js` に定義済みのものを使う
+- §4.2.1f Create（1コマンド）: **対象を1ステップ減らして** Line 評価のランナーを箱に置く。
+  LAT が対象なら駒ごと除去。同時に2体まで（`MAX_RUNNERS`）
+- §4.2.1g Dispatch（1コマンド）: 対象（PLT HQ / CO Staff）のカードへ置き Exposed にする
+- §4.2.1h Dismiss（1コマンド）: 取り除いて Good Order のユニットに1ステップ戻す
+- `resolveRunnerDeliveries()` を CO HQ 起動インパルスに入った瞬間に呼ぶ（map.js）
+- 状態は play 層に保存。`resetPlay()` で消える（ノルマンディーは開始時0体）
+
+**ルールの読み違いを1回して直した箇所**
+- 当初「Pinned の間は留まり、Good Order に戻ったら配達する」と実装したが、
+  §4.3.2 を読み直すと **Pinned になった時点で配達は失敗**で、
+  「Good Order に戻った最初の CO HQ インパルスで**箱に帰るだけ**」が正しい。
+  `failed` フラグを持たせて、失敗後は二度と届かないようにした。
+- 同様に **ランナー自身が Fire Team 面**になった場合も失敗（§4.3.2 の文言どおり）
+
+**ゲーム的な含意**: ランナーは作るのに1ステップ払う（解散で1ステップ戻る）ので、
+電話が使えるミッションでは電話の方が安い。攻勢ミッションで EE8 が選べる理由がここ。
 
 ### Step 5: 通信条件を指揮判定に組み込む 〈S〉
 - `canActivateTarget()` と `canGiveOrder()` に `canCommunicate()` を条件追加
