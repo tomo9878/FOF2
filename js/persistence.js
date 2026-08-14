@@ -26,6 +26,7 @@ import {
   unitCommandMap, getBNHQStatus, setBNHQStatus, BN_HQ_STATUS,
   getImpulseIndex, setImpulseIndex, resetImpulse,
 } from './command.js';
+import { unitRTMap, clearRTs } from './comm.js';
 import { unitExperienceMap } from './campaign.js';
 import { getVisibility, setVisibility } from './ncm.js';
 import { recomputeActivityLevel } from './contact.js';
@@ -94,6 +95,7 @@ export function serialize() {
       visibility: getVisibility(),
       bnHQ:     getBNHQStatus(),
       impulse:  getImpulseIndex(),
+      rts:      [...unitRTMap],
     },
   };
 }
@@ -151,6 +153,8 @@ function _applyPlay(play) {
   setVisibility(play.visibility ?? 0);
   if (play.bnHQ) setBNHQStatus(play.bnHQ);
   setImpulseIndex(play.impulse ?? 0);
+  unitRTMap.clear();
+  (play.rts ?? []).forEach(([id, list]) => unitRTMap.set(id, list));
   // 描画
   cardVOFMap.forEach((_, c) => renderCardVOF(c));
   cardPDFMap.forEach((_, c) => renderCardPDFs(c));
@@ -198,6 +202,7 @@ export function resetPlay(scenario) {
   resetSquadPools();
   setBNHQStatus(BN_HQ_STATUS.OFF_MAP_COMM); // BN HQ は原則盤外から始まる（§4.1.1）
   resetImpulse();                            // インパルスも先頭（BN HQ）へ
+  clearRTs();  // RT はシナリオ資産。Step6 でシナリオから再投入する
   setVisibility(scenario.visibility === 'limited' ? 1 : 0);
 
   // 全カード・全駒のマーカー/バッジを再描画（消去を反映）

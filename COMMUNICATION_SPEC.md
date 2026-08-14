@@ -105,14 +105,27 @@
 - **まだ `canGiveOrder()` / `canActivateTarget()` からは呼んでいない**（統合は Step5）。
   今つなぐと無線未実装のため「同じカードにいないと何もできない」状態になるため
 
-### Step 2: 無線ネットワークと機器データ 〈M〉
-- `js/data/radios.js`：型（A/B/C）・ネットワーク（CO TAC / BN TAC / Arty FD / Mtr FD）の定義
-- ユニット→保有 RT の割当（シナリオ資産として持たせる）
-- `comm.js` に無線経路を追加
-  - タイプA: **両端がカバー外** ＆ `los.js` で LOS が通ること
-  - タイプB: 同一網なら無条件（盤外含む）
-  - タイプC: 同一・隣接カードまで分隊も対象
-- **`los.js` は実装済みなのでタイプAの判定はすぐ書ける**
+### Step 2: 無線ネットワークと機器データ 〈M〉 — ✅ 完了
+- `js/data/radios.js`：`RT_MODELS`（SCR536=A / SCR300・SCR610・PRC25=B / ICOM=C / EE8=電話）と
+  `NETWORK_DEF`（CO TAC / BN TAC / ARTY FD / MTR FD / AIR CTL）を定義
+- `comm.js`：`unitRTMap` に RT の保有を持たせ（`assignRT` / `getRTs` / `clearRTs`）、
+  `canReachByRadio()` と `canUseNetwork()` を追加。`canCommunicate()` は
+  Visual-Verbal → 無線 の順に試す
+- 世代ごとの到達条件（§4.3.5）
+  - A: **両端がカバー外** ＆ `los.hasLOS()` が通ること ＆ 盤上どうし
+  - B: 同一網なら無条件（盤外とも可）
+  - C: `los.cardDistance()` が 1 以下（同一・隣接カード）
+- ネットワーク資格（§4.3.3）: BN TAC は CO HQ・BN HQ・BN Staff のみ、
+  ARTY FD は Arty FO のみ… を `canUseNetwork()` でチェック。
+  ユニット定義側は `radioRole`（'arty_fo' 等）で表現する
+- RT は play 層に保存し、`resetPlay()` で消える（Step6 でシナリオから再投入する）
+
+**解釈の判断（要注意）**
+- §4.3.3-1 の「CO HQ の RT がハブで、他の RT はここに繋がる必要がある」を
+  **どちらか一方の端が CO HQ であること** と実装した。
+  PLT HQ ↔ PLT HQ の直接通信は不可（CO HQ 経由が必要）という読み。
+- 両端で機種が違う場合は **厳しい方の世代** を適用する（A > C > B）。
+  ルールに明記が無いので、弱い側の無線に引きずられる自然な読みを採った。
 
 ### Step 3: 電話と電話線 〈L〉
 - 電話線マーカー（カード単位）＋ 電話機カウンターの配置
