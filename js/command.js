@@ -484,9 +484,14 @@ export function resolveBNHQImpulse() {
     return result;
   }
 
+  // §3.3.1a / §4.1.1: BN HQ が使えない場合はターンが CO HQ イニシアチブから始まる。
+  // ただし**前ターンからのランナーが盤上にいる**場合は例外（§4.3.2）。
+  // ランナーの有無は runner.js が持つが、command.js から参照すると循環参照になるため、
+  // 呼び出し側（map.js）が runnersOnMapCount() を見て注記を補う。
+  result.noBNHQ = true;
   result.note = status === BN_HQ_STATUS.UNAVAILABLE
-    ? 'BN HQ 使用不能。CO HQ は起動されず、CO HQ イニシアチブ・インパルスから開始'
-    : 'BN HQ と通信できず CO HQ は起動されない。CO HQ イニシアチブ・インパルスから開始';
+    ? 'BN HQ 使用不能。CO HQ は起動されない。'
+    : 'BN HQ と通信できず CO HQ は起動されない。';
   return result;
 }
 

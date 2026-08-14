@@ -95,13 +95,15 @@ export function runnersInPlayCount() {
 }
 
 /**
- * Good Order か（Pinned でなく、盤上にいる）。
- * ※ FoF の Good Order は「Pinned でなく LAT/損耗状態でもない」だが、
- *    本実装では Pinned と盤上判定までを見る。
+ * Good Order Unit か。
+ * FOF.pdf p.7 用語集「Good Order Unit: This is any infantry unit that is not a
+ * Limited Action Team and is not Pinned.」
+ * ＝ LAT ではなく、Pinned でもないこと。加えて盤上にいることを条件に含める。
  * @param {string} unitId
  * @returns {boolean}
  */
 export function isGoodOrder(unitId) {
+  if (findUnitDef(unitId)?.type === 'lat') return false;  // LAT は Good Order ではない
   if (!unitCoordMap.has(unitId)) return false;
   return !getUnitState(unitId).pinned;
 }

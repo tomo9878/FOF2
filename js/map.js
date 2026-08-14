@@ -18,7 +18,7 @@ import {
   getCommandsDrawn, setCommandsDrawn, GENERAL_INIT_UNIT_ID, BN_HQ_UNIT_ID,
   getCurrentImpulse, advanceImpulse, isUnitEligibleNow,
 } from './command.js';
-import { resolveRunnerDeliveries } from './runner.js';
+import { resolveRunnerDeliveries, runnersOnMapCount } from './runner.js';
 
 // ===== window へ公開（HTML の onclick から呼ぶため） =====
 window.changeZoom = changeZoom;
@@ -123,7 +123,13 @@ function initBNHQPanel() {
   btn.addEventListener('click', () => {
     const r = resolveBNHQImpulse();
     const extra = r.activatedCOHQ.length ? `（${r.activatedCOHQ.join(', ')} を起動）` : '';
-    note.textContent = r.note + extra;
+    // §3.3.1a/§4.1.1: BN HQ が使えなくても、盤上にランナーがいれば CO HQ インパルスを行う
+    const tail = r.noBNHQ
+      ? (runnersOnMapCount() > 0
+          ? 'ただし盤上にランナーがいるので CO HQ インパルスで配達を解決する（§4.3.2）'
+          : 'CO HQ イニシアチブ・インパルスから開始')
+      : '';
+    note.textContent = r.note + extra + tail;
     document.dispatchEvent(new CustomEvent('board:changed'));
   });
 }

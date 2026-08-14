@@ -156,6 +156,16 @@
 **ゲーム的な含意**: ランナーは作るのに1ステップ払う（解散で1ステップ戻る）ので、
 電話が使えるミッションでは電話の方が安い。攻勢ミッションで EE8 が選べる理由がここ。
 
+**外部チェックリストとの突き合わせで判明した点**
+- Good Order の定義は用語集 p.7「any infantry unit that is not a Limited Action Team
+  and is not Pinned」。LAT を除外していなかったので `isGoodOrder()` を修正した
+- §3.3.1a/§4.1.1: BN HQ が使えなくても**盤上にランナーがいれば** CO HQ インパルスを行う
+  （＝ CO HQ イニシアチブへ飛ばさない）。BN HQ パネルの注記に反映した
+- 「Create の対象は CO HQ と同じカードにいること」という制限は**ルールに無い**。
+  §4.2.1f の Recipient は「Any Good Order unit or Unpinned Assault/Fire Team」のみ。
+  実際に効くのは §4.3 の一般則「発令者は対象と通信できること」なので、
+  無線・電話で届く相手なら別カードでもよい。→ 判定は Step5 の統合で入る
+
 ### Step 5: 通信条件を指揮判定に組み込む 〈S〉
 - `canActivateTarget()` と `canGiveOrder()` に `canCommunicate()` を条件追加
   （§4.1.1 の "in play and **in communication**"）
