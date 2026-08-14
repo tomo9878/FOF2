@@ -70,6 +70,7 @@
 - 起動アクション §4.2.1a（CO HQ/BN HQ の右パネル）：1コマンド消費・自動成功で下位HQ/Staffを起動。分隊・武器チーム・LAT・上位HQ・自分自身は起動不可、二重起動不可、AP不足/消費上限で不可：完成
 - 通信 §4.3.1 Visual-Verbal（comm.js `canCommunicate`）：同エリア（`coord#slotId`／カバー外は `coord#open`）かつ両者 Unpinned。Remove Pinned・Exhort は Pinned 無視、Cease Fire・Shift Fire は同カード全員に伝達：完成
 - 通信 §4.3.3/§4.3.5 無線（comm.js `canReachByRadio` ＋ data/radios.js）：RT機種（SCR536=A / SCR300・SCR610=B / ICOM=C）と5ネットワーク。A=両端カバー外＋LOS、B=同一網なら盤外含め無条件、C=同・隣接カード。網の資格チェックあり。CO TAC は CO HQ をハブとして経由必須、機種混在時は厳しい方を適用：完成
+- 通信 §4.3.4 電話（phone.js）：電話線マーカー（在庫つき）＋8方向隣接の接続グラフ。電話機自体とスタートエリアも電話線として機能。CO TAC は CO HQ の電話が接続に含まれること、他網はスタートエリア到達が必要。**カバー下・Pinned でも通る**（無線タイプAとの決定的な違い）。戦闘損害（Incoming/AirStrike で R#1/2、Good Order の敵のみのカードで R#1-2/3）と §4.2.1k 修理・敷設・回収をカード右クリックに実装：完成
 - 通信 §4.3.2 ランナー（runner.js）：作成(§4.2.1f・**対象を1ステップ減らす**)／派遣(§4.2.1g・Exposed)／解散(§4.2.1h・1ステップ戻す。受け取り手は**CO HQ と同じエリア**の Good Order 非満タンユニット。払ったユニットでなくてよい)、同時2体まで。CO HQ 起動インパルスで `resolveRunnerDeliveries()` が配達を解決。Pinned・Fire Team面・対象不在は**失敗確定**（後から届かない）。CO HQ の右パネルから操作：完成
   - **まだ命令判定（`canGiveOrder`/`canActivateTarget`）には繋いでいない（統合は COMMUNICATION_SPEC.md Step5）**
 - Fire Team 面 §4.1.4（`isOnCommandSide()`）：`namedFireTeam` の駒が1ステップ失うとB面＝Fire Team 面。**発令者・対象のどちらかがB面だと Activate 不可**（§4.2.1a）、B面のHQは自分にしか命令できない、BN HQ の自動起動も対象がB面ならスキップ。L/P/C ヒットで LAT に置き換わった HQ/Staff は保存コマンドを全喪失（`loseSavedCommands()` を hit.js から呼ぶ）：完成
@@ -148,7 +149,8 @@ HIT判定カードと結果判定カードの間など、連続ドロー中は�
     ├── pc-resolve.js PC解決エンジン（§8.2.4 接触するかの判定）
     ├── enemy-contact.js 敵接触タイプ判定（§8.3 パッケージ判定＋武器/FO種別等の追加判定＋Squad袋引き/装備プール）
     ├── enemy-placement.js 敵ユニット実配置（§8.4.3 方向ドロー→距離解決→addUnitToCardで盤面配置）
-    ├── comm.js       通信（§4.3 Visual-Verbal ＋ 無線。電話は未）
+    ├── comm.js       通信（§4.3 Visual-Verbal ＋ 無線 ＋ 電話の統合窓口）
+    ├── phone.js      野戦電話・電話線（§4.3.4 接続グラフ・切断/修理・戦闘損害）
     ├── runner.js     ランナー（§4.3.2 / §4.2.1f-h 作成・派遣・解散・配達解決）
     ├── los.js        LOS/距離判定（§5.2.1 8方向・レンジ・Hill標高越え）
     ├── placement.js  敵配置の距離・方向解決（§8.4.1/8.4.2）

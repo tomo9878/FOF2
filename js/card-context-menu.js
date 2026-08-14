@@ -17,6 +17,10 @@ import { getPCResolutionPlan, startPCResolution, resolvePCDrawStep, finishPCReso
 import { resolveEnemyContactType } from './enemy-contact.js';
 import { resolveDirection, placeResolvedUnits } from './enemy-placement.js';
 import { isDrawLocked, setDrawLock } from './context-menu.js';
+import {
+  phoneLineMap, getPhoneLineStock, isStagingArea,
+  layPhoneLine, removePhoneLine, cutPhoneLine, repairPhoneLine,
+} from './phone.js';
 
 let _currentCoord = null;
 
@@ -32,6 +36,7 @@ export function showCardContextMenu(e, coord) {
   _refreshNCMDisplay(coord);
   _refreshCoverSection(coord);
   _refreshPCButton(coord);
+  _refreshPhoneLineSection(coord);
 
   menu.style.display = 'block';
   const mw = menu.offsetWidth, mh = menu.offsetHeight;
@@ -46,6 +51,26 @@ export function hideCardContextMenu() {
   const menu = document.getElementById('cardContextMenu');
   if (menu) menu.style.display = 'none';
   _currentCoord = null;
+}
+
+// ===== 電話線セクション（§4.3.4）=====
+//
+// 敷設は本来「電話線を割り当てられたユニットがカードを離れるときに自動で1本置く」
+// （命令不要・§4.3.4）。移動フックはまだ無いので、当面は手動で置く/回収する。
+function _refreshPhoneLineSection(coord) {
+  const stockEl  = document.getElementById('cardCmPhoneStock');
+  const layBtn   = document.getElementById('cardCmPhoneLay');
+  const cutBtn   = document.getElementById('cardCmPhoneCut');
+  const repBtn   = document.getElementById('cardCmPhoneRepair');
+  const rmBtn    = document.getElementById('cardCmPhoneRemove');
+  if (!layBtn) return;
+
+  const line = phoneLineMap.get(coord);
+  if (stockEl) stockEl.textContent = `（残り ${getPhoneLineStock()}本）${line ? (line.cut ? ' — このカード: 切断' : ' — このカード: 敷設済み') : ''}`;
+  layBtn.disabled = !!line || getPhoneLineStock() <= 0 || isStagingArea(coord);
+  cutBtn.disabled = !line || line.cut;
+  repBtn.disabled = !line || !line.cut;
+  rmBtn.disabled  = !line;
 }
 
 // ===== VOF ボタン状態更新 =====
@@ -217,6 +242,19 @@ export function initCardContextMenu() {
       _refreshVOFButtons(_currentCoord);
     });
   });
+
+  // ── 電話線（§4.3.4）──
+  const phoneAction = (fn) => (e) => {
+    e.stopPropagation();
+    if (!_currentCoord) return;
+    fn(_currentCoord);
+    _refreshPhoneLineSection(_currentCoord);
+    document.dispatchEvent(new CustomEvent('board:changed'));
+  };
+  document.getElementById('cardCmPhoneLay')?.addEventListener('click', phoneAction(layPhoneLine));
+  document.getElementById('cardCmPhoneCut')?.addEventListener('click', phoneAction(cutPhoneLine));
+  document.getElementById('cardCmPhoneRepair')?.addEventListener('click', phoneAction(repairPhoneLine));
+  document.getElementById('cardCmPhoneRemove')?.addEventListener('click', phoneAction(removePhoneLine));
 
   // ── Crossfire トグル ──
   document.getElementById('cardCmXfire')?.addEventListener('click', (e) => {

@@ -322,6 +322,19 @@
 
   /* ===== VOF マーカー画像（カード上に表示）===== */
   /* PC（Potential Contact）マーカー画像（右上・VOF と反対側） */
+  /* 電話線マーカー（§4.3.4） */
+  .phone-line-marker {
+    position: absolute;
+    bottom: 6px;
+    left: 6px;
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+    z-index: 5;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+    pointer-events: none;
+  }
+
   .pc-marker-img {
     position: absolute;
     top: 6px;
@@ -1542,6 +1555,17 @@
             title="友軍ユニットがいるPCマーカー付きカードで接触判定を行う（§8.2.4）">
       ❓ PC解決（対象なし）
     </button>
+  </div>
+
+  <div class="cm-separator"></div>
+
+  <!-- 電話線（§4.3.4）-->
+  <div style="padding:4px 12px 0; font-size:10px; color:#7aa8c8;">☎ 電話線 <span id="cardCmPhoneStock" style="color:#8a8a6a;"></span></div>
+  <div class="vof-sub-row" style="gap:4px;">
+    <button id="cardCmPhoneLay"    style="flex:1;">敷設</button>
+    <button id="cardCmPhoneCut"    style="flex:1;">切断</button>
+    <button id="cardCmPhoneRepair" style="flex:1;" title="§4.2.1k 修理（1コマンド・同カードのHQ/Staffが発令）">修理</button>
+    <button id="cardCmPhoneRemove" style="flex:1;" title="敷いた電話線を回収する">回収</button>
   </div>
 
   <div class="cm-separator"></div>

@@ -28,6 +28,9 @@ import {
 } from './command.js';
 import { unitRTMap, clearRTs } from './comm.js';
 import { runnerMap, clearRunners } from './runner.js';
+import {
+  phoneLineMap, clearPhoneLines, setPhoneLineStock, getPhoneLineStock, renderAllPhoneLines,
+} from './phone.js';
 import { unitExperienceMap } from './campaign.js';
 import { getVisibility, setVisibility } from './ncm.js';
 import { recomputeActivityLevel } from './contact.js';
@@ -98,6 +101,8 @@ export function serialize() {
       impulse:  getImpulseIndex(),
       rts:      [...unitRTMap],
       runners:  [...runnerMap],
+      phoneLines: [...phoneLineMap],
+      phoneStock: getPhoneLineStock(),
     },
   };
 }
@@ -159,10 +164,14 @@ function _applyPlay(play) {
   (play.rts ?? []).forEach(([id, list]) => unitRTMap.set(id, list));
   runnerMap.clear();
   (play.runners ?? []).forEach(([id, r]) => runnerMap.set(id, r));
+  phoneLineMap.clear();
+  (play.phoneLines ?? []).forEach(([c, l]) => phoneLineMap.set(c, l));
+  setPhoneLineStock(play.phoneStock ?? 0);
   // 描画
   cardVOFMap.forEach((_, c) => renderCardVOF(c));
   cardPDFMap.forEach((_, c) => renderCardPDFs(c));
   cardPCMap.forEach((_, c) => renderCardPC(c));
+  renderAllPhoneLines();
   (play.states ?? []).forEach(([id]) => renderUnitBadges(id));
 }
 
@@ -207,7 +216,9 @@ export function resetPlay(scenario) {
   setBNHQStatus(BN_HQ_STATUS.OFF_MAP_COMM); // BN HQ は原則盤外から始まる（§4.1.1）
   resetImpulse();                            // インパルスも先頭（BN HQ）へ
   clearRTs();      // RT はシナリオ資産。Step6 でシナリオから再投入する
-  clearRunners();  // ランナーはプレイ中に作るもの（ノルマンディーは開始時0体）
+  clearRunners();     // ランナーはプレイ中に作るもの（ノルマンディーは開始時0体）
+  clearPhoneLines();  // 電話線もシナリオ資産。Step6 でシナリオから再投入する
+  renderAllPhoneLines();
   setVisibility(scenario.visibility === 'limited' ? 1 : 0);
 
   // 全カード・全駒のマーカー/バッジを再描画（消去を反映）

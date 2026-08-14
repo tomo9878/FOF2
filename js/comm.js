@@ -24,6 +24,7 @@ import { getUnitCoverSlot } from './cover.js';
 import { hasLOS, cardDistance } from './los.js';
 import { getCommandRole, findUnitsByCommandRole, findUnitDef } from './command.js';
 import { RT_MODELS, NETWORK_DEF, RADIO_TYPE, TYPE_STRICTNESS } from './data/radios.js';
+import { canReachByPhone } from './phone.js';
 
 /** 通信手段 */
 export const COMM_METHOD = {
@@ -233,9 +234,20 @@ export function canCommunicate(fromId, toId, orderKind = ORDER_KIND.NORMAL) {
     return { ok: true, via: COMM_METHOD.RADIO, reason: radio.reason };
   }
 
-  // ── §4.3.4 電話・§4.3.2 ランナーは未実装（Step3 / Step4）──
+  // ── §4.3.4 電話 ──
+  // 電話も Visual-Verbal 圏外（別カード・別エリア・Pinned）で通る。カバー下でも使える
+  const phone = canReachByPhone(fromId, toId, unitRTMap, canUseNetwork, findUnitsByCommandRole);
+  if (phone.ok) {
+    return { ok: true, via: COMM_METHOD.PHONE, reason: phone.reason };
+  }
 
-  return { ok: false, via: null, reason: `${vv.reason} ／ 無線: ${radio.reason}` };
+  // ※ ランナー（§4.3.2）は「通信」ではなく翌ターンの起動を届ける手段なので
+  //    canCommunicate() の経路には含めない（runner.js が別に扱う）
+
+  return {
+    ok: false, via: null,
+    reason: `${vv.reason} ／ 無線: ${radio.reason} ／ 電話: ${phone.reason}`,
+  };
 }
 
 /**
