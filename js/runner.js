@@ -16,7 +16,11 @@
 //   翌ターン起動したい PLT HQ / CO Staff がいるカードにランナーを置き、Exposed にする
 //
 // ── §4.2.1h Dismiss a Runner（コスト1・Auto・発令者 CO HQ）──
-//   ランナーを取り除き、**CO HQ と同じエリアにいる** Good Order のユニットに1ステップ戻す
+//   「add a step to a Good Order unit that can absorb at least one step and that is
+//     located on the same area of a card as the CO HQ」
+//   ＝ ①Good Order ②満タンでない ③**CO HQ と同じカードの同じエリア**（§4.3.1 のエリア）
+//   ※ ランナー作成時に1ステップ払ったユニットである必要は無い。
+//     受け取り手は CO HQ の隣にいる別のユニットでよい。
 //
 // ── 配達の解決（§4.3.2）──
 //   間の Combat Effects Segment で Hit も Pinned もされなければ、翌ターンの
@@ -31,6 +35,7 @@ import {
   expendCommand, canExpendCommand, getCurrentAP, findUnitDef,
 } from './command.js';
 import { setUnitExperience } from './campaign.js';
+import { getAreaKey } from './comm.js';
 
 /** 盤上に同時に置けるランナーの数（§4.3.2） */
 export const MAX_RUNNERS = 2;
@@ -227,6 +232,11 @@ export function canDismissRunner(coHqId, runnerId, recipientId) {
 
   const s = getUnitStrength(recipientId);
   if (!s || s.steps >= s.maxSteps) return { ok: false, reason: 'ステップを受け取れない（満タン）' };
+
+  // §4.2.1h「located on the same area of a card as the CO HQ」
+  if (getAreaKey(recipientId) !== getAreaKey(coHqId)) {
+    return { ok: false, reason: 'CO HQ と同じカードの同じエリアにいるユニットにしか戻せない' };
+  }
   return { ok: true, reason: '' };
 }
 

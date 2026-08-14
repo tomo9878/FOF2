@@ -29,6 +29,7 @@ import {
   canCreateRunner, createRunner, canDispatchRunner, dispatchRunner,
   canDismissRunner, dismissRunner, isGoodOrder,
 } from './runner.js';
+import { getAreaKey } from './comm.js';
 import { drawActionCard } from './deck.js';
 import {
   COVER_TYPES,
@@ -621,10 +622,11 @@ function _runnerHtml(unitId) {
   const payers = _boardUnits(u => isGoodOrder(u.id) && (getUnitStrength(u.id)?.steps ?? 0) > 2);
   // 派遣先（盤上の PLT HQ / CO Staff）
   const targets = _boardUnits(u => ['plt_hq', 'co_staff'].includes(u.commandRole));
-  // 解散時にステップを受け取れるユニット
+  // 解散時にステップを受け取れるユニット（§4.2.1h: CO HQ と同じエリアに限る）
+  const coArea = getAreaKey(unitId);
   const healers = _boardUnits(u => {
     const s = getUnitStrength(u.id);
-    return isGoodOrder(u.id) && s && s.steps < s.maxSteps;
+    return isGoodOrder(u.id) && s && s.steps < s.maxSteps && getAreaKey(u.id) === coArea;
   });
 
   return `
@@ -642,8 +644,8 @@ function _runnerHtml(unitId) {
       <button class="rp-act-btn" id="rnDispatchBtn">派遣 (${RUNNER_ACTION_COST})</button>
     </div>
     <div class="rp-runner-form">
-      <div class="rp-act-reason">解散（1ステップ戻す）</div>
-      ${_selectHtml('rnDismissSel', healers, 'ステップを受け取れるユニットがいない')}
+      <div class="rp-act-reason">解散（CO HQ と同じエリアのユニットに1ステップ戻す）</div>
+      ${_selectHtml('rnDismissSel', healers, 'CO HQ と同じエリアに受け取れるユニットがいない')}
       <button class="rp-act-btn" id="rnDismissBtn">解散 (${RUNNER_ACTION_COST})</button>
     </div>` : ''}
   `;

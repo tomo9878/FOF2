@@ -140,7 +140,9 @@
 - §4.2.1f Create（1コマンド）: **対象を1ステップ減らして** Line 評価のランナーを箱に置く。
   LAT が対象なら駒ごと除去。同時に2体まで（`MAX_RUNNERS`）
 - §4.2.1g Dispatch（1コマンド）: 対象（PLT HQ / CO Staff）のカードへ置き Exposed にする
-- §4.2.1h Dismiss（1コマンド）: 取り除いて Good Order のユニットに1ステップ戻す
+- §4.2.1h Dismiss（1コマンド）: 取り除いて1ステップ戻す。受け取り手の条件は
+  ①Good Order ②満タンでない ③**CO HQ と同じカードの同じエリア**（§4.3.1 のエリア）。
+  作成時に払ったユニットである必要は無い
 - `resolveRunnerDeliveries()` を CO HQ 起動インパルスに入った瞬間に呼ぶ（map.js）
 - 状態は play 層に保存。`resetPlay()` で消える（ノルマンディーは開始時0体）
 
