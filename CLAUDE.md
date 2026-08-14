@@ -68,6 +68,7 @@
   - 1インパルス消費上限（昼6・夜4／§4.1.3）：`expendCommand()` が消費カウンタを持ち、上限で「－」を無効化。＋は取り消し（カウンタも戻る）。General Initiative は対象外
 - インパルス順序制御 §3.3.1/§3.3.2（右パネル「🎖 インパルス」）：7インパルス（BN HQ→CO HQ起動→PLT/Staff起動→CO HQ Init→PLT Init→CO Staff Init→General Init）を順に進める。該当しないユニットの取得ボタンは理由つきで無効化。クリーンアップで先頭へ戻る：完成
 - 起動アクション §4.2.1a（CO HQ/BN HQ の右パネル）：1コマンド消費・自動成功で下位HQ/Staffを起動。分隊・武器チーム・LAT・上位HQ・自分自身は起動不可、二重起動不可、AP不足/消費上限で不可：完成
+- 通信 §4.3.1 Visual-Verbal（comm.js `canCommunicate`）：同エリア（`coord#slotId`／カバー外は `coord#open`）かつ両者 Unpinned。Remove Pinned・Exhort は Pinned 無視、Cease Fire・Shift Fire は同カード全員に伝達。**まだ命令判定には繋いでいない（統合は COMMUNICATION_SPEC.md Step5）**：完成
 - Fire Team 面 §4.1.4（`isOnCommandSide()`）：`namedFireTeam` の駒が1ステップ失うとB面＝Fire Team 面。**発令者・対象のどちらかがB面だと Activate 不可**（§4.2.1a）、B面のHQは自分にしか命令できない、BN HQ の自動起動も対象がB面ならスキップ。L/P/C ヒットで LAT に置き換わった HQ/Staff は保存コマンドを全喪失（`loseSavedCommands()` を hit.js から呼ぶ）：完成
 - 命令の発令可否 `canGiveOrder()` §4.1.1（Command Reference Table 右列）：BN HQ=全員／CO HQ・CO XO・1st Sgt・GySgt=自分より下位のみ／PLT HQ=自小隊＋全LAT／HQ以外は発令不可。CO Staff の序列は `staffRank`（xo/1sgt）で細分：完成
 - General Initiative インパルス §3.3.2d（右パネル「⭐ General Initiative」）：人間がカードを引き★をそのまま取得（§4.1.2の修正なし）。単一小隊ミッションは半分・切り捨て。HQ不要・通信不要・繰越不可。共有プールは仮想ユニット `GENERAL_INIT`：完成
@@ -144,6 +145,7 @@ HIT判定カードと結果判定カードの間など、連続ドロー中は�
     ├── pc-resolve.js PC解決エンジン（§8.2.4 接触するかの判定）
     ├── enemy-contact.js 敵接触タイプ判定（§8.3 パッケージ判定＋武器/FO種別等の追加判定＋Squad袋引き/装備プール）
     ├── enemy-placement.js 敵ユニット実配置（§8.4.3 方向ドロー→距離解決→addUnitToCardで盤面配置）
+    ├── comm.js       通信（§4.3。現状 Visual-Verbal のみ。無線/電話/ランナーは未）
     ├── los.js        LOS/距離判定（§5.2.1 8方向・レンジ・Hill標高越え）
     ├── placement.js  敵配置の距離・方向解決（§8.4.1/8.4.2）
     ├── persistence.js 状態保存・復元（localStorage・2層version）

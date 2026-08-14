@@ -93,13 +93,17 @@
 - 副産物: `hit.js` の Litter 画像パスが `images/LAT_Litter-W.png` で **404** だったのを
   `images/Counter LAT - Litter Team.png`（P/C と同じ Counter LAT シリーズ）に修正
 
-### Step 1: 通信の骨格 + Visual-Verbal 〈S〉
-- 新規 `js/comm.js`：`canCommunicate(fromId, toId) → {ok, via, reason}`
-- まず Visual-Verbal だけ実装：両者 Unpinned ＆ 同 coord ＆ 同じカバースロット
-  （両方カバー外も可）。判定材料は `state.js` の `unitCoordMap` /
-  `getUnitState().pinned` と `cover.js` の `getUnitCoverSlot()` で揃っている
-- 例外2つ（Attempt to Remove Pinned / Cease Fire・Shift Fire）は
-  「命令の種類」を引数で受けて通す口だけ用意する
+### Step 1: 通信の骨格 + Visual-Verbal 〈S〉 — ✅ 完了
+- 新規 `js/comm.js`：`canCommunicate(fromId, toId, orderKind) → {ok, via, reason}`
+- `getAreaKey(unitId)` が「同じエリア」を `coord#slotId`（カバー外は `coord#open`）で表現。
+  同じカードでも別の Cover マーカーなら別エリアになる
+- Visual-Verbal: 両者 Unpinned ＆ 同エリア
+- 例外は `ORDER_KIND` で受ける
+  - `REMOVE_PINNED` / `EXHORT` … Pinned を無視して通る
+  - `CEASE_FIRE` / `SHIFT_FIRE` … 同じカードなら別エリア・Pinned でも全員に伝わる
+- `COMM_METHOD` に RADIO / PHONE の口を用意済み（Step2/3 でここに足す）
+- **まだ `canGiveOrder()` / `canActivateTarget()` からは呼んでいない**（統合は Step5）。
+  今つなぐと無線未実装のため「同じカードにいないと何もできない」状態になるため
 
 ### Step 2: 無線ネットワークと機器データ 〈M〉
 - `js/data/radios.js`：型（A/B/C）・ネットワーク（CO TAC / BN TAC / Arty FD / Mtr FD）の定義
