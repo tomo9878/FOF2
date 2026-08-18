@@ -37,7 +37,9 @@ import { recomputeActivityLevel } from './contact.js';
 import { resetSquadPools } from './enemy-contact.js';
 
 const KEY = 'fof_save';
-const SETUP_VERSION = 1;
+// v2: 行番号の向きをルールブックに合わせた（row 1 = スタートエリア隣接・最下段）。
+//     旧セーブの coord は上下が逆なので、そのまま読むとマップが鏡像になる → 破棄する
+const SETUP_VERSION = 2;
 // v2: unitCommandMap の activated の意味を「上位HQに起動された」に限定し、
 //     「このターン取得済み」を drawn に分離した（旧データは意味が違うので破棄する）
 const PLAY_VERSION  = 2;

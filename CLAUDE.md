@@ -82,6 +82,22 @@
   - ★スキーマ変更時は persistence.js の SETUP_VERSION / PLAY_VERSION を +1（PLAY上げれば駒配置は残しplay層だけ破棄）
   - ヘッダー「状態リセット」（駒残し）/「新規ゲーム」（全初期化）ボタン
 
+## 座標系の約束（ルールブック準拠・変更注意）
+
+**行番号はスタートエリア側から数える。row 1 がスタートエリアに接する行。**
+スタートエリアは **row 0**、行番号が増えるほど敵側（画面上）。
+
+- 根拠: §2.3.5「in the Staging Area below row 1」／ campaign p.16「LOD is between the
+  Staging Area and Row 1」「LOA is at the Top of Row 3」／ §2.5A「row 1 の電話・電話線は
+  スタートエリアのどこの電話とも繋がる」
+- 方向名（`los.js` の `top`/`bottom` 等）は**画面基準**。
+  `top` = 画面上 = 敵側 = **行番号が増える**方向（`DIR_DELTA.top = [+1, 0]`）
+- マップ拡張（§8.4.5）で敵側へ広げると行番号は 4, 5… と**増える**
+- `grid.js` の `assertRowOrientation()` が盤面生成のたびに
+  「row 1 がスタートエリアの直上か」を検算し、破れたら `console.error` を出す
+- ⚠ ここを触るときは `los.js` の `DIR_DELTA`・`grid.js` の `_cssRow`／`expandMapEdge('top')`・
+  `placement.js` の方向コメントが**セット**であることに注意（1つだけ直すと盤面が鏡像になる）
+
 ## 設計方針
 
 ### カードを引く操作は必ず人間が行う
@@ -122,17 +138,7 @@ HIT判定カードと結果判定カードの間など、連続ドロー中は�
 - [x] ~~活動レベル No Contact 時の HQ コマンド判定 +1~~ 完成（コマンド取得時に+1）
 
 ## 既知の課題・ブロッカー
-- ⚠ **行番号がルールブックと上下逆**（未修正・要判断）
-  - ルール: スタートエリアは **Row 1 の手前**（§2.3.5「in the Staging Area below row 1」／
-    campaign p.16「LOD is between the Staging Area and Row 1」「LOA is at the Top of Row 3」）
-  - 実装: coord の row 1 が画面**最上段**、スタートエリアは row(rows+1) で**最下段**
-    → **row 3 がスタートエリアに接している**。ルールと上下が反転している
-  - 影響: PC配置（mission-01 の Row1:C / Row2:A / Row3:B が鏡像になる）、
-    Objective/Attack Position の配置行、§2.5A「row 1 はスタートエリアの電話と接続」、
-    §8.4 の敵配置方向
-  - 対策案: (a) 行番号を下から振る（row 1 = 最下段）／(b) 描画時に `gridRow = rows+1-N` で反転
-  - ※ 電話の接続判定は幾何的な隣接で見ているので、実挙動としては
-    「スタートエリアに接する行」が正しく繋がる（番号の意味だけがズレている）
+- ~~⚠ 行番号がルールブックと上下逆~~ **修正済**（下記「座標系の約束」参照）
 - Visibility は setVisibility()/getVisibility() 実装済みだが UI なし（シナリオヘッダーと合わせて実装予定）
 - Best VOF 自動選択（複数 VOF）は Phase 2 以降
 

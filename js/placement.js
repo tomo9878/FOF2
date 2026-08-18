@@ -15,7 +15,7 @@
 //     （武器ごとの実射程差は未モデル化・既知の簡略化）
 //
 // ── 方向（§8.4.2, unitPlacementDirection テーブルの結果）──
-//   front       → 'top'       （進軍方向。Row番号が小さくなる向き）
+//   front       → 'top'       （進軍方向＝敵側。Row番号が**大きくなる**向き）
 //   left_front  → 'top_left'
 //   right_front → 'top_right'
 //   縦方向(行)距離はどの方向でも1歩につき1行分動くため、

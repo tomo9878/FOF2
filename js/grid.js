@@ -19,14 +19,33 @@ export let selectedCard = null;
 // 現在のマップ配置（保存・復元用）: [{ coord, cardId, underCardId }]
 export const placedCards = [];
 
-// ===== マップ拡張（§8.4.5 Map Expansion）用の内部状態 =====
-// 行ラベルは負数・0も許可する（例: 元の Row1 より前方に拡張 → Row "0", "-1"...）。
+// ===== 座標系の約束（ルールブック準拠）=====
+//
+// **行番号はスタートエリア側から数える。row 1 がスタートエリアに接する行。**
+//   §2.3.5「in the Staging Area below row 1」
+//   campaign p.16「LOD is between the Staging Area and Row 1」「LOA is at the Top of Row 3」
+//   §2.5A「A Telephone or Telephone line in row 1 provides a connection to
+//          phones anywhere in the Staging Area」
+//
+// 画面では **row 1 が最下段（スタートエリアのすぐ上）**、行番号が増えるほど上（敵側）。
+// したがって方向名（los.js の 'top' 等・画面基準）との対応は:
+//   'top'    = 画面上 = 敵側 = **行番号が増える**方向
+//   'bottom' = 画面下 = 自軍側 = 行番号が減る方向
+// マップ拡張（§8.4.5）で敵側へ広げる場合は行番号が 4, 5… と**増える**。
+//
+// ※ 以前は逆（row 1 が最上段・敵側へは 0, -1 と減る）だったため、
+//    ミッションブックの Row 指定が上下鏡像に適用されていた。
+//
 // 列は常に 'A' 始まりを保つ（左方向への拡張は既存カードを1列右へ再ラベルして 'A' を明け渡す）。
 let _minRowNum = 1;
 let _maxRowNum = 1;
 let _colCount  = 0;
 
-function _cssRow(rowNum)     { return rowNum - _minRowNum + 1; }
+/** スタートエリアの行番号（row 1 の手前なので 0） */
+export const STAGING_ROW_NUM = 0;
+
+// 行番号 → CSS グリッド行。行番号が大きいほど画面上（CSS行が小さい）。
+function _cssRow(rowNum)     { return _maxRowNum - rowNum + 1; }
 function _cssCol(colIdx)     { return colIdx + 1; }
 function _colIndexOf(letter) { return letter.charCodeAt(0) - 65; }
 function _colLetterOf(idx)   { return String.fromCharCode(65 + idx); }
@@ -295,7 +314,9 @@ function _buildGridWithPlaced(placed, units, markers, rows, cols) {
   placed.forEach((cell, i) => {
     const card = cell.card;
     const colIdx = i % cols;
-    const rowNum = Math.floor(i / cols) + 1;
+    // 行番号はスタートエリア側から数える（row 1 = 最下段）。
+    // placed 配列は画面の上から順に埋めるので、行番号は rows → 1 と降っていく。
+    const rowNum = rows - Math.floor(i / cols);
     const coord = colLetters[colIdx] + rowNum;
 
     // 配置を記録
@@ -307,8 +328,10 @@ function _buildGridWithPlaced(placed, units, markers, rows, cols) {
     grid.appendChild(div);
   });
 
-  // ===== スタートエリア行（テレイン行の次の行）=====
-  const stagingRowNum = rows + 1;          // 座標の行番号
+  // ===== スタートエリア行（row 1 の手前＝画面最下段）=====
+  // §2.3.5「in the Staging Area below row 1」に合わせ、行番号は **0**。
+  // 隣接判定（電話線・LOS）が row 1 と噛み合うようにこの番号にしている。
+  const stagingRowNum = STAGING_ROW_NUM;   // 座標の行番号（= 0）
   const dividerRow    = rows + 1;           // グリッド上の区切り行
   const stagingRow    = rows + 2;           // グリッド上のスタートエリア行
 
@@ -353,6 +376,36 @@ function _buildGridWithPlaced(placed, units, markers, rows, cols) {
     _addDropHandlers(div, coord);
     grid.appendChild(div);
   });
+
+  assertRowOrientation();
+}
+
+/**
+ * 座標系の不変条件チェック（安全網）。
+ * ルール上 **row 1 はスタートエリアに接している**（§2.3.5 / §2.5A / campaign p.16）。
+ * 上下が反転すると LOS の向き・敵配置方向・PC 配置がまとめて鏡像になり、
+ * 見た目は動くのに全部おかしい、という気づきにくい壊れ方をする。
+ * 盤面生成のたびに検算して、破れていたらコンソールに出す。
+ * @returns {boolean} 不変条件を満たすか
+ */
+export function assertRowOrientation() {
+  const cssRowOf = (sel) => {
+    const el = document.querySelector(sel);
+    return el ? parseInt(getComputedStyle(el).gridRowStart, 10) : null;
+  };
+  const row1  = cssRowOf('.terrain-card[data-coord="A1"]:not(.staging-area)');
+  const staging = cssRowOf('.terrain-card.staging-area[data-coord]');
+  const top   = cssRowOf(`.terrain-card[data-coord="A${_maxRowNum}"]:not(.staging-area)`);
+  if (row1 == null || staging == null || top == null) return true;   // 盤面未生成
+
+  const ok = row1 < staging && top < row1;   // row 1 はスタートエリアの直上、最大行が最上段
+  if (!ok) {
+    console.error(
+      '[grid] 行番号の向きが壊れています: row 1 はスタートエリアに接している必要があります' +
+      `（A1のCSS行=${row1} / スタートエリア=${staging} / A${_maxRowNum}=${top}）`
+    );
+  }
+  return ok;
 }
 
 // ===== マップ拡張（§8.4.5 Map Expansion）=====
@@ -441,9 +494,10 @@ export function expandMapEdge(edge) {
   if (!grid) return [];
 
   if (edge === 'top') {
-    const newRowNum = _minRowNum - 1;
-    _minRowNum = newRowNum;
-    // 既存カードのCSS行位置を1つ後ろへずらす（ラベル自体は変えない）
+    // 'top' は画面上＝敵側。行番号はスタートエリア側から数えるので **増える**
+    const newRowNum = _maxRowNum + 1;
+    _maxRowNum = newRowNum;
+    // _cssRow は _maxRowNum に依存するので、既存カードのCSS行位置を振り直す
     document.querySelectorAll('.terrain-card[data-coord]:not(.staging-area)').forEach(el => {
       el.style.gridRow = _cssRow(_rowNumOf(el.dataset.coord));
     });

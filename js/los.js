@@ -33,9 +33,14 @@ const OPPOSITE = {
 };
 
 // 方向 → (行delta, 列delta)
+//
+// 方向名は**画面基準**。行番号はスタートエリア側から数える（grid.js の座標系の約束）ので、
+//   'top'（画面上＝敵側）    → 行番号 **+1**
+//   'bottom'（画面下＝自軍側）→ 行番号 −1
+// ※ 以前は行番号が上下逆だったため top が −1 だった。座標系の修正に合わせて符号を反転。
 const DIR_DELTA = {
-  top: [-1, 0], bottom: [1, 0], left: [0, -1], right: [0, 1],
-  top_left: [-1, -1], top_right: [-1, 1], bottom_left: [1, -1], bottom_right: [1, 1],
+  top: [1, 0], bottom: [-1, 0], left: [0, -1], right: [0, 1],
+  top_left: [1, -1], top_right: [1, 1], bottom_left: [-1, -1], bottom_right: [-1, 1],
 };
 
 function _coordToRC(coord) {
