@@ -7,6 +7,7 @@ import {
 } from './state.js';
 import { addUnitToCard, removeUnitFromCard } from './grid.js';
 import { loseSavedCommands } from './command.js';
+import { checkRTCombatDamage } from './comm.js';
 
 // ===== Combo Hit Helpers =====
 export const _HIT_INFO = {
@@ -319,6 +320,7 @@ export function hitC(unit) {
     const ctId  = unit.id + '_HIT_CT';
     const ctDef = { id: ctId, src: CASUALTY_SRC, label: CASUALTY_LABEL, type: 'lat', faction: unit.faction };
     loseSavedCommands(unit.id);   // §4.1.4 Casualty 化した HQ/Staff の保存コマンドは失われる
+    checkRTCombatDamage(unit.id); // §4.3.4/§4.3.5 最後のステップが Casualty → RT は R#1/2 で破壊
     removeUnitFromCard(unit.id);
     addUnitToCard(coord, ctDef);
     pinUnit(ctId);
@@ -341,6 +343,7 @@ export function hitC(unit) {
   if (s.steps === 2) {
     const ctId  = unit.id + '_HIT_CT';
     const ftId  = unit.id + '_HIT_FT';
+    checkRTCombatDamage(unit.id); // 消滅閾値＝最後のステップが Casualty になる
     const ctDef = { id: ctId, src: CASUALTY_SRC, label: CASUALTY_LABEL, type: 'lat', faction: unit.faction };
     const ftDef = unit.fireteam
       ? { ...unit.fireteam, id: ftId }
@@ -426,6 +429,7 @@ export function hitCombo(unit, l1, l2) {
       const info = _HIT_INFO[l1];
       const latId = _cid(unit.id, info.tag);
       loseSavedCommands(unit.id);
+      if (l1 === 'C') checkRTCombatDamage(unit.id);   // §4.3.4/§4.3.5
       removeUnitFromCard(unit.id);
       addUnitToCard(coord, { id: latId, src: info.src, label: info.label, type: 'lat', faction: unit.faction });
       pinUnit(latId);

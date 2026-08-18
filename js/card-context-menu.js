@@ -22,6 +22,9 @@ import {
   layPhoneLine, removePhoneLine, cutPhoneLine,
   canRepairPhoneLine, repairPhoneLineAction,
 } from './phone.js';
+import { droppedRTMap, canPickUpRT, pickUpRT } from './comm.js';
+import { unitCoordMap, getUnitState, renderUnitBadges } from './state.js';
+import { UNITS } from './data/units-normandy.js';
 
 let _currentCoord = null;
 
@@ -38,6 +41,7 @@ export function showCardContextMenu(e, coord) {
   _refreshCoverSection(coord);
   _refreshPCButton(coord);
   _refreshPhoneLineSection(coord);
+  _refreshDroppedRTSection(coord);
 
   menu.style.display = 'block';
   const mw = menu.offsetWidth, mh = menu.offsetHeight;
@@ -52,6 +56,44 @@ export function hideCardContextMenu() {
   const menu = document.getElementById('cardContextMenu');
   if (menu) menu.style.display = 'none';
   _currentCoord = null;
+}
+
+// ===== 落ちている RT（§4.2.2h Pick up）=====
+function _refreshDroppedRTSection(coord) {
+  const sec  = document.getElementById('cardCmRTSection');
+  const info = document.getElementById('cardCmRTInfo');
+  const sel  = document.getElementById('cardCmRTPicker');
+  const btn  = document.getElementById('cardCmRTPickUp');
+  if (!sec) return;
+
+  const dropped = droppedRTMap.get(coord) ?? [];
+  if (!dropped.length) { sec.style.display = 'none'; return; }
+  sec.style.display = '';
+  if (info) info.textContent = `（${dropped.map(r => r.model).join(', ')}）`;
+
+  // 拾える駒＝そのカードにいる Good Order のユニット
+  const pickers = [...unitCoordMap].filter(([id, c]) => c === coord && !getUnitState(id).pinned)
+    .map(([id]) => id);
+  if (sel) {
+    sel.innerHTML = pickers.map(id => `<option value="${id}">${_unitLabelOf(id)}</option>`).join('');
+  }
+  const first = pickers[0];
+  const check = first ? canPickUpRT(first, coord) : { ok: false, reason: 'そのカードに拾える駒がいない' };
+  if (btn) {
+    btn.disabled = !check.ok;
+    btn.title = check.ok
+      ? `§4.2.2h 拾う（${check.originatorId} が1コマンド消費・拾った駒は Exposed）`
+      : `拾えない: ${check.reason}`;
+  }
+}
+
+/** ユニットIDの表示名 */
+function _unitLabelOf(unitId) {
+  for (const arr of Object.values(UNITS)) {
+    const u = arr.find(x => x.id === unitId);
+    if (u) return u.label;
+  }
+  return unitId;
 }
 
 // ===== 電話線セクション（§4.3.4）=====
@@ -257,6 +299,18 @@ export function initCardContextMenu() {
     _refreshPhoneLineSection(_currentCoord);
     document.dispatchEvent(new CustomEvent('board:changed'));
   };
+  // ── 落ちている RT を拾う（§4.2.2h）──
+  document.getElementById('cardCmRTPickUp')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!_currentCoord) return;
+    const sel = document.getElementById('cardCmRTPicker');
+    const r = pickUpRT(sel?.value, _currentCoord, 0);
+    if (!r.ok) return;
+    renderUnitBadges(sel.value);            // Exposed バッジを反映
+    _refreshDroppedRTSection(_currentCoord);
+    document.dispatchEvent(new CustomEvent('board:changed'));
+  });
+
   document.getElementById('cardCmPhoneLay')?.addEventListener('click', phoneAction(layPhoneLine));
   document.getElementById('cardCmPhoneCut')?.addEventListener('click', phoneAction(cutPhoneLine));
   document.getElementById('cardCmPhoneRepair')?.addEventListener('click', phoneAction(repairPhoneLineAction));

@@ -22,7 +22,11 @@
 import { unitCoordMap, getUnitState } from './state.js';
 import { getUnitCoverSlot } from './cover.js';
 import { hasLOS, cardDistance } from './los.js';
-import { getCommandRole, findUnitsByCommandRole, findUnitDef } from './command.js';
+import {
+  getCommandRole, findUnitsByCommandRole, findUnitDef,
+  getCurrentAP, canExpendCommand, expendCommand, canGiveOrder,
+} from './command.js';
+import { rollR } from './data/scenario-tables.js';
 import { RT_MODELS, NETWORK_DEF, RADIO_TYPE, TYPE_STRICTNESS } from './data/radios.js';
 import { canReachByPhone, setPhoneLineStock, isStagingArea } from './phone.js';
 
@@ -309,6 +313,189 @@ function _tryVisualVerbal(fromId, toId, orderKind) {
   }
 
   return { ok: true, via: COMM_METHOD.VISUAL_VERBAL, reason: '同じカードの同じエリア' };
+}
+
+// ===== RT の戦闘損害・遺棄・回収・網の載せ替え =====
+//
+// FOF.pdf p.29 §4.3.4「Combat Damage to Field Phones」／ p.30 §4.3.5「Combat Damage to Radios」
+//   電話・無線とも同じ規定:
+//   「If the last or only step of a unit with a radio/phone becomes a Casualty,
+//     there is a 1-in-2 chance (R#1/2) that it will be destroyed.
+//     If destroyed, remove it from play, otherwise place the marker on the map.
+//     You can have another unit pick it up and use it if commanded to do so (4.2.2h).」
+//
+// §4.2.2h Pick up（p.23・コスト1・Auto・発令者 Any HQ or Staff・対象 Any Good Order unit）
+//   「Have an infantry unit pick up items from the card」。拾った駒は **Exposed** になる。
+//
+// §4.2.1j Switch Radio/Phone to a Different Network（p.22・コスト1・Auto）
+//   「Replace the same kind of radio or phone with one that has been Removed from Play.」
+//   例: SCR300 BN TAC が破壊されたら、SCR300 Mtr FD NET を BN TAC に載せ替えられる。
+//   → **同じ機種**で、**破壊されて Removed from Play になった網**にだけ移せる。
+
+/** coord → [{model, network}] 盤上に落ちている RT */
+export const droppedRTMap = new Map();
+
+/** Removed from Play になった RT（§4.2.1j の載せ替え先になる） */
+export const removedRTs = [];
+
+/** 遺棄/破壊の状態をクリア（リセット用） */
+export function clearRTDamage() { droppedRTMap.clear(); removedRTs.length = 0; }
+
+/**
+ * RT カウンターの画像パス（images/Net - {網} - {機種}.png）。
+ * @param {{model:string, network:string}} rt
+ * @returns {string}
+ */
+export function rtImage(rt) {
+  const netLabel = NETWORK_DEF[rt.network]?.label ?? rt.network;
+  return `images/Net - ${netLabel} - ${rt.model}.png`;
+}
+
+/**
+ * §4.3.4 / §4.3.5 戦闘損害チェック。
+ * 「最後の（唯一の）ステップが Casualty になった」ユニットについて呼ぶ。
+ * 持っている RT ごとに R#1/2 を振り、破壊なら Removed from Play、
+ * 残れば同じカードに落とす。どちらでもそのユニットからは失われる。
+ * @param {string} unitId
+ * @returns {Array<{model:string, network:string, r:number, destroyed:boolean, card:object}>}
+ */
+export function checkRTCombatDamage(unitId) {
+  const rts = unitRTMap.get(unitId);
+  if (!rts?.length) return [];
+  const coord = unitCoordMap.get(unitId);
+  const results = [];
+
+  for (const rt of rts) {
+    if (rt.dead) continue;
+    const { r, card } = rollR(2);
+    const destroyed = r === 1;                 // R#1/2
+    if (destroyed) {
+      removedRTs.push({ model: rt.model, network: rt.network });
+    } else if (coord) {
+      if (!droppedRTMap.has(coord)) droppedRTMap.set(coord, []);
+      droppedRTMap.get(coord).push({ model: rt.model, network: rt.network });
+    }
+    rt.dead = true;
+    results.push({ model: rt.model, network: rt.network, r, destroyed, card });
+  }
+  unitRTMap.delete(unitId);
+  if (coord) renderDroppedRTs(coord);
+  return results;
+}
+
+/**
+ * §4.2.2h 落ちている RT を拾えるか。
+ * @param {string} recipientId - 拾う駒（同じカードの Good Order ユニット）
+ * @param {string} coord
+ * @returns {{ok:boolean, reason:string, originatorId:string|null}}
+ */
+export function canPickUpRT(recipientId, coord) {
+  const NG = (reason) => ({ ok: false, reason, originatorId: null });
+  if (!(droppedRTMap.get(coord) ?? []).length) return NG('このカードに落ちている RT がない');
+  if (unitCoordMap.get(recipientId) !== coord)  return NG('拾う駒がそのカードにいない');
+  if (getUnitState(recipientId).pinned)         return NG('Pinned の駒は拾えない');
+
+  // 発令者: 同カードに限らないが、対象と通信できる HQ/Staff で、コマンドが払えること
+  const originatorId = _findOriginatorFor(recipientId);
+  if (!originatorId) return NG('命令できる HQ/Staff がいない（通信・コマンドを確認）');
+  return { ok: true, reason: '', originatorId };
+}
+
+/**
+ * §4.2.2h 実行。1コマンド消費、拾った駒は Exposed になる。
+ * @param {string} recipientId
+ * @param {string} coord
+ * @param {number} [index=0] - 落ちている RT のインデックス
+ * @returns {{ok:boolean, reason:string, rt:object|null}}
+ */
+export function pickUpRT(recipientId, coord, index = 0) {
+  const check = canPickUpRT(recipientId, coord);
+  if (!check.ok) return { ...check, rt: null };
+  const list = droppedRTMap.get(coord);
+  const rt = list[index];
+  if (!rt) return { ok: false, reason: '対象の RT がない', rt: null };
+
+  expendCommand(check.originatorId);
+  list.splice(index, 1);
+  if (!list.length) droppedRTMap.delete(coord);
+  assignRT(recipientId, rt.model, rt.network);
+  getUnitState(recipientId).exposed = true;    // §4.2.2h「Mark any infantry units involved Exposed」
+  renderDroppedRTs(coord);
+  return { ok: true, reason: '', rt };
+}
+
+/**
+ * §4.2.1j 網の載せ替え先の候補（同じ機種で Removed from Play になった網）。
+ * @param {string} unitId
+ * @param {number} rtIndex
+ * @returns {string[]} 載せ替え可能なネットワークのキー
+ */
+export function switchableNetworks(unitId, rtIndex) {
+  const rt = (unitRTMap.get(unitId) ?? [])[rtIndex];
+  if (!rt || rt.dead) return [];
+  return removedRTs
+    .filter(x => x.model === rt.model && x.network !== rt.network)
+    .map(x => x.network);
+}
+
+/**
+ * §4.2.1j 実行。1コマンド消費し、同じ機種のまま網を載せ替える。
+ * @param {string} unitId
+ * @param {number} rtIndex
+ * @param {string} toNetwork
+ * @returns {{ok:boolean, reason:string}}
+ */
+export function switchRTNetwork(unitId, rtIndex, toNetwork) {
+  const rt = (unitRTMap.get(unitId) ?? [])[rtIndex];
+  if (!rt || rt.dead) return { ok: false, reason: 'その RT が無い' };
+  const slot = removedRTs.findIndex(x => x.model === rt.model && x.network === toNetwork);
+  if (slot < 0) {
+    return { ok: false, reason: `${NETWORK_DEF[toNetwork]?.label ?? toNetwork} の同型 RT が Removed from Play になっていない` };
+  }
+  const originatorId = _findOriginatorFor(unitId);
+  if (!originatorId) return { ok: false, reason: '命令できる HQ/Staff がいない（通信・コマンドを確認）' };
+
+  expendCommand(originatorId);
+  removedRTs.splice(slot, 1);
+  rt.network = toNetwork;
+  return { ok: true, reason: '' };
+}
+
+/**
+ * その駒に命令を出せる HQ/Staff を探す（コマンドが払えて通信できること）。
+ * @param {string} targetId
+ * @returns {string|null}
+ */
+function _findOriginatorFor(targetId) {
+  for (const [unitId] of unitCoordMap) {
+    if (!getCommandRole(unitId)) continue;
+    if (getCurrentAP(unitId) < 1 || !canExpendCommand(unitId)) continue;
+    if (canGiveOrder(unitId, targetId).ok) return unitId;
+  }
+  return null;
+}
+
+/**
+ * カード上の「落ちている RT」マーカーを描き直す。
+ * @param {string} coord
+ */
+export function renderDroppedRTs(coord) {
+  const card = document.querySelector(`.terrain-card[data-coord="${coord}"]`);
+  if (!card) return;
+  card.querySelectorAll('.dropped-rt-marker').forEach(el => el.remove());
+  (droppedRTMap.get(coord) ?? []).forEach((rt, i) => {
+    const img = document.createElement('img');
+    img.className = 'dropped-rt-marker';
+    img.src = rtImage(rt);
+    img.title = `落ちている ${rt.model}（${NETWORK_DEF[rt.network]?.label ?? rt.network}）`;
+    img.style.right = `${6 + i * 20}px`;
+    card.appendChild(img);
+  });
+}
+
+/** 全カードの遺棄 RT を描き直す */
+export function renderAllDroppedRTs() {
+  document.querySelectorAll('.terrain-card[data-coord]').forEach(el => renderDroppedRTs(el.dataset.coord));
 }
 
 // ===== シナリオからの通信資産投入 =====

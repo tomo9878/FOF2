@@ -340,6 +340,19 @@
     border-radius: 3px;
   }
 
+  /* 落ちている RT マーカー（§4.3.4 / §4.3.5） */
+  .dropped-rt-marker {
+    position: absolute;
+    bottom: 6px;
+    width: 34px;
+    height: 34px;
+    object-fit: contain;
+    z-index: 6;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.7));
+    opacity: 0.9;
+    pointer-events: none;
+  }
+
   /* 電話線マーカー（§4.3.4） */
   .phone-line-marker {
     position: absolute;
@@ -1589,6 +1602,15 @@
   </div>
 
   <div class="cm-separator"></div>
+
+  <!-- 落ちている RT を拾う（§4.2.2h）-->
+  <div id="cardCmRTSection" style="display:none">
+    <div style="padding:4px 12px 0; font-size:10px; color:#7aa8c8;">📻 落ちている無線・電話 <span id="cardCmRTInfo" style="color:#8a8a6a;"></span></div>
+    <div class="vof-sub-row" style="gap:4px;">
+      <select id="cardCmRTPicker" class="rp-bnhq-select" style="flex:2"></select>
+      <button id="cardCmRTPickUp" style="flex:1;" title="§4.2.2h 拾う（1コマンド・拾った駒は Exposed）">拾う</button>
+    </div>
+  </div>
 
   <!-- 電話線（§4.3.4）-->
   <div style="padding:4px 12px 0; font-size:10px; color:#7aa8c8;">☎ 電話線 <span id="cardCmPhoneStock" style="color:#8a8a6a;"></span></div>

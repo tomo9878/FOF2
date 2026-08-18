@@ -26,7 +26,10 @@ import {
   unitCommandMap, getBNHQStatus, setBNHQStatus, BN_HQ_STATUS,
   getImpulseIndex, setImpulseIndex, resetImpulse,
 } from './command.js';
-import { unitRTMap, applyScenarioComms, getCoTacMode, restoreCoTacMode } from './comm.js';
+import {
+  unitRTMap, applyScenarioComms, getCoTacMode, restoreCoTacMode,
+  droppedRTMap, removedRTs, clearRTDamage, renderAllDroppedRTs,
+} from './comm.js';
 import { runnerMap, clearRunners } from './runner.js';
 import {
   phoneLineMap, clearPhoneLines, setPhoneLineStock, getPhoneLineStock, renderAllPhoneLines,
@@ -106,6 +109,8 @@ export function serialize() {
       phoneLines: [...phoneLineMap],
       phoneStock: getPhoneLineStock(),
       coTac:    getCoTacMode(),
+      droppedRTs: [...droppedRTMap],
+      removedRTs: [...removedRTs],
     },
   };
 }
@@ -166,6 +171,9 @@ function _applyPlay(play) {
   restoreCoTacMode(play.coTac);   // RT は下で保存済みのものを入れるのでフラグだけ戻す
   unitRTMap.clear();
   (play.rts ?? []).forEach(([id, list]) => unitRTMap.set(id, list));
+  clearRTDamage();
+  (play.droppedRTs ?? []).forEach(([c, list]) => droppedRTMap.set(c, list));
+  (play.removedRTs ?? []).forEach(rt => removedRTs.push(rt));
   runnerMap.clear();
   (play.runners ?? []).forEach(([id, r]) => runnerMap.set(id, r));
   phoneLineMap.clear();
@@ -176,6 +184,7 @@ function _applyPlay(play) {
   cardPDFMap.forEach((_, c) => renderCardPDFs(c));
   cardPCMap.forEach((_, c) => renderCardPC(c));
   renderAllPhoneLines();
+  renderAllDroppedRTs();
   (play.states ?? []).forEach(([id]) => renderUnitBadges(id));
 }
 
@@ -219,7 +228,9 @@ export function resetPlay(scenario) {
   resetSquadPools();
   setBNHQStatus(BN_HQ_STATUS.OFF_MAP_COMM); // BN HQ は原則盤外から始まる（§4.1.1）
   resetImpulse();                            // インパルスも先頭（BN HQ）へ
+  clearRTDamage();                // 遺棄/破壊された RT もリセット
   applyScenarioComms(scenario);   // RT と電話線在庫をシナリオから再投入（§4.3.3）
+  renderAllDroppedRTs();
   clearRunners();     // ランナーはプレイ中に作るもの（ノルマンディーは開始時0体）
   clearPhoneLines();  // 電話線もシナリオ資産。Step6 でシナリオから再投入する
   renderAllPhoneLines();
