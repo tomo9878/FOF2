@@ -30,6 +30,7 @@ import {
   canDismissRunner, dismissRunner, isGoodOrder,
 } from './runner.js';
 import { getAreaKey } from './comm.js';
+import { setHighlightOrigin } from './order-highlight.js';
 import { drawActionCard } from './deck.js';
 import {
   COVER_TYPES,
@@ -361,6 +362,7 @@ export function updateRightPanelUnit(unit) {
   const el = document.getElementById('rpUnitInfo');
   if (!el) return;
   _rpUnit = unit;   // インパルスが進んだときに描き直せるよう覚えておく
+  setHighlightOrigin(unit.id);   // HQ を選んだら命令範囲の可視化の基準にする
 
   const s      = getUnitStrength(unit.id);
   const state  = getUnitState(unit.id);

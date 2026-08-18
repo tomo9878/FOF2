@@ -270,9 +270,9 @@ export function setCommunicationChecker(fn) { _commChecker = fn; }
  * @param {string} toId
  * @returns {{ok:boolean, reason:string, via:string|null}}
  */
-function _communicates(fromId, toId) {
+function _communicates(fromId, toId, orderKind) {
   if (!_commChecker) return { ok: true, reason: '通信判定が未接続', via: null };
-  return _commChecker(fromId, toId);
+  return _commChecker(fromId, toId, orderKind);
 }
 
 // ===== 命令の発令可否（Command Reference Table の「Can give other orders to」列）=====
@@ -327,9 +327,12 @@ function _isLAT(unitId) {
  * originator が target に命令（Activate 以外の通常アクション）を出せるか。
  * @param {string} originatorId
  * @param {string} targetId
+ * @param {string} [orderKind] - comm.js の ORDER_KIND。§4.3.1 の例外
+ *        （Pinned でも通る Remove Pinned / Exhort、カード全員に届く Cease Fire / Shift Fire）
+ *        を判定に反映したい場合に渡す
  * @returns {{ok:boolean, reason:string}}
  */
-export function canGiveOrder(originatorId, targetId) {
+export function canGiveOrder(originatorId, targetId, orderKind) {
   const role = getCommandRole(originatorId);
   if (!role) return { ok: false, reason: 'HQ/Staff ではないので発令者になれない' };
   if (originatorId === targetId) return { ok: true, reason: '自分自身への命令' };
@@ -360,7 +363,7 @@ export function canGiveOrder(originatorId, targetId) {
   }
 
   // ② §4.3 通信できるか（指揮系統を満たしていても通信できなければ命令は出せない）
-  const comm = _communicates(originatorId, targetId);
+  const comm = _communicates(originatorId, targetId, orderKind);
   if (!comm.ok) return { ok: false, reason: `通信できない（${comm.reason}）` };
 
   return { ok: true, reason: `${chainReason}／${comm.via ?? '通信OK'}` };

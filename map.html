@@ -322,6 +322,24 @@
 
   /* ===== VOF マーカー画像（カード上に表示）===== */
   /* PC（Potential Contact）マーカー画像（右上・VOF と反対側） */
+  /* 命令範囲の可視化（§4.1.1 指揮系統 ＋ §4.3 通信） */
+  .order-hl-toggle {
+    font-size: 11px;
+    display: inline-flex; align-items: center; gap: 4px;
+    cursor: pointer;
+  }
+  .order-hl-toggle input { cursor: pointer; }
+
+  /* 命令が届かない駒: 暗くする。Exposed/Pinned のオーバーレイとは干渉しない */
+  .unit-slot.order-unreachable  { filter: brightness(0.35) saturate(0.5); }
+  /* Pinned: 通常の命令は通らないが「Pinned 解除の試み」だけ出せる */
+  .unit-slot.order-pinned-only {
+    filter: brightness(0.45) saturate(0.7);
+    outline: 2px solid #e8a030;
+    outline-offset: -2px;
+    border-radius: 3px;
+  }
+
   /* 電話線マーカー（§4.3.4） */
   .phone-line-marker {
     position: absolute;
@@ -1294,6 +1312,9 @@
       <input type="range" id="zoomSlider" min="40" max="180" value="115" step="5"
         oninput="setZoom(this.value/100)" class="zoom-slider">
     </div>
+    <label class="btn order-hl-toggle" title="選択中のHQが命令を出せる駒だけを通常表示にし、届かない駒を暗くする（§4.1.1 指揮系統 ＋ §4.3 通信）">
+      <input type="checkbox" id="orderHighlightToggle"> 🔦 命令範囲
+    </label>
     <button class="btn" onclick="resetPlayState()" style="font-size:11px"
       title="マップ・駒配置は残し、VOF/状態/AP/PC などプレイ中の状態だけ初期化">状態リセット</button>
     <button class="btn" onclick="if(confirm('新規ゲーム：マップ再生成・駒もプールに戻ります。よろしいですか？'))newGame()"

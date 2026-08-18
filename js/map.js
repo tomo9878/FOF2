@@ -24,6 +24,7 @@ import {
 } from './comm.js';
 import { getPhoneLineStock } from './phone.js';
 import { setCommunicationChecker } from './command.js';
+import { initOrderHighlight } from './order-highlight.js';
 
 // ===== window へ公開（HTML の onclick から呼ぶため） =====
 window.changeZoom = changeZoom;
@@ -288,6 +289,7 @@ window.newGame        = () => { clearStorage(); location.reload(); };  // 全初
 initContextMenu();
 initCardContextMenu();
 initCoTacPanel();
+initOrderHighlight();
 initImpulsePanel();
 initBNHQPanel();
 initGeneralInitPanel();
