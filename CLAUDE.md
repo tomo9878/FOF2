@@ -72,7 +72,8 @@
 - 通信 §4.3.3/§4.3.5 無線（comm.js `canReachByRadio` ＋ data/radios.js）：RT機種（SCR536=A / SCR300・SCR610=B / ICOM=C）と5ネットワーク。A=両端カバー外＋LOS、B=同一網なら盤外含め無条件、C=同・隣接カード。網の資格チェックあり。CO TAC は CO HQ をハブとして経由必須、機種混在時は厳しい方を適用：完成
 - 通信 §4.3.4 電話（phone.js）：電話線マーカー（在庫つき）＋8方向隣接の接続グラフ。電話機自体とスタートエリアも電話線として機能。CO TAC は CO HQ の電話が接続に含まれること、他網はスタートエリア到達が必要。**カバー下・Pinned でも通る**（無線タイプAとの決定的な違い）。戦闘損害（Incoming/AirStrike で R#1/2、Good Order の敵のみのカードで R#1-2/3）と §4.2.1k 修理・敷設・回収をカード右クリックに実装：完成
 - 通信 §4.3.2 ランナー（runner.js）：作成(§4.2.1f・**対象を1ステップ減らす**)／派遣(§4.2.1g・Exposed)／解散(§4.2.1h・1ステップ戻す。受け取り手は**CO HQ と同じエリア**の Good Order 非満タンユニット。払ったユニットでなくてよい)、同時2体まで。CO HQ 起動インパルスで `resolveRunnerDeliveries()` が配達を解決。Pinned・Fire Team面・対象不在は**失敗確定**（後から届かない）。CO HQ の右パネルから操作：完成
-  - **まだ命令判定（`canGiveOrder`/`canActivateTarget`）には繋いでいない（統合は COMMUNICATION_SPEC.md Step5）**
+- 通信の指揮判定への統合 §4.3（Step5）：`canGiveOrder()` は ①指揮系統 → ②通信 の2段判定。`canActivateTarget()` も §4.1.1「in play and in communication」を要求。`resolveBNHQImpulse()` は BN TAC で実際に CO HQ と通信できるかを確認。**循環参照を避けるため `setCommunicationChecker()` で comm.js を注入**（map.js の初期化で接続）：完成
+- Mission 1 の通信資産 §4.3.3（mission-01.js `comms`・campaign p.12 TO&E ＋ p.13 CSR1）：CO HQ=SCR300 BN TAC＋SCR536 CO TAC／CO XO・1〜3PLT HQ=SCR536 CO TAC／**CO 1st Sgt は無線なし**／BN HQ=SCR300 BN TAC。右パネル「☎ CO TAC 回線」で EE8 電話（線4本）へ切替可（Combat Patrol は不可）：完成
 - Fire Team 面 §4.1.4（`isOnCommandSide()`）：`namedFireTeam` の駒が1ステップ失うとB面＝Fire Team 面。**発令者・対象のどちらかがB面だと Activate 不可**（§4.2.1a）、B面のHQは自分にしか命令できない、BN HQ の自動起動も対象がB面ならスキップ。L/P/C ヒットで LAT に置き換わった HQ/Staff は保存コマンドを全喪失（`loseSavedCommands()` を hit.js から呼ぶ）：完成
 - 命令の発令可否 `canGiveOrder()` §4.1.1（Command Reference Table 右列）：BN HQ=全員／CO HQ・CO XO・1st Sgt・GySgt=自分より下位のみ／PLT HQ=自小隊＋全LAT／HQ以外は発令不可。CO Staff の序列は `staffRank`（xo/1sgt）で細分：完成
 - General Initiative インパルス §3.3.2d（右パネル「⭐ General Initiative」）：人間がカードを引き★をそのまま取得（§4.1.2の修正なし）。単一小隊ミッションは半分・切り捨て。HQ不要・通信不要・繰越不可。共有プールは仮想ユニット `GENERAL_INIT`：完成

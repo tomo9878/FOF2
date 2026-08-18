@@ -19,6 +19,11 @@ import {
   getCurrentImpulse, advanceImpulse, isUnitEligibleNow,
 } from './command.js';
 import { resolveRunnerDeliveries, runnersOnMapCount } from './runner.js';
+import {
+  applyScenarioComms, setCoTacMode, getCoTacMode, canCommunicate,
+} from './comm.js';
+import { getPhoneLineStock } from './phone.js';
+import { setCommunicationChecker } from './command.js';
 
 // ===== window へ公開（HTML の onclick から呼ぶため） =====
 window.changeZoom = changeZoom;
@@ -56,6 +61,27 @@ function nextPhase() {
   }
 }
 window.nextPhase = nextPhase;
+
+// ===== CO TAC 回線の切替（§4.3.3 / campaign p.13 CSR1）=====
+function initCoTacPanel() {
+  const sel  = document.getElementById('coTacMode');
+  const note = document.getElementById('coTacNote');
+  if (!sel) return;
+  const sync = (msg) => {
+    sel.value = getCoTacMode();
+    if (note) {
+      note.textContent = msg ?? (getCoTacMode() === 'phone'
+        ? `電話線マーカー 残り ${getPhoneLineStock()}本（カード右クリックで敷設）`
+        : 'SCR536 は視線が通る相手のみ・カバーの下では使えない');
+    }
+  };
+  sel.addEventListener('change', () => {
+    const r = setCoTacMode(scenario, sel.value);
+    sync(r.ok ? null : r.reason);
+    document.dispatchEvent(new CustomEvent('board:changed'));
+  });
+  sync();
+}
 
 // ===== インパルスの順序（§3.3.1 / §3.3.2）=====
 // 1つのインパルスを終えてから次へ進む（p.18）。今のインパルスに該当しないユニットの
@@ -219,6 +245,8 @@ document.addEventListener('keydown', (e) => {
 // ===== 初期化 =====
 const scenario = getScenario(1);
 applyScenarioCommandSettings(scenario);   // 単一小隊ミッションか（General Initiative 半減の判定用）
+// §4.3 通信判定を command.js に注入する（comm.js ⇔ command.js の循環参照を避けるため）
+setCommunicationChecker(canCommunicate);
 
 function findUnitDef(unitId) {
   for (const arr of Object.values(UNITS)) {
@@ -234,6 +262,7 @@ if (!restored) {
   buildGrid(TERRAIN_CARDS, {}, {}, shuffle, { rows: scenario.map.rows, cols: scenario.map.cols });
   applyScenarioExperience(scenario);                          // 初期練度を投入
   setVisibility(scenario.visibility === 'limited' ? 1 : 0);   // シナリオ視界
+  applyScenarioComms(scenario);                               // 通信資産（RT・電話線）を投入
 
   // シナリオの PC 配置（各行の全カードに letter side）
   for (const [row, letter] of Object.entries(scenario.pcPlacement ?? {})) {
@@ -258,6 +287,7 @@ window.resetPlayState = () => { resetPlay(scenario); syncBNHQPanel(); syncImpuls
 window.newGame        = () => { clearStorage(); location.reload(); };  // 全初期化
 initContextMenu();
 initCardContextMenu();
+initCoTacPanel();
 initImpulsePanel();
 initBNHQPanel();
 initGeneralInitPanel();

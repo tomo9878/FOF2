@@ -194,12 +194,29 @@
   実際に効くのは §4.3 の一般則「発令者は対象と通信できること」なので、
   無線・電話で届く相手なら別カードでもよい。→ 判定は Step5 の統合で入る
 
-### Step 5: 通信条件を指揮判定に組み込む 〈S〉
-- `canActivateTarget()` と `canGiveOrder()` に `canCommunicate()` を条件追加
-  （§4.1.1 の "in play and **in communication**"）
-- BN HQ の状態 select（今は人間が4状態から選ぶ仮実装）を、
-  **SCR300 BN TAC の有無・破損から自動判定**する形に置き換える
-- 右パネルに「なぜ命令できないか」を表示（既存の理由表示の仕組みに乗せる）
+### Step 5: 通信条件を指揮判定に組み込む 〈S〉 — ✅ 完了
+- `canGiveOrder()`：①指揮系統（Command Reference Table）→ ②§4.3 通信 の2段判定に整理。
+  BN HQ / PLT HQ / CO HQ・Staff のどの経路でも通信チェックを通るようにした
+- `canActivateTarget()`：§4.1.1「any friendly subordinate units in play and
+  **in communication**」を追加
+- `resolveBNHQImpulse()`：盤外・通信可を選んでいても、実際に
+  **BN TAC で CO HQ と通信できるか**を `canCommunicate('BN_HQ', coHq)` で確認する
+- **循環参照の回避**: `comm.js` は役職判定のため `command.js` を import しており、
+  `command.js` から直接 `comm.js` を import すると循環する。
+  `setCommunicationChecker(fn)` で**関数を注入**する形にし、map.js の初期化で繋ぐ。
+  未注入時は「判定なし」で通す（モジュール単体テスト時の保険）
+
+### Step 6: シナリオデータ投入 〈S〉 — ✅ 完了
+- `mission-01.js` に `comms` ブロックを追加（出典: campaign p.12 TO&E ＋ p.13 CSR1）
+  - CO HQ: SCR300 BN TAC ＋ SCR536 CO TAC
+  - CO XO / 1〜3 PLT HQ: SCR536 CO TAC
+  - **CO 1st Sgt は無線なし**（TO&E どおり。声か電話のみ）
+  - BN HQ（盤外の仮想ユニット）にも SCR300 BN TAC を持たせる（両端に RT が必要）
+  - `coTac: 'radio' | 'phone'`、電話選択時は電話線4本、ランナー0体
+- `comm.js` の `applyScenarioComms()` が展開。CO TAC を電話にすると
+  **CO TAC の無線だけが EE8 に置き換わり**、他網（BN TAC）は無線のまま
+- 右パネルに「☎ CO TAC 回線」の切替を追加。Combat Patrol では電話を選べない
+- 60mm 迫撃砲セクションの SCR536 は、Section 単位の駒が未定義のため未割当
 
 ### Step 6: シナリオデータ投入 〈S〉
 - `mission-01.js` に通信資産を追加：CO TAC=SCR536（攻勢なので EE8 電話4本の選択肢あり）、

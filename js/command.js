@@ -248,6 +248,33 @@ export function loseSavedCommands(unitId) {
   entry.spent = 0;
 }
 
+// ===== §4.3 通信の注入口 =====
+//
+// FOF.pdf p.27 §4.3「To order a unit to perform an action, the Originator …
+// must be able to communicate with the Recipient unit.」
+// 通信判定は comm.js が持つが、comm.js は役職判定のために command.js を import しており
+// 直接 import すると循環参照になる。そこで **関数を注入する** 形にし、
+// map.js の初期化で `setCommunicationChecker(canCommunicate)` を呼んで繋ぐ。
+
+let _commChecker = null;
+
+/**
+ * 通信判定関数を差し込む（map.js の初期化から呼ぶ）。
+ * @param {(from:string, to:string, orderKind?:string)=>{ok:boolean, reason:string, via:string|null}} fn
+ */
+export function setCommunicationChecker(fn) { _commChecker = fn; }
+
+/**
+ * 通信できるか。未注入なら「判定なし」として通す（テスト単体実行時の保険）。
+ * @param {string} fromId
+ * @param {string} toId
+ * @returns {{ok:boolean, reason:string, via:string|null}}
+ */
+function _communicates(fromId, toId) {
+  if (!_commChecker) return { ok: true, reason: '通信判定が未接続', via: null };
+  return _commChecker(fromId, toId);
+}
+
 // ===== 命令の発令可否（Command Reference Table の「Can give other orders to」列）=====
 //
 // FOF.pdf p.18「Command Reference Table」右列
@@ -310,23 +337,33 @@ export function canGiveOrder(originatorId, targetId) {
   if (!isOnCommandSide(originatorId)) {
     return { ok: false, reason: 'Fire Team 面のため自分自身にしか命令できない（rally で表に戻す）' };
   }
-  if (role === 'general') return { ok: true, reason: 'General Initiative（HQ不要）' };
-  if (role === 'bn_hq')   return { ok: true, reason: 'BN HQ は全ユニットに命令できる' };
-
-  if (role === 'plt_hq') {
+  // ① 指揮系統（Command Reference Table）を満たしているか
+  let chainReason;
+  if (role === 'general') {
+    chainReason = 'General Initiative（HQ不要）';
+  } else if (role === 'bn_hq') {
+    chainReason = 'BN HQ は全ユニットに命令できる';
+  } else if (role === 'plt_hq') {
     // 「自分の小隊に属するユニット」＋「あらゆる LAT」
-    if (_isLAT(targetId)) return { ok: true, reason: 'LAT には小隊を問わず命令できる' };
     const mine = getPlatoonKey(originatorId);
-    const theirs = getPlatoonKey(targetId);
-    return mine && mine === theirs
-      ? { ok: true,  reason: '自分の小隊のユニット' }
-      : { ok: false, reason: 'PLT HQ は自分の小隊のユニットと LAT にしか命令できない' };
+    if (_isLAT(targetId)) {
+      chainReason = 'LAT には小隊を問わず命令できる';
+    } else if (mine && mine === getPlatoonKey(targetId)) {
+      chainReason = '自分の小隊のユニット';
+    } else {
+      return { ok: false, reason: 'PLT HQ は自分の小隊のユニットと LAT にしか命令できない' };
+    }
+  } else if (getCommandRank(targetId) > getCommandRank(originatorId)) {
+    chainReason = '下位のユニット';
+  } else {
+    return { ok: false, reason: '自分と同格以上のHQ/Staffには命令できない' };
   }
 
-  // CO HQ / CO Staff: 自分より下位の階級にだけ命令できる
-  return getCommandRank(targetId) > getCommandRank(originatorId)
-    ? { ok: true,  reason: '下位のユニット' }
-    : { ok: false, reason: '自分と同格以上のHQ/Staffには命令できない' };
+  // ② §4.3 通信できるか（指揮系統を満たしていても通信できなければ命令は出せない）
+  const comm = _communicates(originatorId, targetId);
+  if (!comm.ok) return { ok: false, reason: `通信できない（${comm.reason}）` };
+
+  return { ok: true, reason: `${chainReason}／${comm.via ?? '通信OK'}` };
 }
 
 // ===== 起動(Activated) / 取得済み(Drawn) =====
@@ -471,16 +508,25 @@ export function resolveBNHQImpulse() {
 
   if (status === BN_HQ_STATUS.OFF_MAP_COMM) {
     const blocked = [];
+    const noComm = [];
     for (const id of findUnitsByCommandRole('co_hq')) {
       // §4.1.4: Fire Team 面の CO HQ は上位HQに起動されない
       if (!isOnCommandSide(id)) { blocked.push(id); continue; }
+      // §4.1.1「if the CO HQ is in communication via a BN TAC radio or phone」
+      const comm = _communicates(BN_HQ_UNIT_ID, id);
+      if (!comm.ok) { noComm.push(`${id}: ${comm.reason}`); continue; }
       setActivated(id, true);
       result.activatedCOHQ.push(id);
     }
-    result.note = result.activatedCOHQ.length
-      ? 'BN HQ は盤外だが通信可のため CO HQ を自動起動（カードは引かない）'
-      : 'CO HQ が Fire Team 面のため起動されない。CO HQ イニシアチブ・インパルスで引く';
+    if (result.activatedCOHQ.length) {
+      result.note = 'BN HQ は盤外だが BN TAC で通信可のため CO HQ を自動起動（カードは引かない）';
+    } else if (blocked.length) {
+      result.note = 'CO HQ が Fire Team 面のため起動されない。CO HQ イニシアチブ・インパルスで引く';
+    } else {
+      result.note = `BN TAC で CO HQ と通信できない（${noComm[0] ?? '不明'}）。CO HQ イニシアチブ・インパルスから開始`;
+    }
     if (blocked.length) result.blockedFireTeamSide = blocked;
+    if (noComm.length)  result.blockedNoComm = noComm;
     return result;
   }
 
@@ -775,7 +821,10 @@ export function canActivateTarget(originatorId, targetId) {
   }
   if (getCurrentAP(originatorId) < ACTIVATE_COST) return { ok: false, reason: 'コマンドが足りない' };
   if (!canExpendCommand(originatorId)) return { ok: false, reason: 'このインパルスの消費上限に達している' };
-  return { ok: true, reason: '' };
+  // §4.1.1「any friendly subordinate units in play and **in communication**」
+  const comm = _communicates(originatorId, targetId);
+  if (!comm.ok) return { ok: false, reason: `通信できない（${comm.reason}）` };
+  return { ok: true, reason: comm.via ?? '' };
 }
 
 /**

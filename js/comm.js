@@ -24,7 +24,7 @@ import { getUnitCoverSlot } from './cover.js';
 import { hasLOS, cardDistance } from './los.js';
 import { getCommandRole, findUnitsByCommandRole, findUnitDef } from './command.js';
 import { RT_MODELS, NETWORK_DEF, RADIO_TYPE, TYPE_STRICTNESS } from './data/radios.js';
-import { canReachByPhone } from './phone.js';
+import { canReachByPhone, setPhoneLineStock } from './phone.js';
 
 /** 通信手段 */
 export const COMM_METHOD = {
@@ -282,6 +282,58 @@ function _tryVisualVerbal(fromId, toId, orderKind) {
   }
 
   return { ok: true, via: COMM_METHOD.VISUAL_VERBAL, reason: '同じカードの同じエリア' };
+}
+
+// ===== シナリオからの通信資産投入 =====
+//
+// campaign p.12 TO&E の「Assets / Ammo per Mission」＋ p.13 CSR1 を
+// シナリオ定義の `comms` として持ち、ここで実際の保有 RT に展開する。
+
+let _coTacMode = 'radio';   // 'radio' | 'phone'
+
+/** @returns {'radio'|'phone'} */
+export function getCoTacMode() { return _coTacMode; }
+
+/**
+ * セーブ復元用: モードのフラグだけ戻す（RT は保存済みのものを使うので再投入しない）。
+ * @param {'radio'|'phone'} mode
+ */
+export function restoreCoTacMode(mode) {
+  if (mode === 'radio' || mode === 'phone') _coTacMode = mode;
+}
+
+/**
+ * CO TAC 網を無線／電話のどちらで運用するか（§4.3.3「両方使えるなら網ごとに選ぶ」）。
+ * Combat Patrol では電話が使えない（campaign p.13 CSR1）。
+ * @param {object} scenario
+ * @param {'radio'|'phone'} mode
+ * @returns {{ok:boolean, reason:string}}
+ */
+export function setCoTacMode(scenario, mode) {
+  if (mode === 'phone' && scenario?.missionType === 'combat_patrol') {
+    return { ok: false, reason: 'Combat Patrol では電話は使用不可（campaign p.13 CSR1）' };
+  }
+  _coTacMode = mode === 'phone' ? 'phone' : 'radio';
+  applyScenarioComms(scenario);
+  return { ok: true, reason: '' };
+}
+
+/**
+ * シナリオの通信資産を盤面に投入する（RT の割当と電話線の在庫）。
+ * @param {object} scenario
+ */
+export function applyScenarioComms(scenario) {
+  const comms = scenario?.comms;
+  clearRTs();
+  setPhoneLineStock(0);
+  if (!comms) return;
+
+  for (const rt of comms.rts ?? []) {
+    // CO TAC を電話運用にした場合、CO TAC の無線を EE8 野戦電話に置き換える
+    const model = (rt.coTac && _coTacMode === 'phone') ? 'EE8' : rt.model;
+    assignRT(rt.unit, model, rt.network);
+  }
+  if (_coTacMode === 'phone') setPhoneLineStock(comms.phoneLinesIfPhone ?? 0);
 }
 
 /**

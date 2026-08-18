@@ -19,6 +19,33 @@ export default {
   // ── セットアップ変数（AP/NCM に直結）──
   visibility: 'daylight',        // 'daylight' | 'limited'（確定: Daylight +0）
 
+  // ── 通信資産（§4.3.3 / §4.3.5）──
+  // 出典: campaign p.12 TO&E の「Assets / Ammo per Mission」列 ＋ p.13「CSR 1. Communications」
+  //   ・CO TAC 網は SCR536（タイプA: LOS 必須・カバー下で機能しない）
+  //   ・**攻勢ミッションでは SCR536 を EE8 野戦電話に置き換えてよい**。
+  //     その場合 電話線マーカー4本が資産としてつく。他の網は無線のまま。
+  //     Combat Patrol では電話は使用不可
+  //   ・BN TAC は SCR300（タイプB）→ BN HQ からの CO HQ 自動起動はこれに依存
+  //   ・**ランナーは開始時0体**（必要ならプレイ中に §4.2.1f で作る）
+  //   ・CO 1st Sgt は TO&E で無線を持たない（声か電話のみ）
+  comms: {
+    coTac: 'radio',          // 'radio' | 'phone'（攻勢のみ切替可）
+    phoneLinesIfPhone: 4,    // 電話を選んだ場合に付く電話線マーカー数
+    runners: 0,              // 開始時のランナー数
+    rts: [
+      // BN TAC は両端に RT が必要。BN HQ 側（盤外の仮想ユニット）にも持たせる
+      { unit: 'BN_HQ',      model: 'SCR300', network: 'BN_TAC' },
+      { unit: 'US_CO_HQ',   model: 'SCR300', network: 'BN_TAC' },
+      { unit: 'US_CO_HQ',   model: 'SCR536', network: 'CO_TAC', coTac: true },
+      { unit: 'US_CO_XO',   model: 'SCR536', network: 'CO_TAC', coTac: true },
+      { unit: 'US_1PLT_HQ', model: 'SCR536', network: 'CO_TAC', coTac: true },
+      { unit: 'US_2PLT_HQ', model: 'SCR536', network: 'CO_TAC', coTac: true },
+      { unit: 'US_3PLT_HQ', model: 'SCR536', network: 'CO_TAC', coTac: true },
+      // 60mm 迫撃砲セクションにも SCR536 CO TAC があるが、
+      // units-normandy.js には Section 単位の駒が無いため未割当（3チームのみ定義）
+    ],
+  },
+
   // ── 参加部隊と初期練度 ──
   // unitId → { experience: 'vet'|'line'|'green' }。
   // ここに書くのは「ミッション開始時の初期練度」。
