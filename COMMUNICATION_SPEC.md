@@ -236,6 +236,38 @@
 
 ---
 
+## 3.5 §4.3 の実装状況・棚卸し（最終確認）
+
+### 実装済み
+| ルール | 実装 |
+|---|---|
+| §4.3 通信できないと命令できない | `canGiveOrder` / `canActivateTarget` / BN HQ 自動起動 |
+| §4.3.1 Visual-Verbal（同エリア・両者Unpinned） | `comm.js` |
+| §4.3.1 例外（Remove Pinned / Exhort・Cease Fire / Shift Fire） | `ORDER_KIND` |
+| §4.3.2 ランナー（作成・派遣・解散・配達） | `runner.js` |
+| §4.3.3 5ネットワークと資格・CO TAC のハブ | `data/radios.js` / `canUseNetwork` |
+| §4.3.5 無線 A/B/C の到達条件 | `canReachByRadio` |
+| §2.5A スタートエリアの無線 LOS 例外 | `_stagingLOS`（内どうし＋隣接row1） |
+| §4.3.4 電話線の接続グラフ・切断・修理(§4.2.1k) | `phone.js` |
+| §4.3.4 電話線の戦闘損害（R#1/2・R#1-2/3） | `checkPhoneLineCombatDamage` |
+| campaign p.12/13 の通信資産 | `mission-01.js` の `comms` |
+
+### 未実装（意図的に見送り・優先度順）
+1. **§4.3.5 無線の戦闘損害（p.30）** — 無線を持つユニットの最後の1ステップが Casualty に
+   なると **R#1/2 で無線が破壊**。壊れなければ盤上に落ち、§4.2.2h で拾える。
+   電話（§4.3.4）と同じ規定で、電話側だけ「未実装」と書いていて無線側を書き漏らしていた
+2. **§4.2.1j 網の載せ替え**（1コマンド）— 破壊・喪失した RT を、同型で別網の RT と
+   差し替える。`unitRTMap` の `dead` フラグは用意済みだが**まだ誰も立てていない**
+3. **§4.2.2h 落ちた RT を拾う**（1コマンド）
+4. §4.3.4 移動時の自動敷設（カードを離れるとき1本置く・命令不要）
+5. 防御ミッションの事前敷設（MLR 後方・p.11）／ §3.9 Reattempt 時の Secured カードへの再配置（p.17）
+6. 盤外ユニットの電話（BN TAC を電話で運用する場合の Staging Area 接続）
+7. §4.3.3 BN Staff が「CO HQ と同じ場所にいれば CO TAC を使える」条件
+   （`allowRoleTags: ['bn_staff']` の口はあるが、該当する駒がまだ無い）
+
+※ 1〜3 は「RT が壊れる」系で互いに繋がっているので、実装するならまとめて。
+   前提として **Casualty 判定（§6.4.3）と Combat Effects Segment の処理**が要る。
+
 ## 4. 未確認・要調査
 
 - ~~Casualty / Litter Team / Paralyzed Team の実装状況（§6.4.3）と、

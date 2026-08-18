@@ -24,7 +24,7 @@ import { getUnitCoverSlot } from './cover.js';
 import { hasLOS, cardDistance } from './los.js';
 import { getCommandRole, findUnitsByCommandRole, findUnitDef } from './command.js';
 import { RT_MODELS, NETWORK_DEF, RADIO_TYPE, TYPE_STRICTNESS } from './data/radios.js';
-import { canReachByPhone, setPhoneLineStock } from './phone.js';
+import { canReachByPhone, setPhoneLineStock, isStagingArea } from './phone.js';
 
 /** 通信手段 */
 export const COMM_METHOD = {
@@ -118,6 +118,27 @@ export function canUseNetwork(unitId, network) {
   return false;
 }
 
+/** その座標が row 1（スタートエリアに接する行）か */
+function _isRow1(coord) {
+  return /^[A-Z]+1$/.test(coord ?? '');
+}
+
+/**
+ * §2.5A のスタートエリア LOS 例外に当たるか。
+ *   ・スタートエリア内どうし → 常に LOS あり
+ *   ・スタートエリア ⇔ 隣接する row 1 のカード → LOS あり
+ * @param {string} a
+ * @param {string} b
+ * @returns {boolean}
+ */
+function _stagingLOS(a, b) {
+  const sa = isStagingArea(a), sb = isStagingArea(b);
+  if (sa && sb) return true;                       // スタートエリア内は自動で LOS
+  if (!sa && !sb) return false;
+  const mapCoord = sa ? b : a;
+  return _isRow1(mapCoord) && cardDistance(a, b) === 1;
+}
+
 /**
  * その世代の無線で2ユニット間が届くか。
  * @param {string} type - RADIO_TYPE
@@ -139,6 +160,12 @@ function _radioReach(type, fromId, toId) {
     if (getUnitCoverSlot(fromId)) return { ok: false, reason: '発令者がカバーの下（初期携帯無線は使えない）' };
     if (getUnitCoverSlot(toId))   return { ok: false, reason: '対象がカバーの下（初期携帯無線は使えない）' };
     if (!fromCoord || !toCoord)   return { ok: false, reason: '初期携帯無線は盤外とは通信できない' };
+    // §2.5A（p.12）スタートエリアの LOS 例外
+    //   「A Line of Sight exists for communication purposes between all cards in the
+    //     Main Staging Area … you may automatically use all radios that require LOS」
+    //   「LOS for radio communication exists between cards in the Staging Area and
+    //     adjacent map cards on row 1」
+    if (_stagingLOS(fromCoord, toCoord)) return { ok: true, reason: '' };
     // LOS が通ること（昼として扱い、煙は無視 → los.js の素の判定をそのまま使う）
     if (!hasLOS(fromCoord, toCoord)) return { ok: false, reason: '視線が通らない（初期携帯無線は LOS 内のみ）' };
     return { ok: true, reason: '' };
