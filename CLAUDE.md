@@ -130,7 +130,8 @@ HIT判定カードと結果判定カードの間など、連続ドロー中は�
 - [x] ~~コマンドフェーズの起動セグメント（HQ起動順・配下への配分・消費上限チェック）~~ 完成
 - [ ] **§4.3 通信と §4.1.4 Fire Team 面 → 実装計画は COMMUNICATION_SPEC.md（ルール調査済み・Step0〜6）**
 - [x] ~~駒の表裏（command side / Fire Team side・§1.2.3B / §4.1.4）~~ 完成（Step0。`isOnCommandSide()` = `namedFireTeam` かつ `steps === maxSteps`）
-- [ ] rally で Fire Team 面から command side に戻す手段（§6.5 / §4.2.3）— 今は手動で強度を戻すしかない
+- [ ] **§4.2 アクション体系 → 実装計画は ACTION_SPEC.md（調査済み・着手順 Rally→移動→戦闘）**
+- [ ] rally で Fire Team 面から command side に戻す手段 — **§4.2.3f「Attempt to Flip a unit with a Fire Team Side to Front」がそれ**。Rally 実装で埋まる
 - [ ] Attachment の小隊割当（§2.3.2 Mission Log）— PLT HQ の命令範囲判定に必要（今はユニットIDの `US_nPLT_` 接頭辞で小隊を判定している）
 - [x] ~~BN HQ の箱~~ 完成（盤面駒ではなく仮想ユニット `BN_HQ` として実装。盤上に上位HQリーダーの駒が要る場合は別途ユニット定義が必要）
 - [x] ~~PC解決ロジック（§8.2.4接触判定＋§8.3タイプ判定）~~ 完成
