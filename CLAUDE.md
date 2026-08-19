@@ -148,6 +148,19 @@ HIT判定カードと結果判定カードの間など、連続ドロー中は�
 - [ ] 配置後のcover探索・友軍ユニットとの重なり回避（§8.4.3詳細）・PDF/VOF自動付与
 - [x] ~~活動レベル No Contact 時の HQ コマンド判定 +1~~ 完成（コマンド取得時に+1）
 
+## データの正典は `cards.json` / `terrain_cards.json` / `units_normandy.json`
+
+`js/data/*.js` は**手で書き起こしたもの**で、元データとズレていた実績がある。
+カード種別・アイコン・地形数値を疑うときは**必ず元 JSON とカード画像に当たること**。
+
+- `cards.json` … `type`（カード上部の語: Cover/Contact/Rally/空）と
+  `action_attempt.icons`（`infiltrate` / `spot_concentrate` / `grenade` /
+  `call_for_fire` / `call_for_fire_battalion` / `hq` / `jam` / `short`）
+- `terrain_cards.json` … `cover_draw`（カバー捜索の引き枚数）・`cover_positions`（収容数）ほか
+- **2026-08-19 に cards.js の `type` 18枚分の誤りを実物画像で確認して修正した**
+  （#18・#42 は Rally なのに contact、#49/#50 は jam/short を type に入れていた 等）。
+  jam / short は type ではなく **icons** 側にある
+
 ## 既知の課題・ブロッカー
 - ~~⚠ 行番号がルールブックと上下逆~~ **修正済**（下記「座標系の約束」参照）
 - Visibility は setVisibility()/getVisibility() 実装済みだが UI なし（シナリオヘッダーと合わせて実装予定）

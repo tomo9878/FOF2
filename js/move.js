@@ -14,11 +14,22 @@
 // |g| Attempt to Infiltrate within a Card   | 1 | 2 (+/−) |
 // |h| Pick up, load, unload, embark         | 1 | Auto（comm.js に実装済み）|
 //
-// **本モジュールは Auto の a / b / f を実装する。**
-//   c・d・g（浸透）はアクションカードの **Infiltrate アイコン**のデータが
-//   cards.js に無いため判定できない（type は cover/contact/rally/jam/short のみ）。
-//   e（カバー捜索）は地形カードの **Cover Draw 番号**が未データ化（COVER_POSITIONS は
-//   カバースロットの収容数であって引く枚数ではない）。どちらもデータ追加が前提。
+// **a / b / f（Auto）に加えて、c / g（浸透）と e（カバー捜索）も実装する。**
+//   判定用データは元から `cards.json` / `terrain_cards.json` にあり、
+//   JS モジュール側へ取り込んだ:
+//     - `CARD_ICONS`（cards.js）… `infiltrate` アイコンを持つカードは10枚
+//     - `COVER_DRAW`（terrain-data.js）… 地形ごとのカバー捜索の引き枚数（2〜4）
+//   d（小隊浸透）は b と c の組み合わせなので後回し。
+//
+// ── §4.2.2c 浸透（隣接カード）──
+//   出発地か目的地のどちらかに VOF が必要。三脚シンボル/H VOF の駒は不可。
+//   カードを引いて Infiltrate アイコンを探し、成功すると **Exposed が付かずに**移動。
+//   失敗したら通常の「隣接カードへ移動」を行う（＝Exposed 付きで移動する）。
+// ── §4.2.2g 浸透（カード内）──
+//   カードに VOF が必要。成功で Exposed 無しの カード内移動、失敗で通常のカード内移動。
+// ── §4.2.2e カバー捜索 ──
+//   そのカードの Cover Draw 番号だけ引き "Cover" を探す。
+//   成功すると新しいカバーマーカーの下に入り **Exposed** になる。
 //
 // ── §4.2.2a の効果 ──
 //   隣接カードへ移動し **Exposed** にする。移動先にカバーマーカーがあれば入れてよい。
@@ -42,7 +53,10 @@ import { cardDistance } from './los.js';
 import { cardVOFMap } from './vof.js';
 import {
   getUnitCoverSlot, removeUnitFromCover, assignUnitToCover, getCoverSlots, COVER_TYPES,
+  addCoverSlot, canAddCoverSlot,
 } from './cover.js';
+import { COVER_DRAW } from './data/terrain-data.js';
+import { getUnitExperience } from './campaign.js';
 import { isStagingArea, phoneLineMap, layPhoneLine, getPhoneLineStock } from './phone.js';
 import { getRTs } from './comm.js';
 import { RT_MODELS } from './data/radios.js';
@@ -254,6 +268,146 @@ export function movePlatoonToAdjacent(pltHqId, toCoord) {
   }
   document.dispatchEvent(new CustomEvent('board:changed'));
   return { ok: true, reason: '', moved, stayed };
+}
+
+// ===== 浸透（§4.2.2c / g）とカバー捜索（§4.2.2e）=====
+
+/** 三脚シンボル / H VOF の駒は浸透できない（§4.2.2c/g） */
+function _canInfiltrate(unitId) {
+  const def = findUnitDef(unitId);
+  if (def?.tripod) return { ok: false, reason: '三脚シンボルの駒は浸透できない' };
+  if (def?.vof === 'H') return { ok: false, reason: 'H VOF の駒は浸透できない' };
+  return { ok: true, reason: '' };
+}
+
+/**
+ * 浸透の段取りを返す（カードは引かない）。
+ * @param {string} unitId
+ * @param {string|null} toCoord - 隣接カードへの浸透なら移動先、カード内なら null
+ * @returns {{ok:boolean, reason:string, draws:number}}
+ */
+export function planInfiltrate(unitId, toCoord) {
+  const from = unitCoordMap.get(unitId);
+  if (!from) return { ok: false, reason: '駒が盤上にいない', draws: 0 };
+  const inf = _canInfiltrate(unitId);
+  if (!inf.ok) return { ...inf, draws: 0 };
+  if (getUnitState(unitId).exposed) return { ok: false, reason: 'Exposed の駒は移動できない', draws: 0 };
+
+  // VOF の条件: 隣接浸透は「出発地か目的地」、カード内浸透は「そのカード」
+  const hasVOF = toCoord
+    ? !!(cardVOFMap.get(from)?.type || cardVOFMap.get(toCoord)?.type)
+    : !!cardVOFMap.get(from)?.type;
+  if (!hasVOF) {
+    return { ok: false, reason: toCoord ? '出発地か目的地に VOF が必要' : 'カードに VOF が必要', draws: 0 };
+  }
+  // 「2 (+/−)」。§4.2.2 の見出しどおり **対象の練度** で修正する
+  const exp = getUnitExperience(unitId);
+  const mod = exp === 'vet' ? +1 : exp === 'green' ? -1 : 0;
+  return { ok: true, reason: '', draws: Math.max(0, 2 + mod) };
+}
+
+/**
+ * 引いたカードに Infiltrate アイコンがあるか。
+ * @param {Array<{icons:string[]}>} cards
+ * @returns {boolean}
+ */
+export function isInfiltrateSuccess(cards) {
+  return cards.some(c => (c?.icons ?? []).includes('infiltrate'));
+}
+
+/**
+ * 浸透の結果を適用する。
+ * 成功 → Exposed を付けずに移動。失敗 → 通常の移動を行う（§4.2.2c/g）。
+ * @param {string} originatorId
+ * @param {string} unitId
+ * @param {string|null} toCoord
+ * @param {boolean} success
+ * @param {string|null} [toSlotId=null]
+ * @returns {{ok:boolean, reason:string, exposed:boolean}}
+ */
+export function applyInfiltrate(originatorId, unitId, toCoord, success, toSlotId = null) {
+  const from = unitCoordMap.get(unitId);
+  if (!success) {
+    // 失敗したら通常移動（コストは既に払っているので直接処理する）
+    return toCoord
+      ? _relocate(unitId, toCoord, toSlotId, true)
+      : _relocateWithin(unitId, toSlotId, true);
+  }
+  return toCoord
+    ? _relocate(unitId, toCoord, toSlotId, false)
+    : _relocateWithin(unitId, toSlotId, false);
+}
+
+/** 実際の移動処理（コストは呼び出し側で払う） */
+function _relocate(unitId, toCoord, toSlotId, markExposed) {
+  const from = unitCoordMap.get(unitId);
+  const fromSlotType = getUnitCoverSlot(unitId)?.type ?? null;
+  const toSlotType = toSlotId
+    ? (getCoverSlots(toCoord).find(s => s.slotId === toSlotId)?.type ?? null) : null;
+  autoLayPhoneLineOnLeave(unitId, from);
+  removeUnitFromCover(unitId);
+  moveUnitToCard(unitId, toCoord);
+  if (toSlotId) assignUnitToCover(unitId, toCoord, toSlotId);
+  const exposed = markExposed && shouldMarkExposed(fromSlotType, toSlotType);
+  if (exposed) getUnitState(unitId).exposed = true;
+  renderUnitBadges(unitId);
+  document.dispatchEvent(new CustomEvent('board:changed'));
+  return { ok: true, reason: '', exposed };
+}
+
+/** カード内の移動処理（コストは呼び出し側で払う） */
+function _relocateWithin(unitId, toSlotId, markExposed) {
+  const coord = unitCoordMap.get(unitId);
+  removeUnitFromCover(unitId);
+  if (toSlotId && !assignUnitToCover(unitId, coord, toSlotId)) {
+    return { ok: false, reason: 'そのカバーに入れない（収容上限）', exposed: false };
+  }
+  if (markExposed) getUnitState(unitId).exposed = true;
+  renderUnitBadges(unitId);
+  document.dispatchEvent(new CustomEvent('board:changed'));
+  return { ok: true, reason: '', exposed: markExposed };
+}
+
+/**
+ * §4.2.2e カバー捜索の段取り。引く枚数は地形カードの Cover Draw 番号。
+ * @param {string} unitId
+ * @returns {{ok:boolean, reason:string, draws:number}}
+ */
+export function planSeekCover(unitId) {
+  const coord = unitCoordMap.get(unitId);
+  if (!coord) return { ok: false, reason: '駒が盤上にいない', draws: 0 };
+  const cardId = document.querySelector(`.terrain-card[data-coord="${coord}"]`)?.dataset.cardId;
+  const n = COVER_DRAW[cardId];
+  if (!n) return { ok: false, reason: 'この地形ではカバーを捜せない', draws: 0 };
+  if (!canAddCoverSlot(coord)) return { ok: false, reason: 'このカードはカバーマーカーの上限に達している', draws: 0 };
+  return { ok: true, reason: '', draws: n };
+}
+
+/**
+ * 引いたカードに "Cover" があるか（type が 'cover'）。
+ * @param {Array<{type:string}>} cards
+ * @returns {boolean}
+ */
+export function isSeekCoverSuccess(cards) {
+  return cards.some(c => c?.type === 'cover');
+}
+
+/**
+ * カバー捜索の成功を適用する。新しいカバーマーカーの下に入り Exposed になる。
+ * @param {string} unitId
+ * @param {string} [type='basic'] - 発見したカバーの種別
+ * @returns {{ok:boolean, reason:string}}
+ */
+export function applySeekCover(unitId, type = 'basic') {
+  const coord = unitCoordMap.get(unitId);
+  const slotId = addCoverSlot(coord, type);
+  if (!slotId) return { ok: false, reason: 'カバーマーカーを置けない' };
+  removeUnitFromCover(unitId);
+  assignUnitToCover(unitId, coord, slotId);
+  getUnitState(unitId).exposed = true;   // §4.2.2e は Exposed になる
+  renderUnitBadges(unitId);
+  document.dispatchEvent(new CustomEvent('board:changed'));
+  return { ok: true, reason: '' };
 }
 
 /**

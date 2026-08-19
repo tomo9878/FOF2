@@ -1,4 +1,57 @@
 // ノルマンディー地形カード一覧
+export const CARD_ICONS = {
+  1: ['spot_concentrate', 'hq'],
+  2: ['infiltrate'],
+  3: ['grenade'],
+  4: ['call_for_fire'],
+  5: ['spot_concentrate', 'hq'],
+  6: ['infiltrate'],
+  7: ['grenade'],
+  8: ['call_for_fire'],
+  9: ['spot_concentrate'],
+  10: ['infiltrate', 'hq'],
+  11: ['grenade'],
+  12: ['call_for_fire'],
+  13: ['spot_concentrate'],
+  14: ['infiltrate'],
+  15: ['grenade', 'hq'],
+  16: ['call_for_fire'],
+  17: ['spot_concentrate'],
+  18: ['infiltrate'],
+  19: ['grenade'],
+  20: ['call_for_fire', 'hq'],
+  21: ['spot_concentrate'],
+  22: ['infiltrate', 'hq'],
+  23: ['grenade'],
+  24: ['call_for_fire'],
+  25: ['spot_concentrate', 'hq'],
+  26: ['infiltrate'],
+  27: ['grenade'],
+  28: ['call_for_fire'],
+  29: ['spot_concentrate'],
+  30: ['infiltrate'],
+  31: ['grenade'],
+  32: ['call_for_fire', 'hq'],
+  33: ['spot_concentrate'],
+  34: ['infiltrate'],
+  35: ['grenade', 'hq'],
+  36: ['call_for_fire'],
+  37: ['spot_concentrate'],
+  38: ['infiltrate', 'hq'],
+  39: ['grenade'],
+  40: ['call_for_fire'],
+  41: ['spot_concentrate'],
+  42: ['call_for_fire_battalion'],
+  43: ['spot_concentrate', 'hq'],
+  44: ['call_for_fire_battalion'],
+  45: ['spot_concentrate'],
+  46: ['call_for_fire_battalion'],
+  47: ['spot_concentrate', 'hq'],
+  48: ['call_for_fire_battalion'],
+  49: ['jam'],
+  50: ['short'],
+};
+
 export const TERRAIN_CARDS = [
   { id:'N01', name:'丘',          file:'N01 Hill.jpg' },
   { id:'N02', name:'丘',          file:'N02 Hill.jpg' },
@@ -79,80 +132,80 @@ export const TERRAIN_CARDS = [
 
 export const ACTION_CARDS = [
   // ── カード 1〜10（全MISS or PINのみ、コマンド多め） ──
-  { n: 1, act:6, init:4, type:'cover',   hMax:-99, pMax:-99, hit:{vet:'CC', line:'CC', green:'CC'} },
-  { n: 2, act:6, init:4, type:'contact', hMax:-99, pMax:-4,  hit:{vet:'CP', line:'CP', green:'CC'} },
-  { n: 3, act:5, init:4, type:'rally',   hMax:-99, pMax:-3,  hit:{vet:'CP', line:'CP', green:'CP'} },
-  { n: 4, act:5, init:4, type:'contact', hMax:-99, pMax:-2,  hit:{vet:'CL', line:'CL', green:'CP'} },
-  { n: 5, act:5, init:3, type:'cover',   hMax:-99, pMax:-2,  hit:{vet:'CL', line:'CL', green:'CP'} },
-  { n: 6, act:5, init:3, type:'rally',   hMax:-99, pMax:-1,  hit:{vet:'CF', line:'CL', green:'CL'} },
-  { n: 7, act:5, init:3, type:'cover',   hMax:-99, pMax:-1,  hit:{vet:'CF', line:'CF', green:'CL'} },
-  { n: 8, act:5, init:3, type:'contact', hMax:-99, pMax:-1,  hit:{vet:'CF', line:'CF', green:'CF'} },
-  { n: 9, act:5, init:3, type:'rally',   hMax:-99, pMax:-1,  hit:{vet:'PC', line:'PC', green:'CF'} },
-  { n:10, act:5, init:3, type:'cover',   hMax:-99, pMax:-1,  hit:{vet:'PC', line:'PC', green:'PC'} },
+  { n: 1, act:6, init:4, type:'cover',    hMax:-99, pMax:-99, hit:{vet:'CC', line:'CC', green:'CC'} },
+  { n: 2, act:6, init:4, type:'contact',  hMax:-99, pMax:-4,  hit:{vet:'CP', line:'CP', green:'CC'} },
+  { n: 3, act:5, init:4, type:'rally',    hMax:-99, pMax:-3,  hit:{vet:'CP', line:'CP', green:'CP'} },
+  { n: 4, act:5, init:4, type:'',         hMax:-99, pMax:-2,  hit:{vet:'CL', line:'CL', green:'CP'} },
+  { n: 5, act:5, init:3, type:'',         hMax:-99, pMax:-2,  hit:{vet:'CL', line:'CL', green:'CP'} },
+  { n: 6, act:5, init:3, type:'rally',    hMax:-99, pMax:-1,  hit:{vet:'CF', line:'CL', green:'CL'} },
+  { n: 7, act:5, init:3, type:'cover',    hMax:-99, pMax:-1,  hit:{vet:'CF', line:'CF', green:'CL'} },
+  { n: 8, act:5, init:3, type:'',         hMax:-99, pMax:-1,  hit:{vet:'CF', line:'CF', green:'CF'} },
+  { n: 9, act:5, init:3, type:'rally',    hMax:-99, pMax:-1,  hit:{vet:'PC', line:'PC', green:'CF'} },
+  { n:10, act:5, init:3, type:'cover',    hMax:-99, pMax:-1,  hit:{vet:'PC', line:'PC', green:'PC'} },
 
   // ── カード 11〜15（-4のみHIT） ──
-  { n:11, act:4, init:3, type:'contact', hMax:-4,  pMax: 0,  hit:{vet:'PC', line:'PC', green:'PC'} },
-  { n:12, act:4, init:3, type:'rally',   hMax:-4,  pMax: 0,  hit:{vet:'LC', line:'LC', green:'PC'} },
-  { n:13, act:4, init:3, type:'cover',   hMax:-4,  pMax: 0,  hit:{vet:'LC', line:'LC', green:'PC'} },
-  { n:14, act:4, init:3, type:'contact', hMax:-4,  pMax: 0,  hit:{vet:'LC', line:'LC', green:'PC'} },
-  { n:15, act:4, init:3, type:'rally',   hMax:-4,  pMax: 0,  hit:{vet:'FC', line:'LC', green:'LC'} },
+  { n:11, act:4, init:3, type:'contact',  hMax:-4,  pMax: 0,  hit:{vet:'PC', line:'PC', green:'PC'} },
+  { n:12, act:4, init:3, type:'rally',    hMax:-4,  pMax: 0,  hit:{vet:'LC', line:'LC', green:'PC'} },
+  { n:13, act:4, init:3, type:'cover',    hMax:-4,  pMax: 0,  hit:{vet:'LC', line:'LC', green:'PC'} },
+  { n:14, act:4, init:3, type:'',         hMax:-4,  pMax: 0,  hit:{vet:'LC', line:'LC', green:'PC'} },
+  { n:15, act:4, init:3, type:'rally',    hMax:-4,  pMax: 0,  hit:{vet:'FC', line:'LC', green:'LC'} },
 
   // ── カード 16〜20（-4〜-3がHIT） ──
-  { n:16, act:4, init:3, type:'contact', hMax:-3,  pMax: 1,  hit:{vet:'FC', line:'FC', green:'LC'} },
-  { n:17, act:4, init:2, type:'contact', hMax:-3,  pMax: 1,  hit:{vet:'FC', line:'FC', green:'LC'} },
-  { n:18, act:4, init:2, type:'contact', hMax:-3,  pMax: 1,  hit:{vet:'FC', line:'FC', green:'FC'} },
-  { n:19, act:4, init:2, type:'cover',   hMax:-3,  pMax: 1,  hit:{vet:'PP', line:'PP', green:'FC'} },
-  { n:20, act:4, init:2, type:'contact', hMax:-3,  pMax: 1,  hit:{vet:'PP', line:'PP', green:'FC'} },
+  { n:16, act:4, init:3, type:'',         hMax:-3,  pMax: 1,  hit:{vet:'FC', line:'FC', green:'LC'} },
+  { n:17, act:4, init:2, type:'contact',  hMax:-3,  pMax: 1,  hit:{vet:'FC', line:'FC', green:'LC'} },
+  { n:18, act:4, init:2, type:'rally',    hMax:-3,  pMax: 1,  hit:{vet:'FC', line:'FC', green:'FC'} },
+  { n:19, act:4, init:2, type:'cover',    hMax:-3,  pMax: 1,  hit:{vet:'PP', line:'PP', green:'FC'} },
+  { n:20, act:4, init:2, type:'',         hMax:-3,  pMax: 1,  hit:{vet:'PP', line:'PP', green:'FC'} },
 
   // ── カード 21〜25（-4〜-2がHIT） ──
-  { n:21, act:4, init:2, type:'rally',   hMax:-2,  pMax: 2,  hit:{vet:'PP', line:'PP', green:'PP'} },
-  { n:22, act:4, init:2, type:'contact', hMax:-2,  pMax: 2,  hit:{vet:'PL', line:'PL', green:'PP'} },
-  { n:23, act:4, init:2, type:'cover',   hMax:-2,  pMax: 2,  hit:{vet:'PL', line:'PL', green:'PP'} },
-  { n:24, act:4, init:2, type:'rally',   hMax:-2,  pMax: 2,  hit:{vet:'PL', line:'PL', green:'PP'} },
-  { n:25, act:3, init:2, type:'cover',   hMax:-2,  pMax: 2,  hit:{vet:'PF', line:'PF', green:'PP'} },
+  { n:21, act:4, init:2, type:'rally',    hMax:-2,  pMax: 2,  hit:{vet:'PP', line:'PP', green:'PP'} },
+  { n:22, act:4, init:2, type:'',         hMax:-2,  pMax: 2,  hit:{vet:'PL', line:'PL', green:'PP'} },
+  { n:23, act:4, init:2, type:'cover',    hMax:-2,  pMax: 2,  hit:{vet:'PL', line:'PL', green:'PP'} },
+  { n:24, act:4, init:2, type:'rally',    hMax:-2,  pMax: 2,  hit:{vet:'PL', line:'PL', green:'PP'} },
+  { n:25, act:3, init:2, type:'',         hMax:-2,  pMax: 2,  hit:{vet:'PF', line:'PF', green:'PP'} },
 
   // ── カード 26〜30（-4〜-1がHIT） ──
-  { n:26, act:3, init:2, type:'contact', hMax:-1,  pMax: 3,  hit:{vet:'PF', line:'PF', green:'PL'} },
-  { n:27, act:3, init:2, type:'rally',   hMax:-1,  pMax: 3,  hit:{vet:'PF', line:'PF', green:'PL'} },
-  { n:28, act:3, init:2, type:'cover',   hMax:-1,  pMax: 3,  hit:{vet:'PF', line:'PF', green:'PL'} },
-  { n:29, act:3, init:2, type:'cover',   hMax:-1,  pMax: 3,  hit:{vet:'C',  line:'C',  green:'PL'} },
-  { n:30, act:3, init:2, type:'rally',   hMax:-1,  pMax: 3,  hit:{vet:'C',  line:'C',  green:'PF'} },
+  { n:26, act:3, init:2, type:'contact',  hMax:-1,  pMax: 3,  hit:{vet:'PF', line:'PF', green:'PL'} },
+  { n:27, act:3, init:2, type:'rally',    hMax:-1,  pMax: 3,  hit:{vet:'PF', line:'PF', green:'PL'} },
+  { n:28, act:3, init:2, type:'cover',    hMax:-1,  pMax: 3,  hit:{vet:'PF', line:'PF', green:'PL'} },
+  { n:29, act:3, init:2, type:'',         hMax:-1,  pMax: 3,  hit:{vet:'C',  line:'C',  green:'PL'} },
+  { n:30, act:3, init:2, type:'rally',    hMax:-1,  pMax: 3,  hit:{vet:'C',  line:'C',  green:'PF'} },
 
   // ── カード 31〜35（-4〜0がHIT） ──
-  { n:31, act:3, init:2, type:'cover',   hMax: 0,  pMax: 4,  hit:{vet:'C',  line:'C',  green:'PF'} },
-  { n:32, act:3, init:2, type:'contact', hMax: 0,  pMax: 4,  hit:{vet:'C',  line:'C',  green:'PF'} },
-  { n:33, act:3, init:2, type:'rally',   hMax: 0,  pMax: 4,  hit:{vet:'C',  line:'C',  green:'C' } },
-  { n:34, act:3, init:2, type:'cover',   hMax: 0,  pMax: 4,  hit:{vet:'P',  line:'C',  green:'C' } },
-  { n:35, act:3, init:1, type:'cover',   hMax: 0,  pMax: 4,  hit:{vet:'P',  line:'P',  green:'C' } },
+  { n:31, act:3, init:2, type:'cover',    hMax: 0,  pMax: 4,  hit:{vet:'C',  line:'C',  green:'PF'} },
+  { n:32, act:3, init:2, type:'',         hMax: 0,  pMax: 4,  hit:{vet:'C',  line:'C',  green:'PF'} },
+  { n:33, act:3, init:2, type:'rally',    hMax: 0,  pMax: 4,  hit:{vet:'C',  line:'C',  green:'C' } },
+  { n:34, act:3, init:2, type:'cover',    hMax: 0,  pMax: 4,  hit:{vet:'P',  line:'C',  green:'C' } },
+  { n:35, act:3, init:1, type:'cover',    hMax: 0,  pMax: 4,  hit:{vet:'P',  line:'P',  green:'C' } },
 
   // ── カード 36〜39（-4〜+1がHIT、+6=MISS） ──
-  { n:36, act:3, init:1, type:'rally',   hMax: 1,  pMax: 5,  hit:{vet:'P',  line:'P',  green:'C' } },
-  { n:37, act:2, init:1, type:'cover',   hMax: 1,  pMax: 5,  hit:{vet:'P',  line:'P',  green:'C' } },
-  { n:38, act:2, init:1, type:'contact', hMax: 1,  pMax: 5,  hit:{vet:'P',  line:'P',  green:'C' } },
-  { n:39, act:2, init:1, type:'rally',   hMax: 1,  pMax: 5,  hit:{vet:'L',  line:'P',  green:'P' } },
+  { n:36, act:3, init:1, type:'rally',    hMax: 1,  pMax: 5,  hit:{vet:'P',  line:'P',  green:'C' } },
+  { n:37, act:2, init:1, type:'cover',    hMax: 1,  pMax: 5,  hit:{vet:'P',  line:'P',  green:'C' } },
+  { n:38, act:2, init:1, type:'',         hMax: 1,  pMax: 5,  hit:{vet:'P',  line:'P',  green:'C' } },
+  { n:39, act:2, init:1, type:'rally',    hMax: 1,  pMax: 5,  hit:{vet:'L',  line:'P',  green:'P' } },
 
   // ── カード 40（-4〜+1がHIT、MISSなし） ──
-  { n:40, act:2, init:1, type:'contact', hMax: 1,  pMax: 6,  hit:{vet:'L',  line:'P',  green:'P' } },
+  { n:40, act:2, init:1, type:'contact',  hMax: 1,  pMax: 6,  hit:{vet:'L',  line:'P',  green:'P' } },
 
   // ── カード 41〜45（-4〜+2がHIT、MISSなし） ──
-  { n:41, act:2, init:1, type:'contact', hMax: 2,  pMax: 6,  hit:{vet:'L',  line:'L',  green:'P' } },
-  { n:42, act:2, init:1, type:'contact', hMax: 2,  pMax: 6,  hit:{vet:'L',  line:'L',  green:'P' } },
-  { n:43, act:2, init:1, type:'cover',   hMax: 2,  pMax: 6,  hit:{vet:'F',  line:'L',  green:'P' } },
-  { n:44, act:2, init:1, type:'contact', hMax: 2,  pMax: 6,  hit:{vet:'F',  line:'L',  green:'P' } },
-  { n:45, act:2, init:1, type:'rally',   hMax: 2,  pMax: 6,  hit:{vet:'F',  line:'F',  green:'L' } },
+  { n:41, act:2, init:1, type:'contact',  hMax: 2,  pMax: 6,  hit:{vet:'L',  line:'L',  green:'P' } },
+  { n:42, act:2, init:1, type:'rally',    hMax: 2,  pMax: 6,  hit:{vet:'L',  line:'L',  green:'P' } },
+  { n:43, act:2, init:1, type:'cover',    hMax: 2,  pMax: 6,  hit:{vet:'F',  line:'L',  green:'P' } },
+  { n:44, act:2, init:1, type:'',         hMax: 2,  pMax: 6,  hit:{vet:'F',  line:'L',  green:'P' } },
+  { n:45, act:2, init:1, type:'rally',    hMax: 2,  pMax: 6,  hit:{vet:'F',  line:'F',  green:'L' } },
 
   // ── カード 46〜47（-4〜+3がHIT） ──
-  { n:46, act:2, init:1, type:'contact', hMax: 3,  pMax: 6,  hit:{vet:'F',  line:'F',  green:'F' } },
-  { n:47, act:1, init:0, type:'contact', hMax: 3,  pMax: 6,  hit:{vet:'F',  line:'F',  green:'F' } },
+  { n:46, act:2, init:1, type:'',         hMax: 3,  pMax: 6,  hit:{vet:'F',  line:'F',  green:'F' } },
+  { n:47, act:1, init:0, type:'contact',  hMax: 3,  pMax: 6,  hit:{vet:'F',  line:'F',  green:'F' } },
 
   // ── カード 48（-4〜+4がHIT） ──
-  { n:48, act:1, init:0, type:'contact', hMax: 4,  pMax: 6,  hit:{vet:'A',  line:'F',  green:'F' } },
+  { n:48, act:1, init:0, type:'',         hMax: 4,  pMax: 6,  hit:{vet:'A',  line:'F',  green:'F' } },
 
   // ── カード 49（Jam!）-4〜+5がHIT ──
-  { n:49, act:1, init:0, type:'jam',     hMax: 5,  pMax: 6,  hit:{vet:'A',  line:'A',  green:'F' } },
+  { n:49, act:1, init:0, type:'',         hMax: 5,  pMax: 6,  hit:{vet:'A',  line:'A',  green:'F' } },
 
   // ── カード 50（Short!）全NCMがHIT ──
-  { n:50, act:1, init:0, type:'short',   hMax: 6,  pMax: 6,  hit:{vet:'A',  line:'A',  green:'A' } },
+  { n:50, act:1, init:0, type:'',         hMax: 6,  pMax: 6,  hit:{vet:'A',  line:'A',  green:'A' } },
 
 ].map(c => ({
   number:    c.n,
@@ -162,7 +215,22 @@ export const ACTION_CARDS = [
   type:      c.type,
   combat:    { hitMax: c.hMax, pinMax: c.pMax },
   hit:       c.hit,
+  icons:     CARD_ICONS[c.n] ?? [],
 }));
+
+
+/**
+ * カード下部 Action Attempt セクションのアイコン（cards.json の action_attempt.icons）。
+ * 判定アクションはここを見る:
+ *   infiltrate            … §4.2.2c/d/g 浸透
+ *   spot_concentrate      … §4.2.4a スポット / §4.2.4b Concentrate Fire
+ *   grenade               … §4.2.4d 手榴弾攻撃
+ *   call_for_fire         … §4.2.4j 間接砲撃要請
+ *   call_for_fire_battalion … 大隊への砲撃要請
+ *   hq                    … §3.1 上位HQイベント
+ *   jam / short           … 特殊カード
+ * ※ 「Cover」「Rally」「Contact」はアイコンではなく type 側にある。
+ */
 
 // ===== ユーティリティ =====
 

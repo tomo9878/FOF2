@@ -110,6 +110,16 @@ export function getTerrainData(cardId) {
   return TERRAIN_DB[cardId] ?? null;
 }
 
+
+/**
+ * カバー捜索（§4.2.2e）で引く枚数 = 地形カードの Cover Draw 番号。
+ * 出典: terrain_cards.json の cover_draw。
+ * 記載の無いカード（Hill 等）はカバーを捜せない。
+ */
+export const COVER_DRAW = {
+  N07: 2, N08: 2, N09: 3, N10: 3, N11: 3, N12: 3, N13: 3, N14: 3, N15: 3, N16: 3, N17: 4, N18: 4, N19: 4, N20: 4, N21: 4, N22: 4, N23: 4, N24: 4, N25: 4, N26: 4, N27: 4, N28: 4, N29: 4, N30: 4, N31: 4, N32: 4, N33: 4, N34: 4, N35: 4, N36: 4, N37: 4, N38: 4, N39: 4, N40: 4, N41: 2, N42: 2, N43: 2, N44: 2, N45: 3, N46: 3, N47: 3, N48: 3, N49: 3, N50: 3, N51: 3, N52: 3, N53: 3, N54: 3, N55: 3,
+};
+
 /** terrain_cards.json の cover_positions をカードIDから直接引く簡易テーブル */
 export const COVER_POSITIONS = {
   // Hill: カバー配置不可

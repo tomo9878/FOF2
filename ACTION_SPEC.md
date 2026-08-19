@@ -55,12 +55,15 @@ Rally を先にする理由:
 ### §4.2.2 Movement Actions（p.23）— 🟡 a / b / f を実装（move.js）
 
 **移動は「盤内カバー移動」と「カード間移動」の2種類ではなく8種類ある。**
-実装したのは Auto の3つ。残りはデータが足りないため未実装:
-- **c / d / g（浸透）**: アクションカードの **Infiltrate アイコン**が cards.js に無い
-  （`type` は cover/contact/rally/jam/short のみ）。50枚分のデータ追加が前提
-- **e（カバー捜索）**: 地形カードの **Cover Draw 番号**が未データ化
-  （`COVER_POSITIONS` はカバースロットの収容数であって引く枚数ではない）
-- h（拾う）は comm.js に実装済み
+- a / b / f（Auto）… 実装済み
+- **c / g（浸透）… 実装済み**（`CARD_ICONS` の `infiltrate` で判定）
+- **e（カバー捜索）… 実装済み**（`COVER_DRAW` の枚数を引き `type==='cover'` を探す）
+- d（小隊浸透）… b と c の組み合わせ。未実装
+- h（拾う）… comm.js に実装済み
+
+> 当初「Infiltrate アイコンと Cover Draw のデータが無い」と書いたが**誤り**だった。
+> どちらも元データ（`cards.json` の `action_attempt.icons` / `terrain_cards.json` の
+> `cover_draw`）に最初から入っており、JS モジュールへ取り込まれていなかっただけ。
 
 **移動後の更新処理**（moveToAdjacent がまとめて行う）
 1. 1コマンド消費（小隊移動は2）
