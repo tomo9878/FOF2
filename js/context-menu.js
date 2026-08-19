@@ -35,6 +35,11 @@ import {
   listRallyActions, planRallyAction, payRallyCost, isRallySuccess,
   applyRallyAction, RALLY_ACTIONS, RALLY_COST,
 } from './rally.js';
+import {
+  listMoveTargets, moveToAdjacent, moveWithinCard, movePlatoonToAdjacent,
+  MOVE_COST, PLATOON_MOVE_COST,
+} from './move.js';
+import { getUnitCoverSlot as _coverSlotOf, getCoverSlots as _coverSlotsOf, COVER_TYPES as _COVER_TYPES } from './cover.js';
 import { drawActionCard } from './deck.js';
 import {
   COVER_TYPES,
@@ -448,12 +453,14 @@ export function updateRightPanelUnit(unit) {
     ${stepsHtml}
     ${ncmHtml}
     ${activeBadges ? `<div class="rp-badges-row">${activeBadges}</div>` : ''}
+    ${_moveHtml(unit.id)}
     ${_rallyHtml(unit.id)}
     ${cmdHtml}
   `.trim();
 
   // コマンドセクションのボタンをバインド
   if (cmdHtml) _bindCommandButtons(unit.id);
+  _bindMoveButtons(unit.id);
   _bindRallyButtons(unit.id);
 }
 
@@ -603,6 +610,117 @@ function _selectHtml(id, items, empty) {
   return `<select class="rp-bnhq-select" id="${id}">`
     + items.map(i => `<option value="${i.id}">${i.label}</option>`).join('')
     + '</select>';
+}
+
+// ===== 移動アクション（§4.2.2）=====
+//
+// 隣接カードのボタンを並べ、押すと「1コマンド消費 → 移動 → Exposed 付与」まで通す。
+// 移動先にカバーがある場合は「カバーに入るか」を選べる（§4.2.2a）。
+
+/** その駒に移動を命令できる HQ/Staff を探す */
+function _findMoveOriginator(unitId) {
+  for (const [id] of unitCoordMap) {
+    if (!getCommandRole(id)) continue;
+    if (getCurrentAP(id) < MOVE_COST || !canExpendCommand(id)) continue;
+    if (canGiveOrder(id, unitId).ok) return id;
+  }
+  return null;
+}
+
+/**
+ * 移動セクションを組み立てる。
+ * @param {string} unitId
+ * @returns {string}
+ */
+function _moveHtml(unitId) {
+  if (!unitCoordMap.has(unitId)) return '';
+  const originator = _findMoveOriginator(unitId);
+  if (!originator) return '';
+
+  const targets = listMoveTargets(originator, unitId).filter(t => t.ok);
+  const coord = unitCoordMap.get(unitId);
+  const curSlot = _coverSlotOf(unitId)?.slotId ?? null;
+  const areas = [
+    { slotId: '', label: 'カバー外' },
+    ..._coverSlotsOf(coord).map(s => ({ slotId: s.slotId, label: _COVER_TYPES[s.type]?.label ?? s.type })),
+  ].filter(a => (a.slotId || null) !== curSlot);
+
+  const isPlt = getCommandRole(unitId) === 'plt_hq';
+  const pltOk = isPlt && getCurrentAP(unitId) >= PLATOON_MOVE_COST && canExpendCommand(unitId);
+
+  if (!targets.length && !areas.length) return '';
+
+  const cardBtns = targets.map(t => {
+    const opts = [{ slotId: '', label: 'カバー外' },
+      ...t.covers.map(c => ({ slotId: c.slotId, label: c.label }))];
+    const sel = opts.length > 1
+      ? `<select class="rp-bnhq-select" id="mvCover_${t.coord}" style="flex:1">${opts.map(o => `<option value="${o.slotId}">${o.label}</option>`).join('')}</select>`
+      : '';
+    return `<div class="rp-act-row">
+      <span class="rp-act-name">→ ${t.coord}</span>${sel}
+      <button class="rp-act-btn" data-move-to="${t.coord}" data-move-from="${originator}">移動 (${MOVE_COST})</button>
+    </div>`;
+  }).join('');
+
+  const areaBtns = areas.length ? `
+    <div class="rp-act-reason">カード内移動（§4.2.2f・常に Exposed）</div>
+    <div class="rp-act-row">
+      <select class="rp-bnhq-select" id="mvAreaSel" style="flex:1">
+        ${areas.map(a => `<option value="${a.slotId}">${a.label}</option>`).join('')}
+      </select>
+      <button class="rp-act-btn" data-move-area="1" data-move-from="${originator}">移動 (${MOVE_COST})</button>
+    </div>` : '';
+
+  const pltBtns = pltOk && targets.length ? `
+    <div class="rp-act-reason">小隊で移動（§4.2.2b・通信できない駒は置き去り）</div>
+    <div class="rp-act-row">
+      <select class="rp-bnhq-select" id="mvPltSel" style="flex:1">
+        ${targets.map(t => `<option value="${t.coord}">→ ${t.coord}</option>`).join('')}
+      </select>
+      <button class="rp-act-btn" data-move-platoon="1">小隊移動 (${PLATOON_MOVE_COST})</button>
+    </div>` : '';
+
+  return `<div class="rp-act-title">§4.2.2 移動（発令: ${originator}）</div>
+    ${cardBtns}${areaBtns}${pltBtns}
+    <div class="rp-rally-result" id="rpMoveResult"></div>`;
+}
+
+/** 移動ボタンを束ねる */
+function _bindMoveButtons(unitId) {
+  const show = (msg) => {
+    const el = document.getElementById('rpMoveResult');
+    if (el) el.innerHTML = `<div class="rp-cs-card">${msg}</div>`;
+  };
+  document.querySelectorAll('[data-move-to]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const to = btn.dataset.moveTo;
+      const slot = document.getElementById(`mvCover_${to}`)?.value || null;
+      const r = moveToAdjacent(btn.dataset.moveFrom, unitId, to, slot);
+      if (!r.ok) { show(`移動できない: ${r.reason}`); return; }
+      show(`${to} へ移動${r.exposed ? '（Exposed）' : '（塹壕/バンカー間なので Exposed なし）'}`
+        + (r.phoneLine?.laid ? ' ／ 電話線を1本敷設' : ''));
+      updateRightPanelUnit(_rpUnit);
+    });
+  });
+  document.querySelector('[data-move-area]')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const btn = e.currentTarget;
+    const slot = document.getElementById('mvAreaSel')?.value || null;
+    const r = moveWithinCard(btn.dataset.moveFrom, unitId, slot);
+    if (!r.ok) { show(`移動できない: ${r.reason}`); return; }
+    show('カード内で移動（Exposed）');
+    updateRightPanelUnit(_rpUnit);
+  });
+  document.querySelector('[data-move-platoon]')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const to = document.getElementById('mvPltSel')?.value;
+    const r = movePlatoonToAdjacent(unitId, to);
+    if (!r.ok) { show(`小隊移動できない: ${r.reason}`); return; }
+    const stayed = r.stayed.map(s => `${s.id}(${s.reason})`).join(', ');
+    show(`${to} へ ${r.moved.length}体が移動${stayed ? ` ／ 置き去り: ${stayed}` : ''}`);
+    updateRightPanelUnit(_rpUnit);
+  });
 }
 
 // ===== Rally アクション（§4.2.3 / §6.5.1）=====

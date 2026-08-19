@@ -28,7 +28,7 @@
 |---|---|---|
 | ① Auto ＋ 対象=駒 | 命令→消費→効果 | **実装済**（Activate §4.2.1a / Runner f-h / 修理 k / 拾う 4.2.2h / 網載せ替え j） |
 | ② ドロー ＋ 対象=駒 | 命令→消費→**人間が1枚ずつ引く**→成否→効果 | **実装済**（Rally §4.2.3・`rally.js`） |
-| ③ 対象=カード（行き先選択あり） | 命令→行き先クリック→消費→移動＋Exposed | 移動 §4.2.2 |
+| ③ 対象=カード（行き先選択あり） | 命令→行き先選択→消費→移動＋Exposed | **実装済**（移動 §4.2.2a/b/f・`move.js`） |
 | ④ ドロー ＋ 対象=敵/カード | ③＋専用修正表・弾薬・マーカー | 戦闘 §4.2.4 |
 
 ドロー型は戦闘解決・PC解決で使っている **手動ドロー＋ドローロック機構**をそのまま流用する。
@@ -38,7 +38,8 @@
 ## 2. 着手順（推奨）
 
 **Rally（§4.2.3）→ 移動（§4.2.2）→ 戦闘（§4.2.4）**
-→ **Rally は完了。次は移動（§4.2.2）**
+→ **Rally・移動（Auto分）は完了。次は戦闘（§4.2.4）**、
+　 または先に浸透/カバー捜索のためのカードデータ追加
 
 Rally を先にする理由:
 1. 8アクションが**ほぼ同じ形**（「VOF があれば2枚引いて "Rally" を探す／無ければ自動成功」）。
@@ -51,7 +52,28 @@ Rally を先にする理由:
 
 ## 3. 調査済みデータ（出典: FOF.pdf p.22-26）
 
-### §4.2.2 Movement Actions（p.23）
+### §4.2.2 Movement Actions（p.23）— 🟡 a / b / f を実装（move.js）
+
+**移動は「盤内カバー移動」と「カード間移動」の2種類ではなく8種類ある。**
+実装したのは Auto の3つ。残りはデータが足りないため未実装:
+- **c / d / g（浸透）**: アクションカードの **Infiltrate アイコン**が cards.js に無い
+  （`type` は cover/contact/rally/jam/short のみ）。50枚分のデータ追加が前提
+- **e（カバー捜索）**: 地形カードの **Cover Draw 番号**が未データ化
+  （`COVER_POSITIONS` はカバースロットの収容数であって引く枚数ではない）
+- h（拾う）は comm.js に実装済み
+
+**移動後の更新処理**（moveToAdjacent がまとめて行う）
+1. 1コマンド消費（小隊移動は2）
+2. **カードを離れる瞬間に電話線を1本敷設**（§4.3.4）
+   ※ 誰が電話線を携行しているかは未データ化のため、
+     **電話（EE8等）を持つ駒が電話線も携行している**とみなしている
+3. 出発地のカバースロットから外す
+4. 駒を移動（`moveUnitToCard`）
+5. 移動先のカバースロットへ入れる（選択時）
+6. **Exposed 付与**（§5.1.2 の例外あり）
+7. `board:changed` 発火 → 活動レベル再計算・命令範囲の再描画・自動保存
+
+
 見出しに **「Use Recipient's Experience Level for Command draw modifier」**
 ＝ ドロー修正は発令者ではなく**対象の練度**を使う。
 
@@ -60,7 +82,7 @@ Rally を先にする理由:
 | a | Move to an Adjacent Card | 1 | **Auto** | 移動先で **Exposed**。移動先にカバーがあれば入れてよい。**塹壕/バンカー/トーチカ間**（5.1.2）と Attached Buildings 間（13.7）は Exposed が付かない。対象は「Exposed でない Good Order 駒」 |
 | b | Move a Platoon to an Adjacent Card | **2** | Auto | 発令者は **PLT HQ**。同カードにいる自小隊の Good Order・非Exposed 駒が全部同じカードへ。**発令者と通信できていない駒はその場に残る** |
 | c | Attempt to Infiltrate an Adjacent Card | 1 | **2 (+/−)** | 出発地か目的地に VOF が必要。三脚シンボル/H VOF は不可。成功すると **Exposed が付かない** |
-| d | （未確認） | | | 抽出できていない。次に触るとき p.23 を再確認する |
+| d | Attempt to have a Platoon Infiltrate an Adjacent Card | **2** | **2 (+/−)** | PLT HQ。c を小隊全員で行う。通信できない駒は残る |
 | e | Attempt to Seek Cover | 1 | **Cover Draw 枚数** | カードの Cover Draw 数だけ引き "Cover" を探す。成功で新しいカバーマーカーの下へ＋**Exposed** |
 | f | Move within a Card | 1 | **Auto** | 同じカードの別エリアへ。**Exposed** |
 | g | Attempt to Infiltrate within a Card | 1 | **2 (+/−)** | カードに VOF が必要。成功で Exposed 無し。**失敗したら通常の Move within a Card を行う** |

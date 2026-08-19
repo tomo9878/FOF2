@@ -137,6 +137,7 @@ HIT判定カードと結果判定カードの間など、連続ドロー中は�
 - [x] ~~駒の表裏（command side / Fire Team side・§1.2.3B / §4.1.4）~~ 完成（Step0。`isOnCommandSide()` = `namedFireTeam` かつ `steps === maxSteps`）
 - [ ] **§4.2 アクション体系 → 実装計画は ACTION_SPEC.md（調査済み・着手順 Rally→移動→戦闘）**
 - [x] ~~rally で Fire Team 面から command side に戻す手段~~ 完成（§4.2.3f・rally.js）
+- 移動アクション §4.2.2（move.js・右パネル「§4.2.2 移動」）：a 隣接カード／b 小隊移動（コスト2・**通信できない駒は置き去り**）／f カード内移動。移動後の更新（**離脱時に電話線を1本自動敷設**→カバーから外す→移動→カバーへ入る→**Exposed 付与と §5.1.2 の例外**（塹壕/バンカー/トーチカ間は付かない）→`board:changed`）まで一括。§4.2.5 の Pinned 移動先制限つき。**浸透 c/d/g はカードの Infiltrate アイコン、カバー捜索 e は地形の Cover Draw 番号が未データ化のため保留**：完成
 - Rally アクション §4.2.3/§6.5.1（rally.js・右パネル「§4.2.3 Rally」）：対象カードに VOF が無ければ自動成功、あれば「2±**発令者**の練度」枚を人間が引き `type:'rally'` を探す。a〜f と j を実装（Pinned解除・LAT変換・Fire Team面の表裏）。発令者は「その駒に命令できてコマンドを払える HQ/Staff」を自動選択：完成
 - [ ] Attachment の小隊割当（§2.3.2 Mission Log）— PLT HQ の命令範囲判定に必要（今はユニットIDの `US_nPLT_` 接頭辞で小隊を判定している）
 - [x] ~~BN HQ の箱~~ 完成（盤面駒ではなく仮想ユニット `BN_HQ` として実装。盤上に上位HQリーダーの駒が要る場合は別途ユニット定義が必要）
@@ -176,6 +177,7 @@ HIT判定カードと結果判定カードの間など、連続ドロー中は�
     ├── pc-resolve.js PC解決エンジン（§8.2.4 接触するかの判定）
     ├── enemy-contact.js 敵接触タイプ判定（§8.3 パッケージ判定＋武器/FO種別等の追加判定＋Squad袋引き/装備プール）
     ├── enemy-placement.js 敵ユニット実配置（§8.4.3 方向ドロー→距離解決→addUnitToCardで盤面配置）
+    ├── move.js       移動アクション（§4.2.2a/b/f・Exposed/カバー/電話線の更新込み）
     ├── rally.js      Rally アクション（§4.2.3 / §6.5.1 自動成功 or "Rally" 探し）
     ├── comm.js       通信（§4.3 Visual-Verbal ＋ 無線 ＋ 電話の統合窓口）
     ├── order-highlight.js 命令範囲の可視化（選択中HQが命令できる駒だけ通常表示）
