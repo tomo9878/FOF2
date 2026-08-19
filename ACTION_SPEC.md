@@ -27,7 +27,7 @@
 | 型 | 内容 | 状況 |
 |---|---|---|
 | ① Auto ＋ 対象=駒 | 命令→消費→効果 | **実装済**（Activate §4.2.1a / Runner f-h / 修理 k / 拾う 4.2.2h / 網載せ替え j） |
-| ② ドロー ＋ 対象=駒 | 命令→消費→**人間が1枚ずつ引く**→成否→効果 | Rally §4.2.3 |
+| ② ドロー ＋ 対象=駒 | 命令→消費→**人間が1枚ずつ引く**→成否→効果 | **実装済**（Rally §4.2.3・`rally.js`） |
 | ③ 対象=カード（行き先選択あり） | 命令→行き先クリック→消費→移動＋Exposed | 移動 §4.2.2 |
 | ④ ドロー ＋ 対象=敵/カード | ③＋専用修正表・弾薬・マーカー | 戦闘 §4.2.4 |
 
@@ -38,6 +38,7 @@
 ## 2. 着手順（推奨）
 
 **Rally（§4.2.3）→ 移動（§4.2.2）→ 戦闘（§4.2.4）**
+→ **Rally は完了。次は移動（§4.2.2）**
 
 Rally を先にする理由:
 1. 8アクションが**ほぼ同じ形**（「VOF があれば2枚引いて "Rally" を探す／無ければ自動成功」）。
@@ -67,7 +68,20 @@ Rally を先にする理由:
 
 補足: Pinned 駒は隣接カードへ移動する前に、運んでいる物資・死傷者を**捨てる**必要がある（§5.1.6E）。
 
-### §4.2.3 Rally Actions（p.24）
+### §4.2.3 Rally Actions（p.24）— ✅ 実装済（rally.js）
+判定の本体は **§6.5.1（p.48）**:
+> success is automatic if there is **no VOF on the card**, otherwise draw 2 cards,
+> modified by the **Experience of the unit giving the order**
+> (HQ, or Self if attempting in General Initiative),
+> and look for the word **"Rally"** in the Action Attempt Section.
+
+- 対象のカードに VOF が無ければ **自動成功**
+- VOF があれば **2枚 ± 発令者の練度**（Vet +1 / Green −1）を引き、
+  `type === 'rally'` のカードが1枚でもあれば成功
+- 見出しは「Use **Originator's** Experience Level」＝ **発令者**の練度。
+  移動（§4.2.2）が **Recipient** なのと逆なので注意
+
+
 ほぼ全部が **「Draw 2 (+/−)、ただしそのカードに VOF が無ければ Auto」** で、
 引いたカードに **"Rally"** の語があれば成功、無ければ何も起きない（§6.5.1）。
 
@@ -80,9 +94,14 @@ Rally を先にする理由:
 | e | Convert an Assault Team to a Fire Team | 1 | **Auto** | Unpinned な Assault Team |
 | f | **Attempt to Flip a unit with a Fire Team Side to Front** | 1 | 同上 | Unpinned な named Fire Team（**発令者HQ自身も対象にできる**） |
 | g | Detach Team | 1 | **Auto** | Good Order の3-4ステップ分隊 or 2ステップ武器チーム |
-| i | Attempt to Reconstitute a Squad | 1 | （未確認） | §4.1.3 の「HQ/Staff が発令者必須」リストに載っている |
+| h | Supplement Squad | 1 | **Auto** | Good Order の2-3ステップ分隊＋Unpinned な Fire/Assault Team → Team を除去して分隊に1ステップ足す |
+| i | Attempt to Reconstitute Squad | 1 | **2 (+/−)**（VOF無しでも自動にならない） | 2〜4個の Unpinned な Assault/Fire Team → 以前に Removed from Play になった同ステップ数の分隊と入れ替える。§4.1.3 の「HQ/Staff が発令者必須」 |
+| j | Flip a unit with a Fire Team side to its Fire Team side | 1 | **Auto** | Good Order の named Fire Team 持ち → 裏（Fire Team 面）へ |
 
-※ h 以降は未抽出。実装時に p.24 を再確認する。
+**実装状況**: a〜f と j を `rally.js` に実装。
+g（Detach）は既存の `detach.js` があるので未統合、
+h（Supplement）と i（Reconstitute）は分隊のステップ／
+「Removed from Play になった分隊」の管理が要るため未実装。
 
 ### §4.2.4 Combat Actions（p.25-26）
 **13アクション（a〜m）**。ほとんどがドロー付きで、周辺ルールを芋づるで引く。

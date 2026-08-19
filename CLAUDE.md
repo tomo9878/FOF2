@@ -10,6 +10,11 @@
 
 1. **ROADMAP.md** の該当章・節のステータス（✅/🟡/⬜/⛔）とメモ欄
 2. **roadmap.html** の同じ項目のデータ（ROADMAP.mdとステータス・メモがズレないようにする）
+   - ⚠ roadmap.html のノートは **JS のシングルクォート文字列リテラル**。
+     `type:'rally'` や `missionType==='combat_patrol'` のような
+     **シングルクォートを含むコード片を書くと文字列が途中で閉じてページが真っ白になる**
+     （実際に2回やらかした）。コード片は `type が rally` のように言い換える
+   - 更新したら**必ずブラウザで roadmap.html を開いて項目が描画されるか確認する**
 3. ルールブック（FOF.pdf / campaign PDF等）を参照して確認した内容は、結論だけでなく
    **どのページ・どの節で確認したか**をメモ欄か仕様書（CONTACT_LEVEL_SPEC.md 等）に残す
    → 次回セッションで同じ調査をやり直さずに済むようにするため
@@ -131,7 +136,8 @@ HIT判定カードと結果判定カードの間など、連続ドロー中は�
 - [ ] **§4.3 通信と §4.1.4 Fire Team 面 → 実装計画は COMMUNICATION_SPEC.md（ルール調査済み・Step0〜6）**
 - [x] ~~駒の表裏（command side / Fire Team side・§1.2.3B / §4.1.4）~~ 完成（Step0。`isOnCommandSide()` = `namedFireTeam` かつ `steps === maxSteps`）
 - [ ] **§4.2 アクション体系 → 実装計画は ACTION_SPEC.md（調査済み・着手順 Rally→移動→戦闘）**
-- [ ] rally で Fire Team 面から command side に戻す手段 — **§4.2.3f「Attempt to Flip a unit with a Fire Team Side to Front」がそれ**。Rally 実装で埋まる
+- [x] ~~rally で Fire Team 面から command side に戻す手段~~ 完成（§4.2.3f・rally.js）
+- Rally アクション §4.2.3/§6.5.1（rally.js・右パネル「§4.2.3 Rally」）：対象カードに VOF が無ければ自動成功、あれば「2±**発令者**の練度」枚を人間が引き `type:'rally'` を探す。a〜f と j を実装（Pinned解除・LAT変換・Fire Team面の表裏）。発令者は「その駒に命令できてコマンドを払える HQ/Staff」を自動選択：完成
 - [ ] Attachment の小隊割当（§2.3.2 Mission Log）— PLT HQ の命令範囲判定に必要（今はユニットIDの `US_nPLT_` 接頭辞で小隊を判定している）
 - [x] ~~BN HQ の箱~~ 完成（盤面駒ではなく仮想ユニット `BN_HQ` として実装。盤上に上位HQリーダーの駒が要る場合は別途ユニット定義が必要）
 - [x] ~~PC解決ロジック（§8.2.4接触判定＋§8.3タイプ判定）~~ 完成
@@ -170,6 +176,7 @@ HIT判定カードと結果判定カードの間など、連続ドロー中は�
     ├── pc-resolve.js PC解決エンジン（§8.2.4 接触するかの判定）
     ├── enemy-contact.js 敵接触タイプ判定（§8.3 パッケージ判定＋武器/FO種別等の追加判定＋Squad袋引き/装備プール）
     ├── enemy-placement.js 敵ユニット実配置（§8.4.3 方向ドロー→距離解決→addUnitToCardで盤面配置）
+    ├── rally.js      Rally アクション（§4.2.3 / §6.5.1 自動成功 or "Rally" 探し）
     ├── comm.js       通信（§4.3 Visual-Verbal ＋ 無線 ＋ 電話の統合窓口）
     ├── order-highlight.js 命令範囲の可視化（選択中HQが命令できる駒だけ通常表示）
     ├── phone.js      野戦電話・電話線（§4.3.4 接続グラフ・切断/修理・戦闘損害）

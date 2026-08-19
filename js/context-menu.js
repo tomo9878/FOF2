@@ -22,7 +22,7 @@ import {
   getCommandsDrawn, setCommandsDrawn, getActivatorRole, COMMAND_ROLE_LABELS,
   finishImpulse, expendCommand, undoExpendCommand, canExpendCommand,
   getSpentThisImpulse, isUnitEligibleNow, listActivationTargets,
-  activateSubordinate, ACTIVATE_COST, isOnCommandSide,
+  activateSubordinate, ACTIVATE_COST, isOnCommandSide, canGiveOrder,
 } from './command.js';
 import {
   listRunners, RUNNER_STATUS, RUNNER_ACTION_COST, MAX_RUNNERS,
@@ -31,6 +31,10 @@ import {
 } from './runner.js';
 import { getAreaKey } from './comm.js';
 import { setHighlightOrigin } from './order-highlight.js';
+import {
+  listRallyActions, planRallyAction, payRallyCost, isRallySuccess,
+  applyRallyAction, RALLY_ACTIONS, RALLY_COST,
+} from './rally.js';
 import { drawActionCard } from './deck.js';
 import {
   COVER_TYPES,
@@ -444,11 +448,13 @@ export function updateRightPanelUnit(unit) {
     ${stepsHtml}
     ${ncmHtml}
     ${activeBadges ? `<div class="rp-badges-row">${activeBadges}</div>` : ''}
+    ${_rallyHtml(unit.id)}
     ${cmdHtml}
   `.trim();
 
   // コマンドセクションのボタンをバインド
   if (cmdHtml) _bindCommandButtons(unit.id);
+  _bindRallyButtons(unit.id);
 }
 
 // ===== コマンド（AP）ボタン =====
@@ -597,6 +603,122 @@ function _selectHtml(id, items, empty) {
   return `<select class="rp-bnhq-select" id="${id}">`
     + items.map(i => `<option value="${i.id}">${i.label}</option>`).join('')
     + '</select>';
+}
+
+// ===== Rally アクション（§4.2.3 / §6.5.1）=====
+//
+// 対象の駒を右クリックすると、その駒に出せる Rally アクションが並ぶ。
+// 発令者（HQ/Staff）は「その駒に命令できてコマンドを払える駒」を自動で選ぶ。
+// VOF が無ければ自動成功、あれば人間が1枚ずつカードを引く（ドローロックをかける）。
+
+let _rallyState = null;   // { targetId, actionKey, need, cards[], done }
+
+/** その駒に Rally を命令できる HQ/Staff を探す */
+function _findRallyOriginator(targetId, actionKey) {
+  const def = RALLY_ACTIONS[actionKey];
+  for (const [unitId] of unitCoordMap) {
+    if (!getCommandRole(unitId)) continue;
+    if (getCurrentAP(unitId) < RALLY_COST || !canExpendCommand(unitId)) continue;
+    if (canGiveOrder(unitId, targetId, def?.orderKind).ok) return unitId;
+  }
+  return null;
+}
+
+/**
+ * 選択中の駒に対する Rally セクションを組み立てる。
+ * @param {string} unitId
+ * @returns {string}
+ */
+function _rallyHtml(unitId) {
+  if (!unitCoordMap.has(unitId)) return '';
+
+  // アクションごとに発令者を探して可否を出す
+  const rows = Object.keys(RALLY_ACTIONS).map(key => {
+    const originator = _findRallyOriginator(unitId, key);
+    const list = originator ? listRallyActions(originator, unitId) : [];
+    const info = list.find(a => a.key === key)
+      ?? { key, label: RALLY_ACTIONS[key].label, ref: RALLY_ACTIONS[key].ref, ok: false, reason: '命令できる HQ/Staff がいない', auto: false, draws: 0 };
+    return { ...info, originator };
+  });
+  if (!rows.some(r => r.ok)) return '';   // 1つも出せないなら枠ごと出さない
+
+  const items = rows.filter(r => r.ok).map(r => `
+    <div class="rp-act-row">
+      <span class="rp-act-name">${r.label}<span class="rp-act-reason"> ${r.ref}</span></span>
+      <button class="rp-act-btn" data-rally="${r.key}" data-rally-from="${r.originator}"
+        title="発令: ${r.originator} / ${r.auto ? '自動成功' : `${r.draws}枚引いて Rally を探す`}">
+        ${r.auto ? `実行 (${RALLY_COST})` : `試みる (${RALLY_COST})`}
+      </button>
+    </div>`).join('');
+
+  return `<div class="rp-act-title">§4.2.3 Rally（VOF が無ければ自動成功）</div>${items}
+    <div class="rp-rally-result" id="rpRallyResult"></div>`;
+}
+
+/** Rally ボタンを束ねる */
+function _bindRallyButtons(unitId) {
+  document.querySelectorAll('[data-rally]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (_isDrawLocked()) return;
+      _startRally(btn.dataset.rallyFrom, unitId, btn.dataset.rally);
+    });
+  });
+  document.getElementById('rpRallyDraw')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    _drawRallyCard();
+  });
+}
+
+/** Rally 開始: コストを払い、自動成功ならその場で適用、ドローなら人間に引かせる */
+function _startRally(originatorId, targetId, actionKey) {
+  const plan = planRallyAction(originatorId, targetId, actionKey);
+  payRallyCost(originatorId);
+
+  if (plan.auto) {
+    applyRallyAction(targetId, actionKey);
+    _rallyState = { targetId, actionKey, need: 0, cards: [], done: true, success: true, note: plan.reason };
+    _renderRally();
+    document.dispatchEvent(new CustomEvent('board:changed'));
+    return;
+  }
+  _rallyState = { targetId, actionKey, need: plan.draws, cards: [], done: false, success: false, note: plan.reason };
+  _setDrawLock(true);
+  _renderRally();
+}
+
+/** 1枚引く（人間が押す） */
+function _drawRallyCard() {
+  if (!_rallyState || _rallyState.done) return;
+  _rallyState.cards.push(drawActionCard());
+  if (_rallyState.cards.length >= _rallyState.need) {
+    _rallyState.success = isRallySuccess(_rallyState.cards);
+    _rallyState.done = true;
+    if (_rallyState.success) applyRallyAction(_rallyState.targetId, _rallyState.actionKey);
+    _setDrawLock(false);
+    document.dispatchEvent(new CustomEvent('board:changed'));
+  }
+  _renderRally();
+}
+
+/** Rally の進行状況を右パネルに描く */
+function _renderRally() {
+  const el = document.getElementById('rpRallyResult');
+  if (!el || !_rallyState) return;
+  const { actionKey, need, cards, done, success, note } = _rallyState;
+  const label = RALLY_ACTIONS[actionKey]?.label ?? actionKey;
+  const drawn = cards.map(c => `#${c.number}${c.type === 'rally' ? '(Rally)' : ''}`).join(' ');
+
+  let html = `<div class="rp-cs-unit">${label}</div><div class="rp-act-reason">${note}</div>`;
+  if (!done) {
+    html += `<div class="rp-cs-card">${cards.length} / ${need} 枚${drawn ? '：' + drawn : ''}</div>
+             <button class="rp-draw-btn" id="rpRallyDraw">🃏 カードを引く（残り ${need - cards.length}）</button>`;
+  } else {
+    if (drawn) html += `<div class="rp-cs-card">引いたカード：${drawn}</div>`;
+    html += `<div class="rp-cs-done" style="color:${success ? '#66aa66' : '#cc7755'}">${success ? '✓ 成功' : '✕ 失敗（何も起きない）'}</div>`;
+  }
+  el.innerHTML = html;
+  document.getElementById('rpRallyDraw')?.addEventListener('click', (e) => { e.stopPropagation(); _drawRallyCard(); });
 }
 
 /**
