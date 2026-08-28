@@ -43,7 +43,41 @@ export default {
       { unit: 'US_3PLT_HQ', model: 'SCR536', network: 'CO_TAC', coTac: true },
       // 60mm 迫撃砲セクションにも SCR536 CO TAC があるが、
       // units-normandy.js には Section 単位の駒が無いため未割当（3チームのみ定義）
+      // Arty FO（Additional Attachment）: SCR610 Arty FD Net（campaign p.17）
+      { unit: 'US_ARTY_FO', model: 'SCR610', network: 'ARTY_FD' },
     ],
+  },
+
+  // ── 火力支援（§7.16 Indirect Fire Missions）──
+  // 出典: campaign PDF p.17 Fire Support Available Table（Mission 1）。
+  //   Battalion Fire Mission はこのミッションでは不可。
+  //   observers の draws は Experience Level 込み（§7.16.3 Note：これ以上の練度修正はしない）。
+  //   network は Call for Fire の通信判定に使う網（Arty FO=ARTY FD／CO HQ=BN TAC。
+  //   「CO HQ が Call for Fire する場合は BN TAC Net を使う」§7.16.1 Using other Networks）。
+  fireSupport: {
+    battalionAvailable: false,
+    missions: {
+      HE: {
+        kind: 'HE',
+        label: 'HE（15th Field Artillery Battalion）',
+        vofMod: -5,
+        available: 4,
+        observers: [
+          { match: { radioRole: 'arty_fo' }, draws: 2, network: 'ARTY_FD' },
+          { match: { commandRole: 'co_hq' }, draws: 1, network: 'BN_TAC' },
+        ],
+      },
+      WP: {
+        kind: 'WP',
+        label: 'WP（15th Field Artillery Battalion）',
+        vofMod: -4,
+        available: 1,
+        observers: [
+          { match: { radioRole: 'arty_fo' }, draws: 2, network: 'ARTY_FD' },
+          { match: { commandRole: 'co_hq' }, draws: 1, network: 'BN_TAC' },
+        ],
+      },
+    },
   },
 
   // ── 参加部隊と初期練度 ──
@@ -76,7 +110,7 @@ export default {
       US_MTR60_1:  { experience: 'line'  },
       US_MTR60_2:  { experience: 'line'  },
       US_MTR60_3:  { experience: 'line'  },
-      // ※ Arty FO（砲兵前進観測員, Line）は Additional Attachments。ユニット未定義のため後日追加。
+      US_ARTY_FO:  { experience: 'line'  },   // Additional Attachment（campaign p.17）
     },
     enemy: {
       // 敵: 352nd Division 擲弾兵分隊（ランダムドロー）。FJ は Mission 2 以降。

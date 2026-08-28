@@ -49,6 +49,9 @@ export const UNITS = {
       src:'images/1_Runner-N-K.png',   srcReduced:'images/1_Runner-N-Kb.png',  label:'Runner (1)' },
     { id:'US_RUNNER_2', type:'weapon_team', faction:'friendly', namedFireTeam:true,
       src:'images/2_Runner-N-K.png',   srcReduced:'images/2_Runner-N-Kb.png',  label:'Runner (2)' },
+    // Additional Attachment（campaign p.17）。radioRole:'arty_fo' で ARTY FD Net の使用資格を持つ（data/radios.js）
+    { id:'US_ARTY_FO',  type:'weapon_team', faction:'friendly', namedFireTeam:true, radioRole:'arty_fo',
+      src:'images/Observer_Arty FO.png', srcReduced:'images/Observer_Arty FOb.png', label:'Arty FO' },
   ],
   'A3': [
     { id:'US_1PLT_HQ',  type:'weapon_team', faction:'friendly', namedFireTeam:true, commandRole:'plt_hq',
@@ -59,27 +62,38 @@ export const UNITS = {
       src:'images/HQ_09-3PLT.png',     srcReduced:'images/HQ_09-3PLTb.png',    label:'3rd PLT HQ' },
   ],
   'C2': [
+    // ammo: §7.18.1。capacity は1ステップあたりの輸送上限、points は campaign p.12 TO&E の開始弾薬。
     { id:'US_HMG50',    type:'weapon_team', faction:'friendly', namedFireTeam:true,
+      ammo:{ type:'MG', points:4, capacity:6 },
       src:'images/US HMG 50cal.png',   srcReduced:'images/Weapon_HMG50-1b.png', label:'.50 cal HMG' },
     { id:'US_LMG_1',    type:'weapon_team', faction:'friendly', namedFireTeam:true,
+      ammo:{ type:'MG', points:4, capacity:6 },
       src:'images/Weapon_LMG-1.png',   srcReduced:'images/Weapon_LMG-1b.png',  label:'1/LMG (30 cal)' },
     { id:'US_LMG_2',    type:'weapon_team', faction:'friendly', namedFireTeam:true,
+      ammo:{ type:'MG', points:4, capacity:6 },
       src:'images/Weapon_LMG-2.png',   srcReduced:'images/Weapon_LMG-2b.png',  label:'2/LMG (30 cal)' },
   ],
   'D1': [
     { id:'US_AT_1',     type:'weapon_team', faction:'friendly', namedFireTeam:true,
+      ammo:{ type:'RKT', points:3, capacity:3 },
       src:'images/Weapon_AT-1.png',    srcReduced:'images/Weapon_AT-1b.png',   label:'1/AT (Bazooka)' },
     { id:'US_AT_2',     type:'weapon_team', faction:'friendly', namedFireTeam:true,
+      ammo:{ type:'RKT', points:3, capacity:3 },
       src:'images/Weapon_AT-2.png',    srcReduced:'images/Weapon_AT-2b.png',   label:'2/AT (Bazooka)' },
     { id:'US_AT_3',     type:'weapon_team', faction:'friendly', namedFireTeam:true,
+      ammo:{ type:'RKT', points:3, capacity:3 },
       src:'images/Weapon_AT-3.png',    srcReduced:'images/Weapon_AT-3b.png',   label:'3/AT (Bazooka)' },
   ],
   'D2': [
+    // §7.18 note: 60mm迫撃砲チームは輸送上限(2/step)超の4を保持（3.7.18の既知の過積載例）
     { id:'US_MTR60_1',  type:'weapon_team', faction:'friendly', namedFireTeam:true,
+      ammo:{ type:'MTR', points:4, capacity:2 },
       src:'images/1_Mtr 60mm.png',     srcReduced:'images/1_Mtr 60mm b.png',  label:'1/60mm Tm' },
     { id:'US_MTR60_2',  type:'weapon_team', faction:'friendly', namedFireTeam:true,
+      ammo:{ type:'MTR', points:4, capacity:2 },
       src:'images/2_Mtr 60mm.png',     srcReduced:'images/2_Mtr 60mm b.png',  label:'2/60mm Tm' },
     { id:'US_MTR60_3',  type:'weapon_team', faction:'friendly', namedFireTeam:true,
+      ammo:{ type:'MTR', points:4, capacity:2 },
       src:'images/3_Mtr 60mm.png',     srcReduced:'images/3_Mtr 60mm b.png',  label:'3/60mm Tm' },
   ],
 
@@ -207,9 +221,10 @@ export const UNITS = {
       src:'images/GE_75mmAT 1.png',    srcReduced:'images/GE_75mmAT 1 b.png', label:'75mm 対戦車砲 1' },
     { id:'GE_IG75_2',  type:'weapon_team', faction:'german', namedFireTeam:true,
       src:'images/GE_75mmIG 2.png',    srcReduced:'images/GE_75mmIG 1 b.png', label:'75mm 歩兵砲' },
-    { id:'GE_Spotter_Mtr2', type:'weapon_team', faction:'german', namedFireTeam:true,
+    // fo:true … §8.5 Spot Attempt Draw Modifiers Table「Target is: A Sniper or FO -1」判定用タグ
+    { id:'GE_Spotter_Mtr2', type:'weapon_team', faction:'german', namedFireTeam:true, fo:true,
       src:'images/GE_Spotter_Mtr2.png', srcReduced:'images/GE_Spotter_Mtr1 b.png', label:'迫撃砲スポッター 1' },
-    { id:'GE_Spotter_Arty1', type:'weapon_team', faction:'german', namedFireTeam:true,
+    { id:'GE_Spotter_Arty1', type:'weapon_team', faction:'german', namedFireTeam:true, fo:true,
       src:'images/GE_Spotter_Arty1.png', srcReduced:'images/GE_Spotter_Arty2 b.png', label:'砲兵スポッター 1' },
   ],
 };

@@ -74,9 +74,9 @@ Series Rules 3rd Edition の目次と現状実装を照合した棚卸し。
 | 7.13 Demolition Charge | ⬜ | |
 | 7.14 Flamethrower | ⬜ | |
 | 7.15 Sniper | ⬜ | VOF S! は一旦除去済 |
-| 7.16 間接砲撃(Fire Mission) | ⬜ | 砲兵・迫撃・観測員。Mission1にArty FOデータあり |
+| 7.16 間接砲撃(Fire Mission) | 🟡 | **§4.2.4i Call for Fire を実装**（fire-mission.js）。Mission1のFire Support Available Table（campaign p.17・15th Field Artillery Battalion：HE VOF-5/draw2(FO)・1(COHQ)/4回、WP VOF-4/同/1回。Battalion Fire Missionは不可）をデータ投入。観測者資格はradioRole/commandRole+該当網の生きたRTで判定（Arty FO=ARTY FD Net・CO HQ=BN TAC Net）。成功でPending-N/Pending-WP-Nマーカー設置（既存のvof.js Pending⇄Incoming機構をそのまま利用・フリップは既存の手動ボタン）・Fire Mission残数を1減。**§7.16.4 Short Round も実装**（観測者側へ1マス寄せる／自陣着弾ならrollRで隣接カードを選択）。**未実装**: Battalion/FPF/Illumination/TOT/Air Strike・Critical Hit・Registered Targets(7.16.5) |
 | 7.17 WP煙幕/CSガス | ⬜ | |
-| 7.18 弾薬(Ammunition) | ⬜ | HMG/迫撃砲の残弾管理 |
+| 7.18 弾薬(Ammunition) | 🟡 | **実装**（ammo.js）。units-normandy.jsにammo:{type,points,capacity}を追加（US_HMG50/LMG_1/LMG_2=MG 4/6、US_AT_1-3=RKT 3/3、US_MTR60_1-3=MTR 4/2＝輸送上限超過の既知の過積載例）。expendAmmo/resupplyAmmoで消費・補給、0でOut of Ammo状態（state.js）。Concentrate Fire成功時の+1消費(§7.11.3)をcombat-action.jsから連動。**簡略化**: Out of Ammo中のVOFレーティング強制ダウングレード（S・Close固定）はVOFがカード単位で人間が手動選択するため未対応（バッジ表示のみ）。§7.18.2の「1ステップ・FT面がS/A/S」判定はFT面VOFレーティングデータが無く未対応（常にOut of Ammoマーカー扱い）。敵弾薬・輸送上限超過分の置き去りは未対応 |
 
 ### 8.0 The Enemy（敵）— ★コンタクトレベルが活きる部分
 | 節 | 状況 | メモ |
@@ -85,7 +85,7 @@ Series Rules 3rd Edition の目次と現状実装を照合した棚卸し。
 | 8.2 PCマーカー | 🟡 | 配置✅・ドローチャートデータ✅・**接触するか判定(pc-resolve.js)✅**（カード右クリック「PC解決」） |
 | 8.3 接触タイプ判定 | ✅ | 敵パッケージ表(enemy-contact.js)。Mission1データ投入済み（German Contact Packages・Enemy Force Packages）。PC解決フローに接続済み。パッケージ内の追加ランダム判定（武器種別LMG/HMG・FO種別Artillery/Mortar・追加装備有無等）も実装済み（`choices`+`resolveValueSpec`、R#明記時はその比率／なければ§1.2.7の一般則でdenom=2）。**Squad袋引き（Grenadier Gp1-4、"Draw one at random each time a squad is placed."）を実装（rating A/A/A/S を画像確認・units-normandy.jsに反映）。HMG/LMG/迫撃砲/スポッターは装備プール（順番割当）で解決** |
 | 8.4 接触位置 | 🟡 | 距離判定(placement.js)実装済み：Point Blank/Close/Long/Very Long固定距離 + Max LOS/Range（los.jsで実際にLOSが届く最遠カードを算出）。R#条件付き距離（Strong Point等の共有ロール）も対応。方向(§8.4.2)はカード右クリックのPC解決フローから「配置方向」ドローとして接続済み（enemy-placement.js resolveDirection）。§8.4.5 マップ拡張も実装済み（grid.js expandMapEdge・terrain-deck.js）。**§8.4.3 実際のユニット生成・配置も実装済み**（enemy-placement.js placeResolvedUnits → addUnitToCard で盤面に実配置。Squad袋引き/装備プールで解決できたものだけ自動配置し、Sniper・FLAK 36・Patrol等の未定義ユニットは「手動配置してください」と明示）。**cover探索・友軍との重なり回避・PDF/VOF自動付与は未** |
-| 8.5 敵スポット | ⬜ | unspotted状態はあるがスポット判定なし |
+| 8.5 敵スポット | 🟡 | **§4.2.4a Attempt to Spot を実装**（combat-action.js）。§8.5 Spotting Attempt Draw Modifiers Tableを反映：スポッター練度(Green-1/Vet+1)・対象カードのC&C値(defLow基準・+3以上-1/+0+1)・標高差+1・対象カバー下-1・同カード+1・対象Exposed+2・対象練度(Vet-1/Green+1)。成功でunspotted解除。**簡略化**: C&C値のdefHigh/defLow使い分け（白/黒境界）は未対応（defLow固定）。対象VOFレーティングA/H・G!による修正は該当データが無く未対応。「Sniper or FO」判定はunits-normandy.jsの`fo:true`タグ（GE_Spotter_Mtr2/Arty1）でFOのみ対応 |
 | 8.6 敵の挙動(Behavior) | ⬜ | 敵AI（Activity Check） |
 | 8.7 地雷・ブービートラップ | ⬜ | VOF種別あり、パッケージ処理未 |
 | 8.8 敵スナイパー | ⬜ | |
@@ -138,12 +138,13 @@ Series Rules 3rd Edition の目次と現状実装を照合した棚卸し。
 2. ~~**PC解決ロジック**（8.2.4 + 8.3）~~ **完成**
 3. ~~**通信**（4.3）~~ **完成**（Visual-Verbal / 無線A・B・C / 電話・電話線 / ランナー ＋ 指揮判定への統合）
 4. **アクション体系（4.2）→ 実装計画は ACTION_SPEC.md（調査済み・Rally→移動→戦闘の順）**。
-   §4.2.2 移動・§4.2.3 Rally・§4.2.4 戦闘（Tier1: k/l/b/c/d/h）は実装済みで、
+   §4.2.2 移動・§4.2.3 Rally・§4.2.4 戦闘（k/l/b/c/d/h/a/i の8アクション）は実装済みで、
    `canGiveOrder()` / `canCommunicate()` を経由してコマンドが「何に使われたか」に繋がった。
-   残りは移動d・Rally g/h/i・戦闘の a（Spot）/e-g（Demo/Flamethrower）/i-j（間接砲撃）/m（FPF/FPL）
+   a（Spot・§8.5）・i（Call for Fire・§7.16）・弾薬管理（§7.18）も実装済み（fire-mission.js・ammo.js）。
+   残りは移動d・Rally g/h/i・戦闘の e-g（Demo/Flamethrower）/j（Battalion/FPF/Illum/TOT/AirStrike）/m（FPF/FPL）
 
 ### ★P2：戦闘の流れを繋ぐ
-5. **射撃開始(Opening Fire)/スポット**（6.1 + 8.5）— 誰がいつVOFを出すか
+5. ~~**スポット**（8.5）~~ **完成**（§4.2.4a・combat-action.js）。射撃開始(Opening Fire・6.1)自体（誰がいつVOFを出すか）は引き続き人間の手動配置のまま
 6. **移動ルール**（5.1）— 移動でExposed化、移動とAP消費の連動（4.2.2 と一体）
 7. ~~**クリーンアップ処理**（3.8）— Exposed解除・Pinned回復（3.7.3）~~ **完成**（cleanup.js）。
    電話線の戦闘損害チェック（`phone.js` の `checkPhoneLineCombatDamage`）は実装済みだが
@@ -154,7 +155,7 @@ Series Rules 3rd Edition の目次と現状実装を照合した棚卸し。
 ### ★P3：1ターンの完成度を上げる
 7. フェーズ自動進行と各フェーズ処理（3.1〜3.8）
 8. Rally・再編（6.5）
-9. 間接砲撃(Fire Mission)・弾薬管理（7.16 + 7.18）— Mission1にArty FOあり
+9. ~~間接砲撃(Fire Mission)・弾薬管理（7.16 + 7.18）~~ **完成**（fire-mission.js・ammo.js。Mission1のArty FO/Fire Support Available Table投入済み。Battalion/FPF/Illumination/TOT/AirStrikeは未）
 10. ~~Concentrate/Grenade Miss フラグ（7.11/7.10）~~ **完成**（§4.2.4b/c/d/h・combat-action.js）。Jam（7.12）は未
 
 ### ★P4：敵の厚み

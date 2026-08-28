@@ -135,14 +135,17 @@ HIT判定カードと結果判定カードの間など、連続ドロー中は�
 - [x] ~~コマンドフェーズの起動セグメント（HQ起動順・配下への配分・消費上限チェック）~~ 完成
 - [ ] **§4.3 通信と §4.1.4 Fire Team 面 → 実装計画は COMMUNICATION_SPEC.md（ルール調査済み・Step0〜6）**
 - [x] ~~駒の表裏（command side / Fire Team side・§1.2.3B / §4.1.4）~~ 完成（Step0。`isOnCommandSide()` = `namedFireTeam` かつ `steps === maxSteps`）
-- [x] ~~§4.2.4 戦闘アクション Tier1（k/l/b/c/d/h）~~ 完成（combat-action.js）。残りは a（Spot・§8.5未着手）/ e-g（Demo/Flamethrower）/ i-j（間接砲撃）/ m（FPF/FPL）— いずれも新規下位システムが要るため見送り（実装計画は ACTION_SPEC.md）
+- [x] ~~§4.2.4 戦闘アクション（k/l/b/c/d/h/a/i）~~ 完成（combat-action.js・fire-mission.js）。残りは e-g（Demo/Flamethrower）/ j（On-Map Mortar・Battalion/FPF/Illumination/TOT/AirStrike）/ m（FPF/FPL）— いずれも新規下位システムが要るため見送り（実装計画は ACTION_SPEC.md）
+- [x] ~~§7.16 間接砲撃（Call for Fire）・§7.18 弾薬管理~~ 完成（fire-mission.js・ammo.js。Mission1のArty FO/Fire Support Available Table投入済み）
+- [x] ~~§8.5 敵スポット（Attempt to Spot）~~ 完成（combat-action.js）
 - [ ] 浸透 c/g・カバー捜索 e の右パネル UI 接続（move.js にロジックは実装済み。ドローロック連動のカードドローフローを追加するだけ）
 - [ ] 移動 d（小隊浸透）・Rally g（Detach統合）/h（Supplement）/i（Reconstitute）
 - [x] ~~rally で Fire Team 面から command side に戻す手段~~ 完成（§4.2.3f・rally.js）
 - 移動アクション §4.2.2（move.js・右パネル「§4.2.2 移動」）：a 隣接カード／b 小隊移動（コスト2・**通信できない駒は置き去り**）／f カード内移動。移動後の更新（**離脱時に電話線を1本自動敷設**→カバーから外す→移動→カバーへ入る→**Exposed 付与と §5.1.2 の例外**（塹壕/バンカー/トーチカ間は付かない）→`board:changed`）まで一括。§4.2.5 の Pinned 移動先制限つき：完成
 - 浸透 c/g（`planInfiltrate`/`applyInfiltrate`）とカバー捜索 e（`planSeekCover`/`applySeekCover`）：move.js にロジック実装済み（当初「Infiltrate アイコン／Cover Draw 番号が未データ化」と書いたのは誤りで、元データ `cards.json`/`terrain_cards.json` に最初から入っていた）。**右パネルへの UI 接続（ドローロック連動のカードドローフロー）が未**（`context-menu.js` は a/b/f のみ呼んでいる）。d（小隊浸透）は未実装
 - Rally アクション §4.2.3/§6.5.1（rally.js・右パネル「§4.2.3 Rally」）：対象カードに VOF が無ければ自動成功、あれば「2±**発令者**の練度」枚を人間が引き `type:'rally'` を探す。a〜f と j を実装（Pinned解除・LAT変換・Fire Team面の表裏）。発令者は「その駒に命令できてコマンドを払える HQ/Staff」を自動選択：完成
-- 戦闘アクション §4.2.4 Tier1（combat-action.js）：k. Cease Fire／l. Shift Fire（Auto・card-context-menu.js の「射撃統制」セクション。VOF はカード単位でユニット非帰属のため通信チェックは発令者の HQ/Staff 判定のみ）、b/c. Concentrate Fire（単体/小隊・2±**対象**の練度枚引き Crosshairs 判定→成功で Concentrated Fire マーカー）、d/h. Grenade Attack（単体/小隊・Point Blank＝同カードのみ・2±対象の練度枚引き Grenade 判定→成功で Grenade VOF・失敗で Grenade Miss マーカー）。UI は context-menu.js の「§4.2.4 戦闘アクション」セクション（単体はその場でドロー、小隊はユニットを1体ずつ順にドローするキュー方式）。vof.js に `setConcentrate`/`setGrenadeMiss` を追加し cardVOFMap を `{type, crossfire, concentrate, grenadeMiss}` に拡張、ncm.js の NCM 計算に grenadeMiss を -1 修正として追加。**既知の簡略化**: 対象は「カード全体」（本来はカバー下スタック/露天1駒）、Concentrate Fire の資格（S/A/A/S/H VOF レーティング）は units-normandy.js に該当フィールドが無いため未チェック、Grenade は Ranged 非対応（Point Blank のみ）、Critical Hit・Jam・弾薬消費・Free Grenade Attack Response は未実装。残る a（Spot）/e-g（Demo/Flamethrower）/i-j（間接砲撃）/m（FPF/FPL）は §8.5 修正表・弾薬管理・Fire Mission ログ等の新規下位システムが要るため見送り：完成
+- 戦闘アクション §4.2.4（combat-action.js・fire-mission.js）：k. Cease Fire／l. Shift Fire（Auto・card-context-menu.js の「射撃統制」セクション。VOF はカード単位でユニット非帰属のため通信チェックは発令者の HQ/Staff 判定のみ）、b/c. Concentrate Fire（単体/小隊・2±**対象**の練度枚引き Crosshairs 判定→成功で Concentrated Fire マーカー・成功時 ammo.js で+1消費 §7.11.3）、d/h. Grenade Attack（単体/小隊・Point Blank＝同カードのみ・2±対象の練度枚引き Grenade 判定→成功で Grenade VOF・失敗で Grenade Miss マーカー）、a. Attempt to Spot（§8.5 Spotting Attempt Draw Modifiers Table を反映。スポッター練度・対象カードC&C値(defLow固定)・標高差・カバー・同カード・Exposed・対象練度で修正。成功で unspotted 解除）、i. Call for Fire（fire-mission.js。Mission1 の Fire Support Available Table＝15th FA Bn の HE/WP をデータ投入。観測者資格は radioRole/commandRole＋該当網の生きた RT で判定、成功で Pending-N/Pending-WP-N マーカー設置・Short Round 対応）。UI は context-menu.js の「§4.2.4 戦闘アクション」セクション（単体/Spot/Call for Fire はその場でドロー、小隊はユニットを1体ずつ順にドローするキュー方式）。vof.js に `setConcentrate`/`setGrenadeMiss` を追加し cardVOFMap を `{type, crossfire, concentrate, grenadeMiss}` に拡張、ncm.js の NCM 計算に grenadeMiss を -1 修正として追加。**既知の簡略化**: 対象は「カード全体」（本来はカバー下スタック/露天1駒）、Concentrate Fire/Spot の VOF レーティングによる資格・修正は units-normandy.js に該当フィールドが無いため未チェック、Grenade は Ranged 非対応（Point Blank のみ）、Critical Hit・Jam・Free Grenade Attack Response は未実装。残る e-g（Demo/Flamethrower）/j（On-Map Mortar・Battalion/FPF/Illumination/TOT/AirStrike）/m（FPF/FPL）は新規下位システムが要るため見送り：完成
+- 弾薬管理 §7.18（ammo.js）：units-normandy.js の `ammo:{type,points,capacity}` を持つユニット（US_HMG50/LMG_1/LMG_2=MG・US_AT_1-3=RKT・US_MTR60_1-3=MTR）だけ追跡。`expendAmmo`/`resupplyAmmo` で消費・補給、0で Out of Ammo 状態（state.js に `outOfAmmo` 追加）。右パネルに手動 -1/補給+4 ボタン（NCM手動調整と同じ「人間の裁量」設計）。**既知の簡略化**: Out of Ammo 中の VOF レーティング強制ダウングレード（S・Close固定）は VOF が人間の手動選択のためコード側で強制できない、§7.18.2 の「1ステップ・FT面が S/A/S」分岐は FT面 VOF レーティングデータが無く常に Out of Ammo マーカー扱い、敵弾薬・輸送上限超過分の置き去りは未対応：完成
 - [x] ~~クリーンアップ処理（§3.7.3 Pinned回復・§3.8 マーカー除去）~~ 完成（cleanup.js）
 - クリーンアップ §3.7.3/§3.8（cleanup.js）：フェーズが「クリーンアップ」に進んだ瞬間に ①VOFの無いカードのユニットの Pinned を解除 ②全ユニットの Exposed 除去 ③Concentrated Fire/Grenade/Grenade Miss マーカー除去（持続系VOFのS/A/H等は対象外）を実行。コマンドの起動/取得済みフラグ・AP繰越は既存の `resetImpulseFlags`/`finishImpulse` と連動。**未実装**（新規下位システムが要るため見送り）：Pyrotechnic/Smoke/Illumination除去（§4.4/9.2）・Casualty Evacuation（§5.1.7）・VOFを持たない敵への自動Cease Fire（§8.6敵AI）・防御ミッションの未解決PC除去（§3.2）・Mine/Sniper VOFの処理（§8.7/7.15）：完成
 - [ ] Attachment の小隊割当（§2.3.2 Mission Log）— PLT HQ の命令範囲判定に必要（今はユニットIDの `US_nPLT_` 接頭辞で小隊を判定している）
@@ -203,7 +206,9 @@ HIT判定カードと結果判定カードの間など、連続ドロー中は�
     ├── enemy-placement.js 敵ユニット実配置（§8.4.3 方向ドロー→距離解決→addUnitToCardで盤面配置）
     ├── move.js       移動アクション（§4.2.2a/b/f・Exposed/カバー/電話線の更新込み）
     ├── rally.js      Rally アクション（§4.2.3 / §6.5.1 自動成功 or "Rally" 探し）
-    ├── combat-action.js 戦闘アクション Tier1（§4.2.4 k/l/b/c/d/h・Cease Fire/Shift Fire/Concentrate Fire/Grenade Attack）
+    ├── combat-action.js 戦闘アクション（§4.2.4 k/l/b/c/d/h/a・Cease Fire/Shift Fire/Concentrate Fire/Grenade Attack/Spot）
+    ├── fire-mission.js 間接砲撃（§4.2.4i / §7.16 Call for Fire・Pending設置・Short Round）
+    ├── ammo.js       弾薬管理（§7.18 消費・補給・Out of Ammo状態）
     ├── cleanup.js    クリーンアップ（§3.7.3 Pinned回復 / §3.8 Exposed・Concentrate/Grenade/GrenadeMissマーカー除去）
     ├── comm.js       通信（§4.3 Visual-Verbal ＋ 無線 ＋ 電話の統合窓口）
     ├── order-highlight.js 命令範囲の可視化（選択中HQが命令できる駒だけ通常表示）

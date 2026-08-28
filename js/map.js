@@ -26,6 +26,7 @@ import { getPhoneLineStock } from './phone.js';
 import { setCommunicationChecker } from './command.js';
 import { initOrderHighlight } from './order-highlight.js';
 import { runCleanupPhase } from './cleanup.js';
+import { applyScenarioFireSupport } from './fire-mission.js';
 
 // ===== window へ公開（HTML の onclick から呼ぶため） =====
 window.changeZoom = changeZoom;
@@ -270,6 +271,7 @@ if (!restored) {
   applyScenarioExperience(scenario);                          // 初期練度を投入
   setVisibility(scenario.visibility === 'limited' ? 1 : 0);   // シナリオ視界
   applyScenarioComms(scenario);                               // 通信資産（RT・電話線）を投入
+  applyScenarioFireSupport(scenario);                         // 火力支援（Fire Mission 残数）を投入
 
   // シナリオの PC 配置（各行の全カードに letter side）
   for (const [row, letter] of Object.entries(scenario.pcPlacement ?? {})) {

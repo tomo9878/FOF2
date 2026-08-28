@@ -22,7 +22,7 @@ import {
   getCommandsDrawn, setCommandsDrawn, getActivatorRole, COMMAND_ROLE_LABELS,
   finishImpulse, expendCommand, undoExpendCommand, canExpendCommand,
   getSpentThisImpulse, isUnitEligibleNow, listActivationTargets,
-  activateSubordinate, ACTIVATE_COST, isOnCommandSide, canGiveOrder,
+  activateSubordinate, ACTIVATE_COST, isOnCommandSide, canGiveOrder, findUnitDef,
 } from './command.js';
 import {
   listRunners, RUNNER_STATUS, RUNNER_ACTION_COST, MAX_RUNNERS,
@@ -45,9 +45,16 @@ import {
   planConcentrateFire, isConcentrateFireSuccess, payConcentrateFireCost, applyConcentrateFire, CONCENTRATE_COST,
   listPlatoonConcentrateTargets, canPlatoonConcentrateFire, payPlatoonConcentrateFireCost, PLATOON_CONCENTRATE_COST,
   listConcentrateFireTargetCoords,
+  canSpot, listSpotTargets, planSpot, isSpotSuccess, paySpotCost, applySpot, SPOT_COST,
 } from './combat-action.js';
 import { getUnitCoverSlot as _coverSlotOf, getCoverSlots as _coverSlotsOf, COVER_TYPES as _COVER_TYPES } from './cover.js';
 import { drawActionCard } from './deck.js';
+import { hasAmmoTracking, getAmmo, expendAmmo, resupplyAmmo } from './ammo.js';
+import {
+  listFireMissionKeys, listEligibleObservers, canCallForFire, planCallForFire,
+  isCallForFireSuccess, isShortRound, payCallForFireCost, applyCallForFire, CALL_FOR_FIRE_COST,
+  getMissionDef, getFireMissionsRemaining,
+} from './fire-mission.js';
 import {
   COVER_TYPES,
   getCoverSlots,
@@ -855,6 +862,11 @@ function _renderRally() {
 
 let _combatActQueue = null; // { kind:'grenade'|'concentrate', targetCoord, units:[...], idx, current, results:[] }
 
+/** 盤上の全カード座標（Call for Fire の着弾先選択用） */
+function _allCombatActCoords() {
+  return [...document.querySelectorAll('.terrain-card[data-coord]')].map(el => el.dataset.coord);
+}
+
 /** その駒に Grenade Attack / Concentrate Fire を命令できる HQ/Staff を探す */
 function _findCombatActOriginator(unitId, cost) {
   for (const [id] of unitCoordMap) {
@@ -873,6 +885,48 @@ function _findCombatActOriginator(unitId, cost) {
 function _combatActionHtml(unitId) {
   if (!unitCoordMap.has(unitId)) return '';
   let html = '';
+
+  // --- a. Attempt to Spot ---
+  const spotOriginator = _findCombatActOriginator(unitId, SPOT_COST);
+  const spotTargets = listSpotTargets(unitId);
+  if (spotOriginator && spotTargets.length) {
+    const opts = spotTargets.map(id => `<option value="${id}">${findUnitDef(id)?.label ?? id}</option>`).join('');
+    html += `<div class="rp-act-row">
+      <span class="rp-act-name">Spot<span class="rp-act-reason"> §4.2.4a</span></span>
+      <select class="rp-bnhq-select" id="caSpotTarget" style="flex:1">${opts}</select>
+      <button class="rp-act-btn" data-spot-single="1" data-spot-from="${spotOriginator}">試みる (${SPOT_COST})</button>
+    </div>`;
+  }
+
+  // --- i. Call for Fire（観測者資格があるミッションだけ）---
+  const cffMissions = listFireMissionKeys().filter(k => listEligibleObservers(k).includes(unitId));
+  if (cffMissions.length) {
+    const cffOriginator = _findCombatActOriginator(unitId, CALL_FOR_FIRE_COST);
+    if (cffOriginator) {
+      const missionOpts = cffMissions.map(k => {
+        const def = getMissionDef(k);
+        return `<option value="${k}">${def?.label ?? k}（残${getFireMissionsRemaining(k)}）</option>`;
+      }).join('');
+      const targetCoords = _allCombatActCoords();
+      const targetOpts = targetCoords.map(c => `<option value="${c}">${c}</option>`).join('');
+      html += `<div class="rp-act-row">
+        <span class="rp-act-name">Call for Fire<span class="rp-act-reason"> §4.2.4i</span></span>
+        <select class="rp-bnhq-select" id="caCffMission">${missionOpts}</select>
+        <select class="rp-bnhq-select" id="caCffTarget" style="flex:1">${targetOpts}</select>
+        <button class="rp-act-btn" data-cff-single="1" data-cff-from="${cffOriginator}">試みる (${CALL_FOR_FIRE_COST})</button>
+      </div>`;
+    }
+  }
+
+  // --- 弾薬（§7.18・人間の裁量で手動増減）---
+  if (hasAmmoTracking(unitId)) {
+    const ammo = getAmmo(unitId);
+    html += `<div class="rp-act-row">
+      <span class="rp-act-name">弾薬（${ammo.type}）<span class="rp-act-reason"> ${ammo.points}/${ammo.capacity}</span></span>
+      <button class="rp-act-btn" id="caAmmoMinus" ${ammo.points <= 0 ? 'disabled' : ''}>-1</button>
+      <button class="rp-act-btn" id="caAmmoResupply">補給+4</button>
+    </div>`;
+  }
 
   // --- d. Grenade Attack（単体・同カードのみ）---
   const grenadeOriginator = _findCombatActOriginator(unitId, GRENADE_COST);
@@ -923,6 +977,39 @@ function _combatActionHtml(unitId) {
 
 /** 戦闘アクションのボタンを束ねる */
 function _bindCombatActButtons(unitId) {
+  document.getElementById('caAmmoMinus')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    expendAmmo(unitId, 1);
+    document.dispatchEvent(new CustomEvent('board:changed'));
+    updateRightPanelUnit(unitId);
+  });
+  document.getElementById('caAmmoResupply')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    resupplyAmmo(unitId, 4);
+    document.dispatchEvent(new CustomEvent('board:changed'));
+    updateRightPanelUnit(unitId);
+  });
+  document.querySelectorAll('[data-spot-single]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (_isDrawLocked()) return;
+      const target = document.getElementById('caSpotTarget')?.value;
+      if (!target || !canSpot(btn.dataset.spotFrom, unitId, target).ok) return;
+      paySpotCost(btn.dataset.spotFrom);
+      _startCombatActQueue('spot', null, [unitId], { targetId: target });
+    });
+  });
+  document.querySelectorAll('[data-cff-single]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (_isDrawLocked()) return;
+      const missionKey = document.getElementById('caCffMission')?.value;
+      const target = document.getElementById('caCffTarget')?.value;
+      if (!missionKey || !target || !canCallForFire(btn.dataset.cffFrom, unitId, missionKey, target).ok) return;
+      payCallForFireCost(btn.dataset.cffFrom);
+      _startCombatActQueue('firemission', target, [unitId], { missionKey });
+    });
+  });
   document.querySelectorAll('[data-grenade-single]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -967,8 +1054,8 @@ function _bindCombatActButtons(unitId) {
 }
 
 /** コストは呼び出し側で払い済み。ユニットのキューを開始する（1体ずつドロー） */
-function _startCombatActQueue(kind, targetCoord, units) {
-  _combatActQueue = { kind, targetCoord, units, idx: 0, current: null, results: [] };
+function _startCombatActQueue(kind, targetCoord, units, extra = {}) {
+  _combatActQueue = { kind, targetCoord, units, idx: 0, current: null, results: [], ...extra };
   _setDrawLock(true);
   _beginNextCombatActUnit();
 }
@@ -982,7 +1069,11 @@ function _beginNextCombatActUnit() {
     return;
   }
   const unitId = q.units[q.idx];
-  const plan = q.kind === 'grenade' ? planGrenadeAttack(unitId) : planConcentrateFire(unitId);
+  let plan;
+  if (q.kind === 'grenade') plan = planGrenadeAttack(unitId);
+  else if (q.kind === 'spot') plan = planSpot(unitId, q.targetId);
+  else if (q.kind === 'firemission') plan = planCallForFire(q.missionKey, unitId);
+  else plan = planConcentrateFire(unitId);
   q.current = { unitId, need: plan.draws, cards: [], done: false, success: false };
   _renderCombatAct();
 }
@@ -992,13 +1083,19 @@ function _drawCombatActCard() {
   if (!q || !q.current || q.current.done) return;
   q.current.cards.push(drawActionCard());
   if (q.current.cards.length >= q.current.need) {
-    const success = q.kind === 'grenade'
-      ? isGrenadeSuccess(q.current.cards)
-      : isConcentrateFireSuccess(q.current.cards);
+    let success;
+    if (q.kind === 'grenade') success = isGrenadeSuccess(q.current.cards);
+    else if (q.kind === 'spot') success = isSpotSuccess(q.current.cards);
+    else if (q.kind === 'firemission') success = isCallForFireSuccess(q.current.cards);
+    else success = isConcentrateFireSuccess(q.current.cards);
     q.current.success = success;
     q.current.done = true;
     if (q.kind === 'grenade') applyGrenadeAttack(q.current.unitId, success);
-    else applyConcentrateFire(q.targetCoord, success);
+    else if (q.kind === 'spot') applySpot(q.targetId, success);
+    else if (q.kind === 'firemission') {
+      const short = isShortRound(q.current.cards);
+      applyCallForFire(q.targetCoord, q.missionKey, q.current.unitId, success, short);
+    } else applyConcentrateFire(q.targetCoord, success, q.current.unitId);
     q.results.push({ unitId: q.current.unitId, success });
     document.dispatchEvent(new CustomEvent('board:changed'));
   }
@@ -1018,7 +1115,10 @@ function _renderCombatAct() {
   const el = document.getElementById('rpCombatActResult');
   if (!el || !_combatActQueue) return;
   const q = _combatActQueue;
-  const label = q.kind === 'grenade' ? '手榴弾攻撃' : 'Concentrate Fire';
+  const label = q.kind === 'grenade' ? '手榴弾攻撃'
+    : q.kind === 'spot' ? 'Spot'
+    : q.kind === 'firemission' ? 'Call for Fire'
+    : 'Concentrate Fire';
 
   let html = q.results.map(r =>
     `<div class="rp-cs-card">${r.unitId}: ${r.success ? '✓ 成功' : '✕ 失敗'}</div>`

@@ -38,6 +38,8 @@ import { unitExperienceMap } from './campaign.js';
 import { getVisibility, setVisibility } from './ncm.js';
 import { recomputeActivityLevel } from './contact.js';
 import { resetSquadPools } from './enemy-contact.js';
+import { unitAmmoMap, clearAmmo } from './ammo.js';
+import { fireMissionRemaining, applyScenarioFireSupport } from './fire-mission.js';
 
 const KEY = 'fof_save';
 // v2: 行番号の向きをルールブックに合わせた（row 1 = スタートエリア隣接・最下段）。
@@ -111,6 +113,8 @@ export function serialize() {
       coTac:    getCoTacMode(),
       droppedRTs: [...droppedRTMap],
       removedRTs: [...removedRTs],
+      ammo:         [...unitAmmoMap],
+      fireMissions: [...fireMissionRemaining],
     },
   };
 }
@@ -179,6 +183,12 @@ function _applyPlay(play) {
   phoneLineMap.clear();
   (play.phoneLines ?? []).forEach(([c, l]) => phoneLineMap.set(c, l));
   setPhoneLineStock(play.phoneStock ?? 0);
+  unitAmmoMap.clear();
+  (play.ammo ?? []).forEach(([id, a]) => unitAmmoMap.set(id, a));
+  if (play.fireMissions) {
+    fireMissionRemaining.clear();
+    play.fireMissions.forEach(([k, n]) => fireMissionRemaining.set(k, n));
+  }
   // 描画
   cardVOFMap.forEach((_, c) => renderCardVOF(c));
   cardPDFMap.forEach((_, c) => renderCardPDFs(c));
@@ -234,6 +244,8 @@ export function resetPlay(scenario) {
   clearRunners();     // ランナーはプレイ中に作るもの（ノルマンディーは開始時0体）
   clearPhoneLines();  // 電話線もシナリオ資産。Step6 でシナリオから再投入する
   renderAllPhoneLines();
+  clearAmmo();                        // 弾薬は unit定義の初期値へ（§7.18）
+  applyScenarioFireSupport(scenario); // Fire Mission 残数をシナリオ初期値へ（§7.16）
   setVisibility(scenario.visibility === 'limited' ? 1 : 0);
 
   // 全カード・全駒のマーカー/バッジを再描画（消去を反映）

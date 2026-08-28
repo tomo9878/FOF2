@@ -9,6 +9,7 @@ export const UNIT_STATES_DEF = [
   { key:'unaware',    label:'無警戒',   badge:'UA', color:'#0088aa' },
   { key:'fanatic',    label:'狂信的',   badge:'FA', color:'#990099' },
   { key:'human_wave', label:'人海戦術', badge:'HW', color:'#bb6600' },
+  { key:'outOfAmmo',  label:'弾薬切れ', badge:'OA', color:'#886600' },
 ];
 
 // ===== ユニット位置・強度トラッキング =====

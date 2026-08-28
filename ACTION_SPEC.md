@@ -38,9 +38,9 @@
 ## 2. 着手順（推奨）
 
 **Rally（§4.2.3）→ 移動（§4.2.2）→ 戦闘（§4.2.4）**
-→ **Rally・移動（Auto分）は完了。戦闘（§4.2.4）は Tier1（k/l/b/c/d/h の6アクション）を実装済み**
-　（`combat-action.js`）。残りは a（Spot・§8.5未着手）/ e-g（Demo・Flamethrower）/
-　i-j（Call for Fire・On-Map Mortar）/ m（FPF/FPL）— いずれも新規の下位システムが要る
+→ **Rally・移動（Auto分）は完了。戦闘（§4.2.4）は8アクション（k/l/b/c/d/h/a/i）を実装済み**
+　（`combat-action.js`・`fire-mission.js`・弾薬管理は`ammo.js`）。残りは e-g（Demo・Flamethrower）/
+　j（On-Map Mortar・Battalion/FPF/Illumination/TOT/AirStrike）/ m（FPF/FPL）— いずれも新規の下位システムが要る
 
 Rally を先にする理由:
 1. 8アクションが**ほぼ同じ形**（「VOF があれば2枚引いて "Rally" を探す／無ければ自動成功」）。
@@ -129,16 +129,16 @@ g（Detach）は既存の `detach.js` があるので未統合、
 h（Supplement）と i（Reconstitute）は分隊のステップ／
 「Removed from Play になった分隊」の管理が要るため未実装。
 
-### §4.2.4 Combat Actions（p.24-26）— 🟡 Tier1（k/l/b/c/d/h）実装済み（combat-action.js）
+### §4.2.4 Combat Actions（p.24-26）— 🟡 8アクション（k/l/b/c/d/h/a/i）実装済み（combat-action.js・fire-mission.js）
 **13アクション（a〜m）**。ほとんどがドロー付きで、周辺ルールを芋づるで引く。
 
-a. Attempt to Spot（1／2枚＋**Spotting Attempt Draw Modifiers Chart**／Crosshairs を探す・§8.5）— **未実装**（§8.5 修正表が未調査・未データ化）
-b. Attempt to Concentrate Fire（1／2(+/−)／**弾薬を2消費**・§7.11）— **実装済み**（弾薬消費は未対応）
+a. Attempt to Spot（1／2枚＋**Spotting Attempt Draw Modifiers Chart**／Crosshairs を探す・§8.5）— **実装済み**（combat-action.js。C&C値はdefLow固定・対象VOFレーティング修正は未対応の既知の簡略化つき）
+b. Attempt to Concentrate Fire（1／2(+/−)／**弾薬を2消費**・§7.11）— **実装済み**（弾薬消費は ammo.js 経由で成功時+1のみ対応。§7.11.3 通り）
 c. Attempt to have a Platoon Concentrate Fire（**2**／PLT HQ）— **実装済み**
 d. Attempt to make a Grenade Attack（1／2(+/−)）— **実装済み（Point Blank＝同カードのみ。Ranged は未対応）**
 e. Attempt to Throw a Demolition Charge／f. Place a Demolition Charge／g. Flamethrower Attack — **未実装**（demo-capable/flamethrower フラグが units-normandy.js に無い）
 h. Attempt to have a Platoon make a Grenade Attack — **実装済み**
-i. Call for Fire from an Off-Map Firing Agency（§7.16）／ j. Call for Indirect Fire from an On-Map Mortar（§7.16）— **未実装**（Fire Mission ログ・弾薬管理が要る）
+i. Call for Fire from an Off-Map Firing Agency（§7.16）— **実装済み**（fire-mission.js。Mission1のHE/WPのみ。Battalion Fire Mission・Registered Targetsは未）／ j. Call for Indirect Fire from an On-Map Mortar（§7.16）— **未実装**
 k. Cease Fire — **実装済み**（card-context-menu.js の射撃統制セクション）
 l. Shift Fire — **実装済み**（PDF は移動先で人間が再設置）
 m. Fire FPF/FPL — **未実装**（FPL マーカー機構が無い）
