@@ -25,6 +25,7 @@ import {
 import { getPhoneLineStock } from './phone.js';
 import { setCommunicationChecker } from './command.js';
 import { initOrderHighlight } from './order-highlight.js';
+import { runCleanupPhase } from './cleanup.js';
 
 // ===== window へ公開（HTML の onclick から呼ぶため） =====
 window.changeZoom = changeZoom;
@@ -54,10 +55,15 @@ let phaseIdx = 2;
 function nextPhase() {
   phaseIdx = (phaseIdx + 1) % PHASES.length;
   document.querySelector('.phase-indicator').textContent = '▶ ' + PHASES[phaseIdx];
-  // クリーンアップ（§3.8）で全HQの起動・取得済みフラグを落とす（保有コマンドは残す）
+  // クリーンアップ（§3.7.3 Pinned Recovery / §3.8 Clean Up）
   if (PHASES[phaseIdx] === 'クリーンアップ') {
     resetImpulseFlags();   // 起動/取得済み/消費カウンタを落とし、インパルスも先頭へ戻す
     syncImpulsePanel();
+    const r = runCleanupPhase();   // Pinned解除・Exposed除去・Concentrate/Grenade/GrenadeMiss除去
+    const indicator = document.querySelector('.phase-indicator');
+    if (indicator) {
+      indicator.title = `Pinned解除 ${r.pinnedRecovered.length}体／Exposed除去 ${r.exposedCleared.length}体／VOFマーカー除去 ${r.vofCleared.length}枚`;
+    }
     document.dispatchEvent(new CustomEvent('board:changed'));
   }
 }

@@ -130,7 +130,7 @@ HIT判定カードと結果判定カードの間など、連続ドロー中は�
 - [ ] 複数駒を同じカードに置いたときのスタック表示（ずらし重ね等）
 - [ ] シナリオ適用フロー（getScenario→applyScenarioExperience＋視界セット）を初期化に組み込む
 - [ ] Visibility UI（シナリオヘッダーエリアに Daylight/Night/Fog トグル）
-- [ ] Concentrate Fire / Grenade Miss / Demo Miss フラグ（cardVOFMap 拡張）
+- [x] ~~Concentrate Fire / Grenade Miss フラグ（cardVOFMap 拡張）~~ 完成（§4.2.4b/c/d/h・combat-action.js）。Demo Miss は §4.2.4e-g Demolition/Flamethrower 未実装につき未着手
 - [x] ~~コマンドシステム簡略版UI（HQ選択→AP表示＋手動±＋カード引き取得）~~ 完成
 - [x] ~~コマンドフェーズの起動セグメント（HQ起動順・配下への配分・消費上限チェック）~~ 完成
 - [ ] **§4.3 通信と §4.1.4 Fire Team 面 → 実装計画は COMMUNICATION_SPEC.md（ルール調査済み・Step0〜6）**
@@ -143,6 +143,8 @@ HIT判定カードと結果判定カードの間など、連続ドロー中は�
 - 浸透 c/g（`planInfiltrate`/`applyInfiltrate`）とカバー捜索 e（`planSeekCover`/`applySeekCover`）：move.js にロジック実装済み（当初「Infiltrate アイコン／Cover Draw 番号が未データ化」と書いたのは誤りで、元データ `cards.json`/`terrain_cards.json` に最初から入っていた）。**右パネルへの UI 接続（ドローロック連動のカードドローフロー）が未**（`context-menu.js` は a/b/f のみ呼んでいる）。d（小隊浸透）は未実装
 - Rally アクション §4.2.3/§6.5.1（rally.js・右パネル「§4.2.3 Rally」）：対象カードに VOF が無ければ自動成功、あれば「2±**発令者**の練度」枚を人間が引き `type:'rally'` を探す。a〜f と j を実装（Pinned解除・LAT変換・Fire Team面の表裏）。発令者は「その駒に命令できてコマンドを払える HQ/Staff」を自動選択：完成
 - 戦闘アクション §4.2.4 Tier1（combat-action.js）：k. Cease Fire／l. Shift Fire（Auto・card-context-menu.js の「射撃統制」セクション。VOF はカード単位でユニット非帰属のため通信チェックは発令者の HQ/Staff 判定のみ）、b/c. Concentrate Fire（単体/小隊・2±**対象**の練度枚引き Crosshairs 判定→成功で Concentrated Fire マーカー）、d/h. Grenade Attack（単体/小隊・Point Blank＝同カードのみ・2±対象の練度枚引き Grenade 判定→成功で Grenade VOF・失敗で Grenade Miss マーカー）。UI は context-menu.js の「§4.2.4 戦闘アクション」セクション（単体はその場でドロー、小隊はユニットを1体ずつ順にドローするキュー方式）。vof.js に `setConcentrate`/`setGrenadeMiss` を追加し cardVOFMap を `{type, crossfire, concentrate, grenadeMiss}` に拡張、ncm.js の NCM 計算に grenadeMiss を -1 修正として追加。**既知の簡略化**: 対象は「カード全体」（本来はカバー下スタック/露天1駒）、Concentrate Fire の資格（S/A/A/S/H VOF レーティング）は units-normandy.js に該当フィールドが無いため未チェック、Grenade は Ranged 非対応（Point Blank のみ）、Critical Hit・Jam・弾薬消費・Free Grenade Attack Response は未実装。残る a（Spot）/e-g（Demo/Flamethrower）/i-j（間接砲撃）/m（FPF/FPL）は §8.5 修正表・弾薬管理・Fire Mission ログ等の新規下位システムが要るため見送り：完成
+- [x] ~~クリーンアップ処理（§3.7.3 Pinned回復・§3.8 マーカー除去）~~ 完成（cleanup.js）
+- クリーンアップ §3.7.3/§3.8（cleanup.js）：フェーズが「クリーンアップ」に進んだ瞬間に ①VOFの無いカードのユニットの Pinned を解除 ②全ユニットの Exposed 除去 ③Concentrated Fire/Grenade/Grenade Miss マーカー除去（持続系VOFのS/A/H等は対象外）を実行。コマンドの起動/取得済みフラグ・AP繰越は既存の `resetImpulseFlags`/`finishImpulse` と連動。**未実装**（新規下位システムが要るため見送り）：Pyrotechnic/Smoke/Illumination除去（§4.4/9.2）・Casualty Evacuation（§5.1.7）・VOFを持たない敵への自動Cease Fire（§8.6敵AI）・防御ミッションの未解決PC除去（§3.2）・Mine/Sniper VOFの処理（§8.7/7.15）：完成
 - [ ] Attachment の小隊割当（§2.3.2 Mission Log）— PLT HQ の命令範囲判定に必要（今はユニットIDの `US_nPLT_` 接頭辞で小隊を判定している）
 - [x] ~~BN HQ の箱~~ 完成（盤面駒ではなく仮想ユニット `BN_HQ` として実装。盤上に上位HQリーダーの駒が要る場合は別途ユニット定義が必要）
 - [x] ~~PC解決ロジック（§8.2.4接触判定＋§8.3タイプ判定）~~ 完成
@@ -202,6 +204,7 @@ HIT判定カードと結果判定カードの間など、連続ドロー中は�
     ├── move.js       移動アクション（§4.2.2a/b/f・Exposed/カバー/電話線の更新込み）
     ├── rally.js      Rally アクション（§4.2.3 / §6.5.1 自動成功 or "Rally" 探し）
     ├── combat-action.js 戦闘アクション Tier1（§4.2.4 k/l/b/c/d/h・Cease Fire/Shift Fire/Concentrate Fire/Grenade Attack）
+    ├── cleanup.js    クリーンアップ（§3.7.3 Pinned回復 / §3.8 Exposed・Concentrate/Grenade/GrenadeMissマーカー除去）
     ├── comm.js       通信（§4.3 Visual-Verbal ＋ 無線 ＋ 電話の統合窓口）
     ├── order-highlight.js 命令範囲の可視化（選択中HQが命令できる駒だけ通常表示）
     ├── phone.js      野戦電話・電話線（§4.3.4 接続グラフ・切断/修理・戦闘損害）
