@@ -104,6 +104,32 @@ export function toggleConcentrate(coord) {
   renderCardVOF(coord);
 }
 
+/**
+ * Concentrated Fire マーカーを直接設定する（§4.2.4b/c）。
+ * VOF が無いカードにも立てられる（type: null のまま）。
+ * @param {string} coord
+ * @param {boolean} value
+ */
+export function setConcentrate(coord, value) {
+  const existing = cardVOFMap.get(coord);
+  if (existing) existing.concentrate = value;
+  else cardVOFMap.set(coord, { type: null, crossfire: false, concentrate: value, grenadeMiss: false });
+  renderCardVOF(coord);
+}
+
+/**
+ * Grenade Miss Modifier マーカーを直接設定する（§7.10.4）。
+ * 他に VOF が無いカードでは、NCM 計算上「-1 の VOF」として扱われる（ncm.js 参照）。
+ * @param {string} coord
+ * @param {boolean} value
+ */
+export function setGrenadeMiss(coord, value) {
+  const existing = cardVOFMap.get(coord);
+  if (existing) existing.grenadeMiss = value;
+  else cardVOFMap.set(coord, { type: null, crossfire: false, concentrate: false, grenadeMiss: value });
+  renderCardVOF(coord);
+}
+
 /** Pending → Incoming にフリップ */
 export function flipToIncoming(coord) {
   const vof = cardVOFMap.get(coord);
@@ -123,7 +149,7 @@ export function renderCardVOF(coord) {
   if (!overlay) return;
 
   overlay.querySelectorAll(
-    '.vof-marker-img, .xfire-marker-img, .concentrate-marker-img, .vof-area-badge'
+    '.vof-marker-img, .xfire-marker-img, .concentrate-marker-img, .grenade-miss-marker-img, .vof-area-badge'
   ).forEach(el => el.remove());
 
   // 活動レベル再計算をトリガ（VOF の増減・変更を捕捉）
@@ -132,16 +158,27 @@ export function renderCardVOF(coord) {
   const vof = cardVOFMap.get(coord);
   if (!vof) return;
 
-  const def    = VOF_DEF[vof.type];
-  const ncmVal = def?.ncm ?? 0;
-  const sign   = ncmVal >= 0 ? '+' : '';
+  // type が無い場合（Grenade Miss / Concentrate 単独）は VOF 本体画像を出さない
+  if (vof.type) {
+    const def    = VOF_DEF[vof.type];
+    const ncmVal = def?.ncm ?? 0;
+    const sign   = ncmVal >= 0 ? '+' : '';
 
-  // VOF マーカー本体
-  const vofImg = document.createElement('img');
-  vofImg.className = 'vof-marker-img';
-  vofImg.src   = `images/${def?.img ?? 'VOF - S.png'}`;
-  vofImg.title = `VOF: ${def?.label ?? vof.type}  NCM ${sign}${ncmVal}`;
-  overlay.appendChild(vofImg);
+    const vofImg = document.createElement('img');
+    vofImg.className = 'vof-marker-img';
+    vofImg.src   = `images/${def?.img ?? 'VOF - S.png'}`;
+    vofImg.title = `VOF: ${def?.label ?? vof.type}  NCM ${sign}${ncmVal}`;
+    overlay.appendChild(vofImg);
+  }
+
+  // Grenade Miss Modifier（§7.10.4・VOF 本体の右隣）
+  if (vof.grenadeMiss) {
+    const missImg = document.createElement('img');
+    missImg.className = 'grenade-miss-marker-img';
+    missImg.src   = 'images/VOF - Grenade Miss.png';
+    missImg.title = 'Grenade Miss Modifier  NCM -1（単独なら -1 VOF として扱う）';
+    overlay.appendChild(missImg);
+  }
 
   // Concentrate Fire マーカー（VOF の右隣）
   if (vof.concentrate) {

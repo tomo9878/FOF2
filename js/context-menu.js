@@ -39,6 +39,13 @@ import {
   listMoveTargets, moveToAdjacent, moveWithinCard, movePlatoonToAdjacent,
   MOVE_COST, PLATOON_MOVE_COST,
 } from './move.js';
+import {
+  canGrenadeAttack, planGrenadeAttack, isGrenadeSuccess, payGrenadeCost, applyGrenadeAttack, GRENADE_COST,
+  listPlatoonGrenadeTargets, canPlatoonGrenadeAttack, payPlatoonGrenadeCost, PLATOON_GRENADE_COST,
+  planConcentrateFire, isConcentrateFireSuccess, payConcentrateFireCost, applyConcentrateFire, CONCENTRATE_COST,
+  listPlatoonConcentrateTargets, canPlatoonConcentrateFire, payPlatoonConcentrateFireCost, PLATOON_CONCENTRATE_COST,
+  listConcentrateFireTargetCoords,
+} from './combat-action.js';
 import { getUnitCoverSlot as _coverSlotOf, getCoverSlots as _coverSlotsOf, COVER_TYPES as _COVER_TYPES } from './cover.js';
 import { drawActionCard } from './deck.js';
 import {
@@ -455,6 +462,7 @@ export function updateRightPanelUnit(unit) {
     ${activeBadges ? `<div class="rp-badges-row">${activeBadges}</div>` : ''}
     ${_moveHtml(unit.id)}
     ${_rallyHtml(unit.id)}
+    ${_combatActionHtml(unit.id)}
     ${cmdHtml}
   `.trim();
 
@@ -462,6 +470,7 @@ export function updateRightPanelUnit(unit) {
   if (cmdHtml) _bindCommandButtons(unit.id);
   _bindMoveButtons(unit.id);
   _bindRallyButtons(unit.id);
+  _bindCombatActButtons(unit.id);
 }
 
 // ===== コマンド（AP）ボタン =====
@@ -837,6 +846,204 @@ function _renderRally() {
   }
   el.innerHTML = html;
   document.getElementById('rpRallyDraw')?.addEventListener('click', (e) => { e.stopPropagation(); _drawRallyCard(); });
+}
+
+// ===== 戦闘アクション（§4.2.4 Tier1）: Grenade Attack / Concentrate Fire =====
+//
+// 単体版はその場でドロー、小隊版（h/c）は対象ユニットを1体ずつ順にドローするキュー方式。
+// コストは単体1・小隊2（まとめ払い）。draws は必ず1枚以上なので Rally の "auto" 概念は無い。
+
+let _combatActQueue = null; // { kind:'grenade'|'concentrate', targetCoord, units:[...], idx, current, results:[] }
+
+/** その駒に Grenade Attack / Concentrate Fire を命令できる HQ/Staff を探す */
+function _findCombatActOriginator(unitId, cost) {
+  for (const [id] of unitCoordMap) {
+    if (!getCommandRole(id)) continue;
+    if (getCurrentAP(id) < cost || !canExpendCommand(id)) continue;
+    if (canGiveOrder(id, unitId).ok) return id;
+  }
+  return null;
+}
+
+/**
+ * 選択中の駒に対する §4.2.4 戦闘アクションセクションを組み立てる。
+ * @param {string} unitId
+ * @returns {string}
+ */
+function _combatActionHtml(unitId) {
+  if (!unitCoordMap.has(unitId)) return '';
+  let html = '';
+
+  // --- d. Grenade Attack（単体・同カードのみ）---
+  const grenadeOriginator = _findCombatActOriginator(unitId, GRENADE_COST);
+  if (grenadeOriginator && canGrenadeAttack(grenadeOriginator, unitId).ok) {
+    html += `<div class="rp-act-row">
+      <span class="rp-act-name">手榴弾攻撃（同カード）<span class="rp-act-reason"> §4.2.4d</span></span>
+      <button class="rp-act-btn" data-grenade-single="1" data-grenade-from="${grenadeOriginator}">試みる (${GRENADE_COST})</button>
+    </div>`;
+  }
+
+  // --- b. Concentrate Fire（単体・対象カード選択）---
+  const concOriginator = _findCombatActOriginator(unitId, CONCENTRATE_COST);
+  const concTargets = listConcentrateFireTargetCoords(unitId);
+  if (concOriginator && concTargets.length) {
+    const opts = concTargets.map(c => `<option value="${c}">${c}</option>`).join('');
+    html += `<div class="rp-act-row">
+      <span class="rp-act-name">Concentrate Fire<span class="rp-act-reason"> §4.2.4b</span></span>
+      <select class="rp-bnhq-select" id="caConcTarget" style="flex:1">${opts}</select>
+      <button class="rp-act-btn" data-conc-single="1" data-conc-from="${concOriginator}">試みる (${CONCENTRATE_COST})</button>
+    </div>`;
+  }
+
+  // --- h/c. 小隊版（PLT HQ のみ）---
+  if (getCommandRole(unitId) === 'plt_hq') {
+    const grenTargets = listPlatoonGrenadeTargets(unitId);
+    if (grenTargets.length) {
+      const grenPlt = canPlatoonGrenadeAttack(unitId);
+      html += `<div class="rp-act-row">
+        <span class="rp-act-name">小隊 手榴弾攻撃（${grenTargets.length}名）<span class="rp-act-reason"> §4.2.4h</span></span>
+        <button class="rp-act-btn" data-grenade-platoon="1" ${grenPlt.ok ? '' : `disabled title="${grenPlt.reason}"`}>実行 (${PLATOON_GRENADE_COST})</button>
+      </div>`;
+    }
+    const pltConcCandidates = listConcentrateFireTargetCoords(unitId);
+    if (pltConcCandidates.length) {
+      const opts = pltConcCandidates.map(c => `<option value="${c}">${c}</option>`).join('');
+      html += `<div class="rp-act-row">
+        <span class="rp-act-name">小隊 Concentrate Fire<span class="rp-act-reason"> §4.2.4c</span></span>
+        <select class="rp-bnhq-select" id="caPltConcTarget" style="flex:1">${opts}</select>
+        <button class="rp-act-btn" data-conc-platoon="1">実行 (${PLATOON_CONCENTRATE_COST})</button>
+      </div>`;
+    }
+  }
+
+  if (!html) return '';
+  return `<div class="rp-act-title">§4.2.4 戦闘アクション</div>${html}
+    <div class="rp-rally-result" id="rpCombatActResult"></div>`;
+}
+
+/** 戦闘アクションのボタンを束ねる */
+function _bindCombatActButtons(unitId) {
+  document.querySelectorAll('[data-grenade-single]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (_isDrawLocked()) return;
+      payGrenadeCost(btn.dataset.grenadeFrom);
+      _startCombatActQueue('grenade', null, [unitId]);
+    });
+  });
+  document.querySelectorAll('[data-conc-single]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (_isDrawLocked()) return;
+      const target = document.getElementById('caConcTarget')?.value;
+      if (!target) return;
+      payConcentrateFireCost(btn.dataset.concFrom);
+      _startCombatActQueue('concentrate', target, [unitId]);
+    });
+  });
+  document.querySelectorAll('[data-grenade-platoon]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (_isDrawLocked() || btn.disabled) return;
+      const targets = listPlatoonGrenadeTargets(unitId);
+      if (!targets.length) return;
+      payPlatoonGrenadeCost(unitId);
+      _startCombatActQueue('grenade', null, targets);
+    });
+  });
+  document.querySelectorAll('[data-conc-platoon]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (_isDrawLocked()) return;
+      const target = document.getElementById('caPltConcTarget')?.value;
+      if (!target || !canPlatoonConcentrateFire(unitId, target).ok) return;
+      const targets = listPlatoonConcentrateTargets(unitId, target);
+      payPlatoonConcentrateFireCost(unitId);
+      _startCombatActQueue('concentrate', target, targets);
+    });
+  });
+  document.getElementById('rpCombatActDraw')?.addEventListener('click', (e) => { e.stopPropagation(); _drawCombatActCard(); });
+  document.getElementById('rpCombatActNext')?.addEventListener('click', (e) => { e.stopPropagation(); _advanceCombatActQueue(); });
+}
+
+/** コストは呼び出し側で払い済み。ユニットのキューを開始する（1体ずつドロー） */
+function _startCombatActQueue(kind, targetCoord, units) {
+  _combatActQueue = { kind, targetCoord, units, idx: 0, current: null, results: [] };
+  _setDrawLock(true);
+  _beginNextCombatActUnit();
+}
+
+function _beginNextCombatActUnit() {
+  const q = _combatActQueue;
+  if (!q) return;
+  if (q.idx >= q.units.length) {
+    _setDrawLock(false);
+    _renderCombatAct();
+    return;
+  }
+  const unitId = q.units[q.idx];
+  const plan = q.kind === 'grenade' ? planGrenadeAttack(unitId) : planConcentrateFire(unitId);
+  q.current = { unitId, need: plan.draws, cards: [], done: false, success: false };
+  _renderCombatAct();
+}
+
+function _drawCombatActCard() {
+  const q = _combatActQueue;
+  if (!q || !q.current || q.current.done) return;
+  q.current.cards.push(drawActionCard());
+  if (q.current.cards.length >= q.current.need) {
+    const success = q.kind === 'grenade'
+      ? isGrenadeSuccess(q.current.cards)
+      : isConcentrateFireSuccess(q.current.cards);
+    q.current.success = success;
+    q.current.done = true;
+    if (q.kind === 'grenade') applyGrenadeAttack(q.current.unitId, success);
+    else applyConcentrateFire(q.targetCoord, success);
+    q.results.push({ unitId: q.current.unitId, success });
+    document.dispatchEvent(new CustomEvent('board:changed'));
+  }
+  _renderCombatAct();
+}
+
+function _advanceCombatActQueue() {
+  const q = _combatActQueue;
+  if (!q) return;
+  q.idx++;
+  q.current = null;
+  _beginNextCombatActUnit();
+}
+
+/** 戦闘アクションキューの進行状況を右パネルに描く */
+function _renderCombatAct() {
+  const el = document.getElementById('rpCombatActResult');
+  if (!el || !_combatActQueue) return;
+  const q = _combatActQueue;
+  const label = q.kind === 'grenade' ? '手榴弾攻撃' : 'Concentrate Fire';
+
+  let html = q.results.map(r =>
+    `<div class="rp-cs-card">${r.unitId}: ${r.success ? '✓ 成功' : '✕ 失敗'}</div>`
+  ).join('');
+
+  if (q.idx >= q.units.length) {
+    html = `<div class="rp-cs-unit">${label}</div>${html}<div class="rp-cs-done">✓ 解決完了（${q.results.length}体）</div>`;
+    el.innerHTML = html;
+    return;
+  }
+
+  const cur = q.current;
+  const drawn = cur.cards.map(c => `#${c.number}`).join(' ');
+  html = `<div class="rp-cs-unit">${label} — ${cur.unitId}</div>${html}`;
+  if (!cur.done) {
+    html += `<div class="rp-cs-card">${cur.cards.length} / ${cur.need} 枚${drawn ? '：' + drawn : ''}</div>
+      <button class="rp-draw-btn" id="rpCombatActDraw">🃏 カードを引く（残り ${cur.need - cur.cards.length}）</button>`;
+  } else {
+    html += `<div class="rp-cs-done" style="color:${cur.success ? '#66aa66' : '#cc7755'}">${cur.success ? '✓ 成功' : '✕ 失敗'}</div>
+      <button class="rp-draw-btn" id="rpCombatActNext">次へ ▶</button>`;
+  }
+
+  el.innerHTML = html;
+  document.getElementById('rpCombatActDraw')?.addEventListener('click', (e) => { e.stopPropagation(); _drawCombatActCard(); });
+  document.getElementById('rpCombatActNext')?.addEventListener('click', (e) => { e.stopPropagation(); _advanceCombatActQueue(); });
 }
 
 /**

@@ -20,7 +20,32 @@
       "mcp__google-calendar__list_events",
       "mcp__Claude_in_Chrome__list_connected_browsers",
       "mcp__playwright__browser_evaluate",
-      "mcp__Claude_Preview__preview_eval"
+      "mcp__Claude_Preview__preview_eval",
+      "mcp__Claude_Browser__read_page",
+      "mcp__Claude_Browser__navigate",
+      "mcp__Claude_Browser__get_page_text",
+      "mcp__Claude_Browser__read_console_messages",
+      "mcp__Claude_Browser__preview_start",
+      "mcp__Claude_Browser__resize_window",
+      "mcp__Claude_Browser__find",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright-headed__browser_take_screenshot",
+      "mcp__playwright-headed__browser_snapshot",
+      "mcp__playwright-headed__browser_navigate",
+      "mcp__playwright-headed__browser_wait_for",
+      "mcp__jira__jira_get_issue",
+      "mcp__gmail__list_messages",
+      "mcp__playwright-kintai__browser_navigate",
+      "mcp__playwright-kintai__browser_snapshot",
+      "mcp__playwright-kintai__browser_close",
+      "mcp__playwright-kintai__browser_click",
+      "mcp__playwright-kintai__browser_select_option",
+      "mcp__slack__get_channel_history",
+      "mcp__slack__reply_to_thread",
+      "mcp__slack__post_message",
+      "Bash(netsh wlan show interfaces)"
     ]
   }
 }

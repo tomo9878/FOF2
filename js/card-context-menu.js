@@ -25,6 +25,12 @@ import {
 import { droppedRTMap, canPickUpRT, pickUpRT } from './comm.js';
 import { unitCoordMap, getUnitState, renderUnitBadges } from './state.js';
 import { UNITS } from './data/units-normandy.js';
+import { getCommandRole } from './command.js';
+import { hasLOS } from './los.js';
+import {
+  CEASE_FIRE_COST, SHIFT_FIRE_COST,
+  canCeaseFire, ceaseFire, canShiftFire, shiftFire,
+} from './combat-action.js';
 
 let _currentCoord = null;
 
@@ -42,6 +48,7 @@ export function showCardContextMenu(e, coord) {
   _refreshPCButton(coord);
   _refreshPhoneLineSection(coord);
   _refreshDroppedRTSection(coord);
+  _refreshCombatActionSection(coord);
 
   menu.style.display = 'block';
   const mw = menu.offsetWidth, mh = menu.offsetHeight;
@@ -94,6 +101,76 @@ function _unitLabelOf(unitId) {
     if (u) return u.label;
   }
   return unitId;
+}
+
+// ===== §4.2.4 戦闘アクション: Cease Fire / Shift Fire =====
+//
+// VOF はカード単位でユニットに帰属しないため（既知の簡略化・combat-action.js 参照）、
+// 発令者は「盤上にいる HQ/Staff」から選ぶだけで、対象ユニットの通信チェックは行わない。
+
+/** 盤上にいる HQ/Staff 一覧 */
+function _allHQs() {
+  const out = [];
+  for (const arr of Object.values(UNITS)) {
+    for (const u of arr) {
+      if (u.faction !== 'friendly') continue;
+      if (!unitCoordMap.has(u.id)) continue;
+      if (!getCommandRole(u.id)) continue;
+      out.push(u.id);
+    }
+  }
+  return out;
+}
+
+/** 盤上の全カード座標 */
+function _allCoords() {
+  return [...document.querySelectorAll('.terrain-card[data-coord]')].map(el => el.dataset.coord);
+}
+
+function _refreshCombatActionSection(coord) {
+  const sec = document.getElementById('cardCmCombatActionSection');
+  if (!sec) return;
+
+  const hqs = _allHQs();
+  const hqOptions = hqs.map(id => `<option value="${id}">${_unitLabelOf(id)}</option>`).join('')
+    || '<option value="">HQ/Staff なし</option>';
+
+  const cfSel = document.getElementById('cardCmCeaseFireHq');
+  if (cfSel) cfSel.innerHTML = hqOptions;
+
+  const sfHqSel = document.getElementById('cardCmShiftFireHq');
+  if (sfHqSel) sfHqSel.innerHTML = hqOptions;
+
+  const sfTargetSel = document.getElementById('cardCmShiftFireTarget');
+  if (sfTargetSel) {
+    const targets = _allCoords().filter(c => c !== coord && hasLOS(coord, c));
+    sfTargetSel.innerHTML = targets.length
+      ? targets.map(c => `<option value="${c}">${c}</option>`).join('')
+      : '<option value="">LOSが通る移動先なし</option>';
+  }
+
+  _refreshCeaseFireBtn(coord);
+  _refreshShiftFireBtn(coord);
+}
+
+function _refreshCeaseFireBtn(coord) {
+  const sel = document.getElementById('cardCmCeaseFireHq');
+  const btn = document.getElementById('cardCmCeaseFireBtn');
+  if (!sel || !btn) return;
+  const check = sel.value ? canCeaseFire(sel.value, coord) : { ok: false, reason: 'HQ/Staff がいない' };
+  btn.disabled = !check.ok;
+  btn.title = check.ok ? `§4.2.4k Cease Fire（${CEASE_FIRE_COST}コマンド）` : `不可: ${check.reason}`;
+}
+
+function _refreshShiftFireBtn(coord) {
+  const hqSel = document.getElementById('cardCmShiftFireHq');
+  const targetSel = document.getElementById('cardCmShiftFireTarget');
+  const btn = document.getElementById('cardCmShiftFireBtn');
+  if (!hqSel || !targetSel || !btn) return;
+  if (!targetSel.value) { btn.disabled = true; btn.title = '移動先候補（LOSが通るカード）が無い'; return; }
+  const check = hqSel.value ? canShiftFire(hqSel.value, coord, targetSel.value) : { ok: false, reason: 'HQ/Staff がいない' };
+  btn.disabled = !check.ok;
+  btn.title = check.ok ? `§4.2.4l Shift Fire（${SHIFT_FIRE_COST}コマンド）` : `不可: ${check.reason}`;
 }
 
 // ===== 電話線セクション（§4.3.4）=====
@@ -403,6 +480,41 @@ export function initCardContextMenu() {
     e.stopPropagation();
     if (!_currentCoord) return;
     _startPCFlow(_currentCoord);
+  });
+
+  // ── §4.2.4k Cease Fire ──
+  document.getElementById('cardCmCeaseFireHq')?.addEventListener('change', (e) => {
+    e.stopPropagation();
+    if (_currentCoord) _refreshCeaseFireBtn(_currentCoord);
+  });
+  document.getElementById('cardCmCeaseFireBtn')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!_currentCoord) return;
+    const hq = document.getElementById('cardCmCeaseFireHq')?.value;
+    if (!hq || !ceaseFire(hq, _currentCoord).ok) return;
+    _refreshVOFButtons(_currentCoord);
+    _refreshPDFButtons(_currentCoord);
+    _refreshCombatActionSection(_currentCoord);
+  });
+
+  // ── §4.2.4l Shift Fire ──
+  document.getElementById('cardCmShiftFireHq')?.addEventListener('change', (e) => {
+    e.stopPropagation();
+    if (_currentCoord) _refreshShiftFireBtn(_currentCoord);
+  });
+  document.getElementById('cardCmShiftFireTarget')?.addEventListener('change', (e) => {
+    e.stopPropagation();
+    if (_currentCoord) _refreshShiftFireBtn(_currentCoord);
+  });
+  document.getElementById('cardCmShiftFireBtn')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!_currentCoord) return;
+    const hq = document.getElementById('cardCmShiftFireHq')?.value;
+    const target = document.getElementById('cardCmShiftFireTarget')?.value;
+    if (!hq || !target || !shiftFire(hq, _currentCoord, target).ok) return;
+    _refreshVOFButtons(_currentCoord);
+    _refreshPDFButtons(_currentCoord);
+    _refreshCombatActionSection(_currentCoord);
   });
 
   // ── 外クリックで閉じる ──

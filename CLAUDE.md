@@ -135,10 +135,14 @@ HIT判定カードと結果判定カードの間など、連続ドロー中は�
 - [x] ~~コマンドフェーズの起動セグメント（HQ起動順・配下への配分・消費上限チェック）~~ 完成
 - [ ] **§4.3 通信と §4.1.4 Fire Team 面 → 実装計画は COMMUNICATION_SPEC.md（ルール調査済み・Step0〜6）**
 - [x] ~~駒の表裏（command side / Fire Team side・§1.2.3B / §4.1.4）~~ 完成（Step0。`isOnCommandSide()` = `namedFireTeam` かつ `steps === maxSteps`）
-- [ ] **§4.2 アクション体系 → 実装計画は ACTION_SPEC.md（調査済み・着手順 Rally→移動→戦闘）**
+- [x] ~~§4.2.4 戦闘アクション Tier1（k/l/b/c/d/h）~~ 完成（combat-action.js）。残りは a（Spot・§8.5未着手）/ e-g（Demo/Flamethrower）/ i-j（間接砲撃）/ m（FPF/FPL）— いずれも新規下位システムが要るため見送り（実装計画は ACTION_SPEC.md）
+- [ ] 浸透 c/g・カバー捜索 e の右パネル UI 接続（move.js にロジックは実装済み。ドローロック連動のカードドローフローを追加するだけ）
+- [ ] 移動 d（小隊浸透）・Rally g（Detach統合）/h（Supplement）/i（Reconstitute）
 - [x] ~~rally で Fire Team 面から command side に戻す手段~~ 完成（§4.2.3f・rally.js）
-- 移動アクション §4.2.2（move.js・右パネル「§4.2.2 移動」）：a 隣接カード／b 小隊移動（コスト2・**通信できない駒は置き去り**）／f カード内移動。移動後の更新（**離脱時に電話線を1本自動敷設**→カバーから外す→移動→カバーへ入る→**Exposed 付与と §5.1.2 の例外**（塹壕/バンカー/トーチカ間は付かない）→`board:changed`）まで一括。§4.2.5 の Pinned 移動先制限つき。**浸透 c/d/g はカードの Infiltrate アイコン、カバー捜索 e は地形の Cover Draw 番号が未データ化のため保留**：完成
+- 移動アクション §4.2.2（move.js・右パネル「§4.2.2 移動」）：a 隣接カード／b 小隊移動（コスト2・**通信できない駒は置き去り**）／f カード内移動。移動後の更新（**離脱時に電話線を1本自動敷設**→カバーから外す→移動→カバーへ入る→**Exposed 付与と §5.1.2 の例外**（塹壕/バンカー/トーチカ間は付かない）→`board:changed`）まで一括。§4.2.5 の Pinned 移動先制限つき：完成
+- 浸透 c/g（`planInfiltrate`/`applyInfiltrate`）とカバー捜索 e（`planSeekCover`/`applySeekCover`）：move.js にロジック実装済み（当初「Infiltrate アイコン／Cover Draw 番号が未データ化」と書いたのは誤りで、元データ `cards.json`/`terrain_cards.json` に最初から入っていた）。**右パネルへの UI 接続（ドローロック連動のカードドローフロー）が未**（`context-menu.js` は a/b/f のみ呼んでいる）。d（小隊浸透）は未実装
 - Rally アクション §4.2.3/§6.5.1（rally.js・右パネル「§4.2.3 Rally」）：対象カードに VOF が無ければ自動成功、あれば「2±**発令者**の練度」枚を人間が引き `type:'rally'` を探す。a〜f と j を実装（Pinned解除・LAT変換・Fire Team面の表裏）。発令者は「その駒に命令できてコマンドを払える HQ/Staff」を自動選択：完成
+- 戦闘アクション §4.2.4 Tier1（combat-action.js）：k. Cease Fire／l. Shift Fire（Auto・card-context-menu.js の「射撃統制」セクション。VOF はカード単位でユニット非帰属のため通信チェックは発令者の HQ/Staff 判定のみ）、b/c. Concentrate Fire（単体/小隊・2±**対象**の練度枚引き Crosshairs 判定→成功で Concentrated Fire マーカー）、d/h. Grenade Attack（単体/小隊・Point Blank＝同カードのみ・2±対象の練度枚引き Grenade 判定→成功で Grenade VOF・失敗で Grenade Miss マーカー）。UI は context-menu.js の「§4.2.4 戦闘アクション」セクション（単体はその場でドロー、小隊はユニットを1体ずつ順にドローするキュー方式）。vof.js に `setConcentrate`/`setGrenadeMiss` を追加し cardVOFMap を `{type, crossfire, concentrate, grenadeMiss}` に拡張、ncm.js の NCM 計算に grenadeMiss を -1 修正として追加。**既知の簡略化**: 対象は「カード全体」（本来はカバー下スタック/露天1駒）、Concentrate Fire の資格（S/A/A/S/H VOF レーティング）は units-normandy.js に該当フィールドが無いため未チェック、Grenade は Ranged 非対応（Point Blank のみ）、Critical Hit・Jam・弾薬消費・Free Grenade Attack Response は未実装。残る a（Spot）/e-g（Demo/Flamethrower）/i-j（間接砲撃）/m（FPF/FPL）は §8.5 修正表・弾薬管理・Fire Mission ログ等の新規下位システムが要るため見送り：完成
 - [ ] Attachment の小隊割当（§2.3.2 Mission Log）— PLT HQ の命令範囲判定に必要（今はユニットIDの `US_nPLT_` 接頭辞で小隊を判定している）
 - [x] ~~BN HQ の箱~~ 完成（盤面駒ではなく仮想ユニット `BN_HQ` として実装。盤上に上位HQリーダーの駒が要る場合は別途ユニット定義が必要）
 - [x] ~~PC解決ロジック（§8.2.4接触判定＋§8.3タイプ判定）~~ 完成
@@ -160,6 +164,11 @@ HIT判定カードと結果判定カードの間など、連続ドロー中は�
 - **2026-08-19 に cards.js の `type` 18枚分の誤りを実物画像で確認して修正した**
   （#18・#42 は Rally なのに contact、#49/#50 は jam/short を type に入れていた 等）。
   jam / short は type ではなく **icons** 側にある
+- **cards.js の `hit_effect`/`hitMax`/`pinMax` も全50枚 `cards.json` と突き合わせ済み**。
+  9枚で食い違いを検出したが、カード画像で確認した結果**すべて cards.js 側が正しく
+  cards.json（元データ）側が誤り**だった（#3 green・#39-44 green・#48/#49 hitMax）。
+  → アプリ側の修正は不要。**cards.json 自体にも既知の誤りがあるので、
+  今後 cards.js を疑うときは必ず画像で裏取りする**（JSON を無条件に正とはしない）
 
 ## 既知の課題・ブロッカー
 - ~~⚠ 行番号がルールブックと上下逆~~ **修正済**（下記「座標系の約束」参照）
@@ -192,6 +201,7 @@ HIT判定カードと結果判定カードの間など、連続ドロー中は�
     ├── enemy-placement.js 敵ユニット実配置（§8.4.3 方向ドロー→距離解決→addUnitToCardで盤面配置）
     ├── move.js       移動アクション（§4.2.2a/b/f・Exposed/カバー/電話線の更新込み）
     ├── rally.js      Rally アクション（§4.2.3 / §6.5.1 自動成功 or "Rally" 探し）
+    ├── combat-action.js 戦闘アクション Tier1（§4.2.4 k/l/b/c/d/h・Cease Fire/Shift Fire/Concentrate Fire/Grenade Attack）
     ├── comm.js       通信（§4.3 Visual-Verbal ＋ 無線 ＋ 電話の統合窓口）
     ├── order-highlight.js 命令範囲の可視化（選択中HQが命令できる駒だけ通常表示）
     ├── phone.js      野戦電話・電話線（§4.3.4 接続グラフ・切断/修理・戦闘損害）

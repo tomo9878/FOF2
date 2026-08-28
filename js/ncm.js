@@ -12,9 +12,10 @@
 //   - 地形防御（PDF方向による高低判定）
 //   - Burst ペナルティ（Incoming / AirStrike）
 //   - スタックペナルティ（3ステップ超 × Grenade/Incoming/Aerial）
+//   - Concentrate Fire / Grenade Miss フラグ（§4.2.4b/d・combat-action.js から設定）
 // 未実装:
 //   - Visibility UI（setVisibility は実装済み、シナリオヘッダーから呼ぶ）
-//   - Concentrate Fire / Grenade Miss / Demo Miss フラグ
+//   - Demo Miss フラグ
 //   - Best VOF 自動選択（複数 VOF）
 
 import { cardVOFMap, VOF_NCM, VOF_DEF } from './vof.js';
@@ -140,9 +141,12 @@ export function calcNCM(coord, unitId = null, isCritical = false) {
   const visAdj      = VOF_IGNORES_VISIBILITY.has(vofCategory) ? 0 : visibility;
   const bestVOF     = vofBase + visAdj;
 
-  // 2. VOF Modifiers（Crossfire / Concentrate）
+  // 2. VOF Modifiers（Crossfire / Concentrate / Grenade Miss）
   const crossfire   = vof.crossfire   ? -1 : 0;
   const concentrate = vof.concentrate ? -1 : 0;
+  // §7.10.4: 単独なら「-1 の VOF」として扱われるが、他の Visibility 等の VOF 修正は
+  // 通常どおり乗る。ここでは追加の -1 モディファイアとして加算するだけで同じ結果になる。
+  const grenadeMiss = vof.grenadeMiss ? -1 : 0;
 
   // 3. Visibility は Best VOF 選定時にのみ使用（合算には含まない）
   //    → 上記 bestVOF に組み込み済み
@@ -184,7 +188,7 @@ export function calcNCM(coord, unitId = null, isCritical = false) {
   // 6. 手動調整（ゲームルール外の特殊ケース対応）
   const manualAdj = unitId ? getNCMAdjust(unitId) : 0;
 
-  const value = bestVOF + crossfire + concentrate + targetStatus + terrainCover + manualAdj;
+  const value = bestVOF + crossfire + concentrate + grenadeMiss + targetStatus + terrainCover + manualAdj;
 
   return {
     value,
@@ -193,6 +197,7 @@ export function calcNCM(coord, unitId = null, isCritical = false) {
       bestVOF,
       crossfire,
       concentrate,
+      grenadeMiss,
       visibility: visAdj,
       targetStatus,
       terrainDef,
