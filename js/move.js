@@ -411,6 +411,45 @@ export function applySeekCover(unitId, type = 'basic') {
 }
 
 /**
+ * §4.2.2d 小隊浸透の対象を集める（コスト消費・移動はしない・カードも引かない）。
+ * 「小隊の各駒が個別に Attempt to Infiltrate を行う」（p.23）ので、
+ * 対象ごとに引く枚数（練度で変わる）を個別に持たせる。
+ * 通信できない駒は b（movePlatoonToAdjacent）と同じくその場に残る。
+ * @param {string} pltHqId
+ * @param {string} toCoord
+ * @returns {{ok:boolean, reason:string, eligible:Array<{id:string, draws:number}>, stayed:Array<{id:string, reason:string}>}}
+ */
+export function planPlatoonInfiltrate(pltHqId, toCoord) {
+  const NG = (reason) => ({ ok: false, reason, eligible: [], stayed: [] });
+  if (getCommandRole(pltHqId) !== 'plt_hq') return NG('PLT HQ にしか出せない');
+  const from = unitCoordMap.get(pltHqId);
+  if (!from) return NG('PLT HQ が盤上にいない');
+  if (cardDistance(from, toCoord) !== 1) return NG('隣接カードではない');
+  if (getCurrentAP(pltHqId) < PLATOON_MOVE_COST) return NG('コマンドが足りない');
+  if (getSpentThisImpulse(pltHqId) + PLATOON_MOVE_COST > getExpendLimit()) {
+    return NG('このインパルスの消費上限に達している');
+  }
+
+  const platoon = getPlatoonKey(pltHqId);
+  const candidates = [...unitCoordMap]
+    .filter(([id, c]) => c === from && getPlatoonKey(id) === platoon)
+    .map(([id]) => id);
+
+  const eligible = [], stayed = [];
+  for (const id of candidates) {
+    if (id !== pltHqId && !canGiveOrder(pltHqId, id).ok) {
+      stayed.push({ id, reason: '発令者と通信できない（§4.2.2d）' }); continue;
+    }
+    const inf = planInfiltrate(id, toCoord);
+    if (!inf.ok) { stayed.push({ id, reason: inf.reason }); continue; }
+    eligible.push({ id, draws: inf.draws });
+  }
+  if (!eligible.length) return NG('浸透を試みられる駒がいない');
+
+  return { ok: true, reason: '', eligible, stayed };
+}
+
+/**
  * その駒が今動ける隣接カードを列挙する（UI のハイライト用）。
  * @param {string} originatorId
  * @param {string} unitId

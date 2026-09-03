@@ -16,6 +16,10 @@ export default {
   missionType: 'offensive',      // 'offensive' | 'defensive' | 'combat_patrol'
   singlePlatoon: false,          // 単一小隊ミッションなら General Initiative は半分・切り捨て（§3.3.2d）
 
+  // ── 敵の戦術（§8.6.2 Activity Check で使う階層表とその列）──
+  // 出典: campaign p.17「Enemy: Tactics: Deliberate Defense」
+  enemyTactics: { hierarchy: 'defensive', column: 'deliberate' },
+
   // ── セットアップ変数（AP/NCM に直結）──
   visibility: 'daylight',        // 'daylight' | 'limited'（確定: Daylight +0）
 

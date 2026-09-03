@@ -31,6 +31,11 @@ import {
   CEASE_FIRE_COST, SHIFT_FIRE_COST,
   canCeaseFire, ceaseFire, canShiftFire, shiftFire,
 } from './combat-action.js';
+import {
+  RECONSTITUTE_COST, listReconstituteOptions, canReconstitute,
+  planReconstitute, payReconstituteCost, isReconstituteSuccess, applyReconstitute,
+} from './reconstitute.js';
+import { drawActionCard } from './deck.js';
 
 let _currentCoord = null;
 
@@ -49,6 +54,7 @@ export function showCardContextMenu(e, coord) {
   _refreshPhoneLineSection(coord);
   _refreshDroppedRTSection(coord);
   _refreshCombatActionSection(coord);
+  _refreshReconstituteSection(coord);
 
   menu.style.display = 'block';
   const mw = menu.offsetWidth, mh = menu.offsetHeight;
@@ -151,6 +157,37 @@ function _refreshCombatActionSection(coord) {
 
   _refreshCeaseFireBtn(coord);
   _refreshShiftFireBtn(coord);
+}
+
+// ===== §4.2.3i Reconstitute Squad =====
+
+function _refreshReconstituteSection(coord) {
+  const sec  = document.getElementById('cardCmReconstituteSection');
+  const hqSel = document.getElementById('cardCmReconstituteHq');
+  const stepsSel = document.getElementById('cardCmReconstituteSteps');
+  if (!sec || !hqSel || !stepsSel) return;
+
+  const opts = listReconstituteOptions(coord);
+  if (!opts.length) { sec.style.display = 'none'; return; }
+  sec.style.display = 'block';
+
+  const hqs = _allHQs();
+  hqSel.innerHTML = hqs.map(id => `<option value="${id}">${_unitLabelOf(id)}</option>`).join('')
+    || '<option value="">HQ/Staff なし</option>';
+  stepsSel.innerHTML = opts.map(o => `<option value="${o.steps}">${o.steps}ステップ分隊（${o.faction}）</option>`).join('');
+
+  _refreshReconstituteBtn(coord);
+}
+
+function _refreshReconstituteBtn(coord) {
+  const hqSel = document.getElementById('cardCmReconstituteHq');
+  const stepsSel = document.getElementById('cardCmReconstituteSteps');
+  const btn = document.getElementById('cardCmReconstituteBtn');
+  if (!hqSel || !stepsSel || !btn) return;
+  const steps = Number(stepsSel.value);
+  const check = hqSel.value && steps ? canReconstitute(hqSel.value, coord, steps) : { ok: false, reason: 'HQ/Staff がいない' };
+  btn.disabled = !check.ok;
+  btn.title = check.ok ? `§4.2.3i（${RECONSTITUTE_COST}コマンド・2±発令者の練度枚引く）` : `不可: ${check.reason}`;
 }
 
 function _refreshCeaseFireBtn(coord) {
@@ -517,6 +554,25 @@ export function initCardContextMenu() {
     _refreshCombatActionSection(_currentCoord);
   });
 
+  // ── §4.2.3i Reconstitute Squad ──
+  document.getElementById('cardCmReconstituteHq')?.addEventListener('change', (e) => {
+    e.stopPropagation();
+    if (_currentCoord) _refreshReconstituteBtn(_currentCoord);
+  });
+  document.getElementById('cardCmReconstituteSteps')?.addEventListener('change', (e) => {
+    e.stopPropagation();
+    if (_currentCoord) _refreshReconstituteBtn(_currentCoord);
+  });
+  document.getElementById('cardCmReconstituteBtn')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!_currentCoord || isDrawLocked()) return;
+    const hq = document.getElementById('cardCmReconstituteHq')?.value;
+    const steps = Number(document.getElementById('cardCmReconstituteSteps')?.value);
+    const check = hq && steps ? canReconstitute(hq, _currentCoord, steps) : { ok: false };
+    if (!check.ok) return;
+    _startReconstituteFlow(_currentCoord, hq, steps, check.teamIds, check.faction);
+  });
+
   // ── 外クリックで閉じる ──
   document.addEventListener('click', (e) => {
     const menu = document.getElementById('cardContextMenu');
@@ -580,6 +636,58 @@ function _showCombatResults(results) {
     <div class="rp-unit-name">⚔ 戦闘解決 — ${results.coord}</div>
     ${entries}
   `.trim();
+}
+
+// ===== Reconstitute Squad ステップ制フロー（§4.2.3i） =====
+//
+// 設計方針: カードを引く操作は必ず人間が行う（Rally・PC解決と同じ）。
+
+let _reconState = null; // { coord, faction, steps, teamIds, originatorId, need, cards, done, success }
+
+function _startReconstituteFlow(coord, originatorId, steps, teamIds, faction) {
+  payReconstituteCost(originatorId);
+  const need = planReconstitute(originatorId);
+  _reconState = { coord, faction, steps, teamIds, originatorId, need, cards: [], done: false, success: false };
+  setDrawLock(true);
+  hideCardContextMenu();
+  _renderReconstitutePanel();
+}
+
+function _drawReconstituteCard() {
+  if (!_reconState || _reconState.done) return;
+  _reconState.cards.push(drawActionCard());
+  if (_reconState.cards.length >= _reconState.need) {
+    _reconState.success = isReconstituteSuccess(_reconState.cards);
+    _reconState.done = true;
+    if (_reconState.success) {
+      const { coord, faction, steps, teamIds } = _reconState;
+      _reconState.result = applyReconstitute(coord, faction, steps, teamIds);
+    }
+    setDrawLock(false);
+  }
+  _renderReconstitutePanel();
+}
+
+function _renderReconstitutePanel() {
+  const el = document.getElementById('rpUnitInfo');
+  if (!el || !_reconState) return;
+  const { coord, steps, need, cards, done, success, result } = _reconState;
+  const drawn = cards.map(c => `#${c.number}${c.type === 'rally' ? '(Rally)' : ''}`).join(' ');
+
+  let html = `<div class="rp-unit-name">🔄 Reconstitute Squad — ${coord}（${steps}ステップ）</div>`;
+  if (!done) {
+    html += `<div class="rp-cs-card">${cards.length} / ${need} 枚${drawn ? '：' + drawn : ''}</div>
+      <button class="rp-draw-btn" id="reconDrawBtn">🃏 カードを引く（残り ${need - cards.length}）</button>`;
+  } else {
+    if (drawn) html += `<div class="rp-cs-card">引いたカード：${drawn}</div>`;
+    if (success) {
+      html += `<div class="rp-cs-done" style="color:#7ad47a">✓ 成功：${result?.ok ? `${result.revivedId} を再編` : result?.reason ?? ''}</div>`;
+    } else {
+      html += `<div class="rp-cs-done" style="color:#d4a05a">✕ 失敗（何も起きない）</div>`;
+    }
+  }
+  el.innerHTML = html;
+  document.getElementById('reconDrawBtn')?.addEventListener('click', (e) => { e.stopPropagation(); _drawReconstituteCard(); });
 }
 
 // ===== PC解決ステップ制フロー（§8.2.4） =====

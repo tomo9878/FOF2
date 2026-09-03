@@ -9,7 +9,7 @@ import {
   unitCoordMap,
 } from './state.js';
 import { hitA, hitF, hitL, hitP, hitC, hitCombo } from './hit.js';
-import { detachFireTeam, detachAssaultTeam, detachStep, supplementUnit } from './detach.js';
+import { detachStep } from './detach.js';
 import { calcNCM } from './ncm.js';
 import { cardVOFMap } from './vof.js';
 import { resolveStep1, resolveStep2 } from './combat.js';
@@ -38,6 +38,9 @@ import {
 import {
   listMoveTargets, moveToAdjacent, moveWithinCard, movePlatoonToAdjacent,
   MOVE_COST, PLATOON_MOVE_COST,
+  planInfiltrate, applyInfiltrate, isInfiltrateSuccess,
+  planSeekCover, applySeekCover, isSeekCoverSuccess,
+  planPlatoonInfiltrate,
 } from './move.js';
 import {
   canGrenadeAttack, planGrenadeAttack, isGrenadeSuccess, payGrenadeCost, applyGrenadeAttack, GRENADE_COST,
@@ -118,25 +121,11 @@ export function refreshDetachSubmenu(unit) {
 
   sub.innerHTML = '';
 
-  if (unit.fireteam) {
-    addDetachMenuItem(sub, '🔫 Fire Team を分離', () => {
-      hideContextMenu();
-      detachFireTeam(unit);
-    });
-  }
-  if (unit.assaultteam) {
-    addDetachMenuItem(sub, '⚔ Assault Team を分離', () => {
-      hideContextMenu();
-      detachAssaultTeam(unit);
-    });
-  }
+  // Fire/Assault Team の分離・Supplement は §4.2.3g/h として Rally パネルに移設済み
+  // （AP消費・HQ通信チェックを伴う正規のコマンドアクション）。ここに残すのはそれ以外の用途。
   addDetachMenuItem(sub, '👤 Step を消費（Guard 等）', () => {
     hideContextMenu();
     detachStep(unit);
-  });
-  addDetachMenuItem(sub, '🔄 Supplement（補充）', () => {
-    hideContextMenu();
-    supplementUnit(unit);
   });
 }
 
@@ -696,8 +685,48 @@ function _moveHtml(unitId) {
       <button class="rp-act-btn" data-move-platoon="1">小隊移動 (${PLATOON_MOVE_COST})</button>
     </div>` : '';
 
+  // §4.2.2d 小隊浸透（PLT HQ のみ・各駒が個別に浸透を試みる）
+  const pltInfBtns = pltOk && targets.length ? `
+    <div class="rp-act-reason">§4.2.2d 小隊浸透（各駒が個別に判定・通信できない駒は置き去り）</div>
+    <div class="rp-act-row">
+      <select class="rp-bnhq-select" id="mvPltInfSel" style="flex:1">
+        ${targets.map(t => `<option value="${t.coord}">→ ${t.coord}</option>`).join('')}
+      </select>
+      <button class="rp-act-btn" data-move-platoon-inf="1">小隊浸透 (${PLATOON_MOVE_COST})</button>
+    </div>` : '';
+
+  // §4.2.2c 浸透（隣接カード）: 通常移動が可能な隣接カードのうち、
+  // 出発地/目的地いずれかに VOF があり、三脚/H VOF ではない駒だけ試みられる
+  const infTargets = targets.filter(t => planInfiltrate(unitId, t.coord).ok);
+  const infBtns = infTargets.length ? `
+    <div class="rp-act-reason">§4.2.2c 浸透を試みる（出発地/目的地に VOF が必要）</div>
+    ${infTargets.map(t => `<div class="rp-act-row">
+      <span class="rp-act-name">→ ${t.coord}（${planInfiltrate(unitId, t.coord).draws}枚 (+/-)）</span>
+      <button class="rp-act-btn" data-inf-to="${t.coord}" data-move-from="${originator}">浸透 (${MOVE_COST})</button>
+    </div>`).join('')}` : '';
+
+  // §4.2.2g 浸透（カード内）: そのカードに VOF が必要
+  const infWithin = planInfiltrate(unitId, null);
+  const infAreaBtns = infWithin.ok && areas.length ? `
+    <div class="rp-act-reason">§4.2.2g 浸透（カード内・${infWithin.draws}枚 (+/-)）</div>
+    <div class="rp-act-row">
+      <select class="rp-bnhq-select" id="mvInfAreaSel" style="flex:1">
+        ${areas.map(a => `<option value="${a.slotId}">${a.label}</option>`).join('')}
+      </select>
+      <button class="rp-act-btn" data-inf-area="1" data-move-from="${originator}">浸透 (${MOVE_COST})</button>
+    </div>` : '';
+
+  // §4.2.2e カバー捜索
+  const seekPlan = planSeekCover(unitId);
+  const seekBtns = seekPlan.ok ? `
+    <div class="rp-act-reason">§4.2.2e カバー捜索（${seekPlan.draws}枚・"Cover" を探す）</div>
+    <div class="rp-act-row">
+      <span class="rp-act-name">このカードで捜す</span>
+      <button class="rp-act-btn" data-seek-cover="1" data-move-from="${originator}">捜索 (${MOVE_COST})</button>
+    </div>` : '';
+
   return `<div class="rp-act-title">§4.2.2 移動（発令: ${originator}）</div>
-    ${cardBtns}${areaBtns}${pltBtns}
+    ${cardBtns}${areaBtns}${pltBtns}${pltInfBtns}${infBtns}${infAreaBtns}${seekBtns}
     <div class="rp-rally-result" id="rpMoveResult"></div>`;
 }
 
@@ -737,6 +766,233 @@ function _bindMoveButtons(unitId) {
     show(`${to} へ ${r.moved.length}体が移動${stayed ? ` ／ 置き去り: ${stayed}` : ''}`);
     updateRightPanelUnit(_rpUnit);
   });
+  document.querySelector('[data-move-platoon-inf]')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (_isDrawLocked()) return;
+    const to = document.getElementById('mvPltInfSel')?.value;
+    _startPlatoonInfiltrate(unitId, to);
+  });
+  document.querySelectorAll('[data-inf-to]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (_isDrawLocked()) return;
+      const to = btn.dataset.infTo;
+      const slot = document.getElementById(`mvCover_${to}`)?.value || null;
+      _startInfiltrate(btn.dataset.moveFrom, unitId, to, slot);
+    });
+  });
+  document.querySelector('[data-inf-area]')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (_isDrawLocked()) return;
+    const btn = e.currentTarget;
+    const slot = document.getElementById('mvInfAreaSel')?.value || null;
+    _startInfiltrate(btn.dataset.moveFrom, unitId, null, slot);
+  });
+  document.querySelector('[data-seek-cover]')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (_isDrawLocked()) return;
+    const btn = e.currentTarget;
+    _startSeekCover(btn.dataset.moveFrom, unitId);
+  });
+}
+
+// ===== 浸透（§4.2.2c/g）・カバー捜索（§4.2.2e）=====
+
+let _infState = null;   // { unitId, originatorId, toCoord, toSlotId, need, cards[], done, success }
+
+function _startInfiltrate(originatorId, unitId, toCoord, toSlotId) {
+  const plan = planInfiltrate(unitId, toCoord);
+  if (!plan.ok) return;
+  expendCommand(originatorId);
+  _infState = { unitId, originatorId, toCoord, toSlotId, need: plan.draws, cards: [], done: false, success: false };
+  _setDrawLock(true);
+  _renderInfiltrate();
+}
+
+function _drawInfiltrateCard() {
+  if (!_infState || _infState.done) return;
+  _infState.cards.push(drawActionCard());
+  if (_infState.cards.length >= _infState.need) {
+    _infState.success = isInfiltrateSuccess(_infState.cards);
+    _infState.done = true;
+    applyInfiltrate(_infState.originatorId, _infState.unitId, _infState.toCoord, _infState.success, _infState.toSlotId);
+    _setDrawLock(false);
+    document.dispatchEvent(new CustomEvent('board:changed'));
+  }
+  _renderInfiltrate();
+}
+
+/** 浸透ドローの進行状況を右パネルに描く */
+function _renderInfiltrate() {
+  const el = document.getElementById('rpMoveResult');
+  if (!el || !_infState) return;
+  const { toCoord, need, cards, done, success } = _infState;
+  const label = toCoord ? `§4.2.2c 浸透 → ${toCoord}` : '§4.2.2g 浸透（カード内）';
+  const drawn = cards.map(c => `#${c.number}${(c.icons ?? []).includes('infiltrate') ? '(Infiltrate)' : ''}`).join(' ');
+
+  let html = `<div class="rp-cs-unit">${label}</div>`;
+  if (!done) {
+    html += `<div class="rp-cs-card">${cards.length} / ${need} 枚${drawn ? '：' + drawn : ''}</div>
+             <button class="rp-draw-btn" id="rpInfDraw">🃏 カードを引く（残り ${need - cards.length}）</button>`;
+  } else {
+    if (drawn) html += `<div class="rp-cs-card">引いたカード：${drawn}</div>`;
+    html += `<div class="rp-cs-done" style="color:${success ? '#66aa66' : '#cc7755'}">
+      ${success ? '✓ 浸透成功（Exposed なし）' : '✕ 失敗 → 通常移動（Exposed）'}</div>`;
+  }
+  el.innerHTML = html;
+  document.getElementById('rpInfDraw')?.addEventListener('click', (e) => { e.stopPropagation(); _drawInfiltrateCard(); });
+}
+
+let _coverState = null; // { unitId, originatorId, need, cards[], done, success, applied }
+
+function _startSeekCover(originatorId, unitId) {
+  const plan = planSeekCover(unitId);
+  if (!plan.ok) return;
+  expendCommand(originatorId);
+  _coverState = { unitId, originatorId, need: plan.draws, cards: [], done: false, success: false, applied: false };
+  _setDrawLock(true);
+  _renderSeekCover();
+}
+
+function _drawSeekCoverCard() {
+  if (!_coverState || _coverState.done) return;
+  _coverState.cards.push(drawActionCard());
+  if (_coverState.cards.length >= _coverState.need) {
+    _coverState.success = isSeekCoverSuccess(_coverState.cards);
+    _coverState.done = true;
+    if (!_coverState.success) _setDrawLock(false); // 失敗ならここでロック解除。成功は種別選択まで継続
+  }
+  _renderSeekCover();
+}
+
+function _confirmSeekCover(type) {
+  if (!_coverState?.done || !_coverState.success || _coverState.applied) return;
+  applySeekCover(_coverState.unitId, type);
+  _coverState.applied = true;
+  _setDrawLock(false);
+  document.dispatchEvent(new CustomEvent('board:changed'));
+  _renderSeekCover();
+  updateRightPanelUnit(_rpUnit);
+}
+
+/** カバー捜索ドローの進行状況を右パネルに描く */
+function _renderSeekCover() {
+  const el = document.getElementById('rpMoveResult');
+  if (!el || !_coverState) return;
+  const { need, cards, done, success, applied } = _coverState;
+  const drawn = cards.map(c => `#${c.number}${c.type === 'cover' ? '(Cover)' : ''}`).join(' ');
+
+  let html = `<div class="rp-cs-unit">§4.2.2e カバー捜索</div>`;
+  if (!done) {
+    html += `<div class="rp-cs-card">${cards.length} / ${need} 枚${drawn ? '：' + drawn : ''}</div>
+             <button class="rp-draw-btn" id="rpCoverDraw">🃏 カードを引く（残り ${need - cards.length}）</button>`;
+  } else if (!success) {
+    if (drawn) html += `<div class="rp-cs-card">引いたカード：${drawn}</div>`;
+    html += `<div class="rp-cs-done" style="color:#cc7755">✕ 発見できず</div>`;
+  } else if (!applied) {
+    const opts = Object.entries(_COVER_TYPES).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('');
+    html += `<div class="rp-cs-card">引いたカード：${drawn}</div>
+      <div class="rp-cs-done" style="color:#66aa66">✓ 発見！ 種別を選んで配置（Exposed になる）</div>
+      <div class="rp-act-row">
+        <select class="rp-bnhq-select" id="rpCoverTypeSel" style="flex:1">${opts}</select>
+        <button class="rp-act-btn" id="rpCoverConfirm">配置</button>
+      </div>`;
+  } else {
+    html += `<div class="rp-cs-done" style="color:#66aa66">✓ カバーを配置した</div>`;
+  }
+  el.innerHTML = html;
+  document.getElementById('rpCoverDraw')?.addEventListener('click', (e) => { e.stopPropagation(); _drawSeekCoverCard(); });
+  document.getElementById('rpCoverConfirm')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    _confirmSeekCover(document.getElementById('rpCoverTypeSel')?.value);
+  });
+}
+
+// ===== §4.2.2d 小隊浸透（PLT HQ・各駒が個別に Attempt to Infiltrate を行う）=====
+//
+// b（movePlatoonToAdjacent）と同じ「同カードの自小隊・通信できない駒は置き去り」に加えて、
+// 浸透固有の条件（VOF・tripod/H VOF）を満たす駒だけを対象にする。各駒は個別に2(+/-)枚引く
+// （練度で枚数が違うため）。コストは小隊まとめて2（movePlatoonToAdjacent と同じ）。
+
+let _pltInfQueue = null; // { pltHqId, toCoord, units:[{id,draws}], stayed, idx, current, results:[] }
+
+function _startPlatoonInfiltrate(pltHqId, toCoord) {
+  const plan = planPlatoonInfiltrate(pltHqId, toCoord);
+  if (!plan.ok) return;
+  expendCommand(pltHqId);
+  expendCommand(pltHqId);
+  _pltInfQueue = { pltHqId, toCoord, units: plan.eligible, stayed: plan.stayed, idx: 0, current: null, results: [] };
+  _setDrawLock(true);
+  _beginNextPlatoonInfUnit();
+}
+
+function _beginNextPlatoonInfUnit() {
+  const q = _pltInfQueue;
+  if (!q) return;
+  if (q.idx >= q.units.length) {
+    _setDrawLock(false);
+    _renderPlatoonInf();
+    updateRightPanelUnit(_rpUnit);
+    return;
+  }
+  const { id, draws } = q.units[q.idx];
+  q.current = { unitId: id, need: draws, cards: [], done: false, success: false };
+  _renderPlatoonInf();
+}
+
+function _drawPlatoonInfCard() {
+  const q = _pltInfQueue;
+  if (!q || !q.current || q.current.done) return;
+  q.current.cards.push(drawActionCard());
+  if (q.current.cards.length >= q.current.need) {
+    q.current.success = isInfiltrateSuccess(q.current.cards);
+    q.current.done = true;
+    applyInfiltrate(q.pltHqId, q.current.unitId, q.toCoord, q.current.success, null);
+    q.results.push({ unitId: q.current.unitId, success: q.current.success });
+    document.dispatchEvent(new CustomEvent('board:changed'));
+  }
+  _renderPlatoonInf();
+}
+
+function _advancePlatoonInf() {
+  const q = _pltInfQueue;
+  if (!q) return;
+  q.idx++;
+  q.current = null;
+  _beginNextPlatoonInfUnit();
+}
+
+/** 小隊浸透キューの進行状況を右パネルに描く */
+function _renderPlatoonInf() {
+  const el = document.getElementById('rpMoveResult');
+  if (!el || !_pltInfQueue) return;
+  const q = _pltInfQueue;
+  const stayed = q.stayed.map(s => `${s.id}(${s.reason})`).join(', ');
+
+  let html = q.results.map(r =>
+    `<div class="rp-cs-card">${r.unitId}: ${r.success ? '✓ 浸透成功（Exposed なし）' : '✕ 失敗（通常移動・Exposed）'}</div>`
+  ).join('');
+
+  if (q.idx >= q.units.length) {
+    html = `<div class="rp-cs-unit">§4.2.2d 小隊浸透 → ${q.toCoord}</div>${html}
+      <div class="rp-cs-done">✓ 解決完了（${q.results.length}体）${stayed ? ` ／ 置き去り: ${stayed}` : ''}</div>`;
+    el.innerHTML = html;
+    return;
+  }
+
+  const cur = q.current;
+  const drawn = cur.cards.map(c => `#${c.number}${(c.icons ?? []).includes('infiltrate') ? '(Infiltrate)' : ''}`).join(' ');
+  html = `<div class="rp-cs-unit">§4.2.2d 小隊浸透 → ${q.toCoord} — ${cur.unitId}</div>${html}`;
+  if (!cur.done) {
+    html += `<div class="rp-cs-card">${cur.cards.length} / ${cur.need} 枚${drawn ? '：' + drawn : ''}</div>
+      <button class="rp-draw-btn" id="rpPltInfDraw">🃏 カードを引く（残り ${cur.need - cur.cards.length}）</button>`;
+  } else {
+    html += `<div class="rp-cs-done" style="color:${cur.success ? '#66aa66' : '#cc7755'}">${cur.success ? '✓ 成功' : '✕ 失敗'}</div>
+      <button class="rp-draw-btn" id="rpPltInfNext">次へ ▶</button>`;
+  }
+  el.innerHTML = html;
+  document.getElementById('rpPltInfDraw')?.addEventListener('click', (e) => { e.stopPropagation(); _drawPlatoonInfCard(); });
+  document.getElementById('rpPltInfNext')?.addEventListener('click', (e) => { e.stopPropagation(); _advancePlatoonInf(); });
 }
 
 // ===== Rally アクション（§4.2.3 / §6.5.1）=====

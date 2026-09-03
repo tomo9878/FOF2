@@ -27,6 +27,7 @@ import { setCommunicationChecker } from './command.js';
 import { initOrderHighlight } from './order-highlight.js';
 import { runCleanupPhase } from './cleanup.js';
 import { applyScenarioFireSupport } from './fire-mission.js';
+import { initEnemyActivityUI } from './enemy-activity-ui.js';
 
 // ===== window へ公開（HTML の onclick から呼ぶため） =====
 window.changeZoom = changeZoom;
@@ -298,6 +299,7 @@ initContextMenu();
 initCardContextMenu();
 initCoTacPanel();
 initOrderHighlight();
+initEnemyActivityUI();
 initImpulsePanel();
 initBNHQPanel();
 initGeneralInitPanel();

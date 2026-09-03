@@ -193,11 +193,11 @@ export const UNITS = {
   // ── ドイツ軍 支援ユニット（namedFireTeam:true）──
   // Hit: A / F → Pin のみ（B面 = Fire Team 面）/ Hit: L/P/C → 除去 ＋ LAT
   'D3': [
-    { id:'GE_Leader_1', type:'weapon_team', faction:'german', namedFireTeam:true,
+    { id:'GE_Leader_1', type:'weapon_team', faction:'german', namedFireTeam:true, isLeader:true,
       src:'images/GE_Leader-1.png',    srcReduced:'images/GE_Leader-1b.png',  label:'ドイツ軍指揮官 1' },
-    { id:'GE_Leader_2', type:'weapon_team', faction:'german', namedFireTeam:true,
+    { id:'GE_Leader_2', type:'weapon_team', faction:'german', namedFireTeam:true, isLeader:true,
       src:'images/GE_Leader-2.png',    srcReduced:'images/GE_Leader-2b.png',  label:'ドイツ軍指揮官 2' },
-    { id:'GE_Leader_3', type:'weapon_team', faction:'german', namedFireTeam:true,
+    { id:'GE_Leader_3', type:'weapon_team', faction:'german', namedFireTeam:true, isLeader:true,
       src:'images/GE_Leader-3.png',    srcReduced:'images/GE_Leader-3b.png',  label:'ドイツ軍指揮官 3' },
     { id:'GE_LMG_1',   type:'weapon_team', faction:'german', namedFireTeam:true,
       src:'images/GE_LMG_1.png',       srcReduced:'images/GE_LMG_1 b.png',   label:'LMG チーム 1' },

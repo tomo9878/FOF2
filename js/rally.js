@@ -25,8 +25,10 @@ import { ORDER_KIND } from './comm.js';
 import { cardVOFMap } from './vof.js';
 import {
   unitCoordMap, getUnitState, getUnitStrength, setUnitSteps, renderUnitBadges,
+  detachedLATsMap,
 } from './state.js';
 import { getUnitExperience } from './campaign.js';
+import { detachFireTeam, detachAssaultTeam, supplementUnit } from './detach.js';
 
 /** Rally アクションのコマンド消費量（§4.2.3 は全て1） */
 export const RALLY_COST = 1;
@@ -49,8 +51,8 @@ function _swapLook(unitId, look) {
   if (img) { img.src = look.src; img.alt = look.label; img.title = look.label; }
 }
 
-/** その駒の現在の LAT 種別を画像から判定する */
-function _latKind(unitId) {
+/** その駒の現在の LAT 種別を画像から判定する（reconstitute.js からも参照） */
+export function latKind(unitId) {
   const slot = document.querySelector(`.unit-slot[data-unit-id="${unitId}"]`);
   const src = slot?.querySelector('.unit-marker')?.getAttribute('src') ?? '';
   if (src.includes('Assault Team')) return 'assault';
@@ -86,25 +88,25 @@ export const RALLY_ACTIONS = {
   },
   paralyzed_to_litter: {
     label: 'Paralyzed → Litter', ref: '§4.2.3b', draw: 'rally',
-    eligible: (id) => _latKind(id) !== 'paralyzed' ? { ok: false, reason: 'Paralyzed Team ではない' }
+    eligible: (id) => latKind(id) !== 'paralyzed' ? { ok: false, reason: 'Paralyzed Team ではない' }
       : getUnitState(id).pinned ? { ok: false, reason: 'Pinned は不可' } : { ok: true },
     apply: (id) => _swapLook(id, LAT_LOOK.litter),
   },
   litter_to_fireteam: {
     label: 'Litter → Fire Team', ref: '§4.2.3c', draw: 'rally',
-    eligible: (id) => _latKind(id) !== 'litter' ? { ok: false, reason: 'Litter Team ではない' }
+    eligible: (id) => latKind(id) !== 'litter' ? { ok: false, reason: 'Litter Team ではない' }
       : getUnitState(id).pinned ? { ok: false, reason: 'Pinned は不可' } : { ok: true },
     apply: (id) => _swapLook(id, LAT_LOOK.fireteam),
   },
   fireteam_to_assault: {
     label: 'Fire Team → Assault Team', ref: '§4.2.3d', draw: 'rally',
-    eligible: (id) => _latKind(id) !== 'fireteam' ? { ok: false, reason: 'Fire Team ではない' }
+    eligible: (id) => latKind(id) !== 'fireteam' ? { ok: false, reason: 'Fire Team ではない' }
       : getUnitState(id).pinned ? { ok: false, reason: 'Pinned は不可' } : { ok: true },
     apply: (id) => _swapLook(id, LAT_LOOK.assault),
   },
   assault_to_fireteam: {
     label: 'Assault Team → Fire Team', ref: '§4.2.3e', draw: 'auto',
-    eligible: (id) => _latKind(id) !== 'assault' ? { ok: false, reason: 'Assault Team ではない' }
+    eligible: (id) => latKind(id) !== 'assault' ? { ok: false, reason: 'Assault Team ではない' }
       : getUnitState(id).pinned ? { ok: false, reason: 'Pinned は不可' } : { ok: true },
     apply: (id) => _swapLook(id, LAT_LOOK.fireteam),
   },
@@ -121,6 +123,45 @@ export const RALLY_ACTIONS = {
       : _isOnFireTeamSide(id) ? { ok: false, reason: 'すでに Fire Team 面' }
       : getUnitState(id).pinned ? { ok: false, reason: 'Pinned は不可' } : { ok: true },
     apply: (id) => { const s = getUnitStrength(id); setUnitSteps(id, s.maxSteps - 1); },
+  },
+  detach_fireteam: {
+    label: 'Detach Team（Fire Team を分離）', ref: '§4.2.3g', draw: 'auto',
+    eligible: (id) => {
+      const def = findUnitDef(id);
+      if (!def?.fireteam) return { ok: false, reason: 'Fire Team を分離できる駒ではない' };
+      const s = getUnitStrength(id);
+      if (s.steps !== s.maxSteps) return { ok: false, reason: 'Good Order（フル戦力）ではない' };
+      if (getUnitState(id).pinned) return { ok: false, reason: 'Pinned は不可' };
+      return { ok: true };
+    },
+    apply: (id) => detachFireTeam(findUnitDef(id)),
+  },
+  detach_assaultteam: {
+    label: 'Detach Team（Assault Team を分離）', ref: '§4.2.3g', draw: 'auto',
+    eligible: (id) => {
+      const def = findUnitDef(id);
+      if (!def?.assaultteam) return { ok: false, reason: 'Assault Team を分離できる駒ではない' };
+      const s = getUnitStrength(id);
+      if (s.steps !== s.maxSteps) return { ok: false, reason: 'Good Order（フル戦力）ではない' };
+      if (getUnitState(id).pinned) return { ok: false, reason: 'Pinned は不可' };
+      return { ok: true };
+    },
+    apply: (id) => detachAssaultTeam(findUnitDef(id)),
+  },
+  supplement_squad: {
+    label: 'Supplement Squad（分離した Team を戻す）', ref: '§4.2.3h', draw: 'auto',
+    eligible: (id) => {
+      const def = findUnitDef(id);
+      if (!def?.fireteam && !def?.assaultteam) return { ok: false, reason: '分離した Team を持てる駒ではない' };
+      const s = getUnitStrength(id);
+      if (s.steps !== s.maxSteps - 1) return { ok: false, reason: 'Good Order（1ステップ分離済み）ではない' };
+      if (getUnitState(id).pinned) return { ok: false, reason: 'Pinned は不可' };
+      const lats = detachedLATsMap.get(id) || [];
+      if (!lats.length) return { ok: false, reason: '分離済みの Fire/Assault Team がいない' };
+      if (lats.some(latId => getUnitState(latId).pinned)) return { ok: false, reason: 'Team が Pinned では不可' };
+      return { ok: true };
+    },
+    apply: (id) => supplementUnit(findUnitDef(id)),
   },
 };
 

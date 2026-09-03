@@ -8,6 +8,12 @@ import {
 import { addUnitToCard, removeUnitFromCard } from './grid.js';
 import { loseSavedCommands } from './command.js';
 import { checkRTCombatDamage } from './comm.js';
+import { recordSquadRemoved } from './reconstitute.js';
+
+/** 分隊が消滅閾値に達して盤上から消えるとき、§6.5.2 の Removed from Play プールへ記録する */
+function _recordIfSquad(unit, s) {
+  if (unit.type === 'squad') recordSquadRemoved(unit.id, unit.faction, s.maxSteps);
+}
 
 // ===== Combo Hit Helpers =====
 export const _HIT_INFO = {
@@ -77,6 +83,7 @@ export function hitA(unit) {
     const atDef = unit.assaultteam
       ? { ...unit.assaultteam, id: atId }
       : { id: atId, src: 'images/LAT_Assault Team-W.png', label: 'アサルトチーム',   type: 'lat', faction: unit.faction };
+    _recordIfSquad(unit, s);
     removeUnitFromCard(unit.id);
     addUnitToCard(coord, ftDef);
     addUnitToCard(coord, atDef);
@@ -140,6 +147,7 @@ export function hitF(unit) {
       ? { ...unit.fireteam, id: ft1Id }
       : { id: ft1Id, src: 'images/LAT_Fire Team-W.png', label: 'ファイアチーム', type: 'lat', faction: unit.faction };
     const ft2Def = { id: ft2Id, src: 'images/LAT_Fire Team-W.png', label: 'ファイアチーム', type: 'lat', faction: unit.faction };
+    _recordIfSquad(unit, s);
     removeUnitFromCard(unit.id);
     addUnitToCard(coord, ft1Def);
     addUnitToCard(coord, ft2Def);
@@ -210,6 +218,7 @@ export function hitL(unit) {
     const ftDef = unit.fireteam
       ? { ...unit.fireteam, id: ftId }
       : { id: ftId, src: 'images/LAT_Fire Team-W.png', label: 'ファイアチーム', type: 'lat', faction: unit.faction };
+    _recordIfSquad(unit, s);
     removeUnitFromCard(unit.id);
     addUnitToCard(coord, ltDef);
     addUnitToCard(coord, ftDef);
@@ -278,6 +287,7 @@ export function hitP(unit) {
     const ftDef = unit.fireteam
       ? { ...unit.fireteam, id: ftId }
       : { id: ftId, src: 'images/LAT_Fire Team-W.png', label: 'ファイアチーム', type: 'lat', faction: unit.faction };
+    _recordIfSquad(unit, s);
     removeUnitFromCard(unit.id);
     addUnitToCard(coord, ptDef);
     addUnitToCard(coord, ftDef);
@@ -348,6 +358,7 @@ export function hitC(unit) {
     const ftDef = unit.fireteam
       ? { ...unit.fireteam, id: ftId }
       : { id: ftId, src: 'images/LAT_Fire Team-W.png', label: 'ファイアチーム', type: 'lat', faction: unit.faction };
+    _recordIfSquad(unit, s);
     removeUnitFromCard(unit.id);
     addUnitToCard(coord, ctDef);
     addUnitToCard(coord, ftDef);
@@ -389,6 +400,7 @@ function _comboApplyReduced(unit, coord, letter) {
     def1 = { id: lat1Id, src: info.src, label: info.label, type: 'lat', faction: unit.faction };
     def2 = unit.fireteam ? { ...unit.fireteam, id: lat2Id } : { id: lat2Id, src: FT.src, label: FT.label, type: 'lat', faction: unit.faction };
   }
+  _recordIfSquad(unit, getUnitStrength(unit.id) ?? { maxSteps: 3 });
   removeUnitFromCard(unit.id);
   addUnitToCard(coord, def1);
   addUnitToCard(coord, def2);

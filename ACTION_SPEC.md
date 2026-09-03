@@ -49,6 +49,35 @@ Rally を先にする理由:
 3. **§4.2.3f「Fire Team 面を表に戻す試み」**が含まれる。
    → 既知の課題「rally で command side に戻す手段が無い」がここで埋まる
 
+**§4.2.2 c/g（浸透）・e（カバー捜索）の UI 接続（2026-09-03）**: ロジックは元々 `move.js` に
+実装済みだったが、右パネルへのボタン配線が無く未使用だった。`context-menu.js` の `_moveHtml`/
+`_bindMoveButtons` に追加接続した。
+- c（隣接カードへ浸透）: `listMoveTargets` で得た通常移動可能な隣接カードのうち、
+  `planInfiltrate(unitId, coord).ok` なもの全てに「浸透」ボタンを併記（コスト・発令者は通常移動と共用）
+- g（カード内浸透）: `planInfiltrate(unitId, null).ok` かつ移動先エリアがある場合のみ表示
+- e（カバー捜索）: `planSeekCover(unitId).ok` なら表示。成功時は Rally と同じ「ドローロック→人間が
+  1枚ずつ引く」方式（`_startInfiltrate`/`_drawInfiltrateCard`・`_startSeekCover`/`_drawSeekCoverCard`）。
+  カバー捜索が成功した場合、**発見したカバーの種別は人間が `COVER_TYPES` から選んで配置**する
+  （物理カードのカバー種別チャートまではデータ化していないための簡略化。NCM手動調整やAmmo補給と
+  同じ「人間の裁量に委ねる」設計方針を踏襲）
+- 浸透失敗時は`applyInfiltrate`が自動的に通常移動（Exposed付き）にフォールバックする、既存の`move.js`の
+  仕様通り。ローカルサーバー（`npx serve`）で実機動作確認済み（隣接浸透の成功/失敗フォールバック・
+  カバー捜索の成功→種別選択→配置まで一通り）
+
+**§4.2.2d（小隊浸透）の実装（2026-09-03）**: FOF.pdf p.23の原文を`pdftotext`で確認したところ、
+d は b（movePlatoonToAdjacent）のような「小隊全員で1回だけ判定」ではなく、
+**"Have each unit in the platoon perform an Attempt to Infiltrate an Adjacent Card action"**
+＝「小隊の各駒が個別に c（Attempt to Infiltrate）を行う」仕組みだった。つまり対象選定（同カード・
+Good Order・非Exposed・通信可）は b と同じだが、判定は駒ごとに独立した2(+/-)ドロー
+（枚数は各駒自身の練度で変わる）になる。`move.js`に`planPlatoonInfiltrate`を追加し
+（対象集めのみ・コスト消費や移動はしない）、`context-menu.js`に`combat-action.js`の
+プラトーン系キュー（Grenade/Concentrate Fire）と同型の「1体ずつドロー→次へ」キュー
+（`_startPlatoonInfiltrate`/`_drawPlatoonInfCard`/`_advancePlatoonInf`）を新設して接続した。
+コストは b と同じく小隊まとめて2（`expendCommand`を2回）。通信できない駒はその場に残る。
+カバースロット選択は b と同じ簡略化（移動先は常にカバー外）。ローカルサーバーで、
+1体が浸透失敗→通常移動+Exposed、別の1体が浸透成功→Exposedなし、という個別結果が
+同一の小隊浸透アクション内で両立することを実機確認済み。
+
 ---
 
 ## 3. 調査済みデータ（出典: FOF.pdf p.22-26）
@@ -59,7 +88,7 @@ Rally を先にする理由:
 - a / b / f（Auto）… 実装済み
 - **c / g（浸透）… 実装済み**（`CARD_ICONS` の `infiltrate` で判定）
 - **e（カバー捜索）… 実装済み**（`COVER_DRAW` の枚数を引き `type==='cover'` を探す）
-- d（小隊浸透）… b と c の組み合わせ。未実装
+- **d（小隊浸透）… 実装済み**（`planPlatoonInfiltrate`。b の対象集め＋c の個別ドローの組み合わせ）
 - h（拾う）… comm.js に実装済み
 
 > 当初「Infiltrate アイコンと Cover Draw のデータが無い」と書いたが**誤り**だった。
@@ -124,10 +153,34 @@ Rally を先にする理由:
 | i | Attempt to Reconstitute Squad | 1 | **2 (+/−)**（VOF無しでも自動にならない） | 2〜4個の Unpinned な Assault/Fire Team → 以前に Removed from Play になった同ステップ数の分隊と入れ替える。§4.1.3 の「HQ/Staff が発令者必須」 |
 | j | Flip a unit with a Fire Team side to its Fire Team side | 1 | **Auto** | Good Order の named Fire Team 持ち → 裏（Fire Team 面）へ |
 
-**実装状況**: a〜f と j を `rally.js` に実装。
-g（Detach）は既存の `detach.js` があるので未統合、
-h（Supplement）と i（Reconstitute）は分隊のステップ／
-「Removed from Play になった分隊」の管理が要るため未実装。
+**実装状況**: a〜j 全て `rally.js`/`reconstitute.js` に実装（2026-08-31 g/h、2026-09-03 i）。
+g（Detach Team）は `detachFireTeam`/`detachAssaultTeam`（detach.js）を Rally 経由（AP消費・HQ通信チェック込み）で
+呼び出す形に統合。従来 context-menu.js の右クリックメニューにあった無料の分離/Supplementボタンは
+AP消費を回避できてしまうため削除し、Rally パネル経由の実装に一本化した。
+h（Supplement Squad）は既存 `supplementUnit`（detach.js）を流用。対象は「1ステップだけ分離済みの分隊」
+（`detachedLATsMap` に1件登録されている状態）かつ分離先 Team が Unpinned であることを条件化。
+
+**i（Reconstitute Squad）の実装（2026-09-03）**: `js/reconstitute.js` を新設。
+FOF.pdf p.47-50（`pdftotext`で原文確認）で「Removed from Play」の発生条件を特定：
+分隊が Fire/Assault Team だけを残して盤上から完全に消える瞬間（hit.js の各 Hit
+A/F/L/P/C・コンボヒットにある「消滅閾値」分岐＝ `steps===2` で `removeUnitFromCard`
+する箇所、計6箇所）がこれにあたる。この6箇所に `recordSquadRemoved(unitId, faction, maxSteps)`
+を追加し、`{unitId, faction, maxSteps}` を `removedSquadPool`（play層・persistence.js
+PLAY_VERSION 3）に積む。§6.5.1 の Design Note「汎用LATの出自は追跡しない」を踏まえつつ、
+汎用分隊カウンターの絵が存在しない実装上の制約から、**「消えた分隊そのもの」を復活させる簡略化**
+を採用（同じ maxSteps が複数消えている場合、どれが戻るかはプールの並び順で決まる）。
+UI はカード右クリックメニュー（`card-context-menu.js`・PC解決と同じ「右パネルへドローロック付き
+ステップ制フローを描く」方式）に配置：対象カードの Unpinned Fire/Assault Team 数と
+プールの在庫から選べるステップ数(2〜4)をセレクトで示し、発令者HQを選んで「再編を試みる」。
+成功時は使った Team の種別（全て Assault Team なら Line、それ以外は Green）で
+`setUnitExperience` する（p.50の規定通り）。
+**既知の制限**: 動的に生成されるLAT（`unit.id+'_HIT_FT'`等）は`findUnitDef`が解決できないstatic-registry非登録のIDのため、
+`command.js`の`_isLAT()`はこれをLAT扱いできない。PLT HQは「自分の小隊のユニットかLAT」にしか命令できない
+仕様（Command Reference Table）だが、この`_isLAT`判定漏れにより、**PLT HQは自分の小隊由来（IDが自小隊prefixで
+始まる）のTeamしか動かせず、他小隊由来の汎用Teamを使ったReconstitute発令はできない**（CO HQ/BN HQなら
+階級ベースの判定経路を通るため問題なく発令できる）。これは本実装固有の問題ではなくcommand.jsの既存仕様
+（他のRallyアクションでも同じ制約が理論上ある）だが、Reconstituteは複数Teamを集める性質上、実際にこの
+制限に触れやすい。修正には`_isLAT`をID命名規則ベースの判定に拡張する必要があり、今回は見送った。
 
 ### §4.2.4 Combat Actions（p.24-26）— 🟡 8アクション（k/l/b/c/d/h/a/i）実装済み（combat-action.js・fire-mission.js）
 **13アクション（a〜m）**。ほとんどがドロー付きで、周辺ルールを芋づるで引く。

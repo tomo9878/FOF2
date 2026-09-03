@@ -40,6 +40,7 @@ import { recomputeActivityLevel } from './contact.js';
 import { resetSquadPools } from './enemy-contact.js';
 import { unitAmmoMap, clearAmmo } from './ammo.js';
 import { fireMissionRemaining, applyScenarioFireSupport } from './fire-mission.js';
+import { removedSquadPool } from './reconstitute.js';
 
 const KEY = 'fof_save';
 // v2: 行番号の向きをルールブックに合わせた（row 1 = スタートエリア隣接・最下段）。
@@ -47,7 +48,8 @@ const KEY = 'fof_save';
 const SETUP_VERSION = 2;
 // v2: unitCommandMap の activated の意味を「上位HQに起動された」に限定し、
 //     「このターン取得済み」を drawn に分離した（旧データは意味が違うので破棄する）
-const PLAY_VERSION  = 2;
+// v3: §4.2.3i Reconstitute Squad 用に removedSquadPool（Removed from Play 分隊プール）を追加
+const PLAY_VERSION  = 3;
 
 // ===== 内部 =====
 
@@ -115,6 +117,7 @@ export function serialize() {
       removedRTs: [...removedRTs],
       ammo:         [...unitAmmoMap],
       fireMissions: [...fireMissionRemaining],
+      removedSquads: removedSquadPool.map(e => ({ ...e })),
     },
   };
 }
@@ -189,6 +192,8 @@ function _applyPlay(play) {
     fireMissionRemaining.clear();
     play.fireMissions.forEach(([k, n]) => fireMissionRemaining.set(k, n));
   }
+  removedSquadPool.length = 0;
+  (play.removedSquads ?? []).forEach(e => removedSquadPool.push(e));
   // 描画
   cardVOFMap.forEach((_, c) => renderCardVOF(c));
   cardPDFMap.forEach((_, c) => renderCardPDFs(c));
@@ -246,6 +251,7 @@ export function resetPlay(scenario) {
   renderAllPhoneLines();
   clearAmmo();                        // 弾薬は unit定義の初期値へ（§7.18）
   applyScenarioFireSupport(scenario); // Fire Mission 残数をシナリオ初期値へ（§7.16）
+  removedSquadPool.length = 0;        // Removed from Play 分隊プールもプレイ状態としてリセット
   setVisibility(scenario.visibility === 'limited' ? 1 : 0);
 
   // 全カード・全駒のマーカー/バッジを再描画（消去を反映）

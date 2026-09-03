@@ -1366,6 +1366,15 @@
     </div>
   </div>
 
+  <!-- 敵活動チェック（§8.6）-->
+  <div class="rp-section">
+    <div class="rp-section-title">🎯 敵活動チェック（§8.6）</div>
+    <div class="rp-btn-row">
+      <button class="btn" id="enemyActivityStartBtn">敵ユニットを判定開始</button>
+    </div>
+    <div id="enemyActivityResult"></div>
+  </div>
+
   <!-- インパルス順序（§3.3.1 / §3.3.2）-->
   <div class="rp-section">
     <div class="rp-section-title">🎖 インパルス</div>
@@ -1618,6 +1627,18 @@
       <select id="cardCmShiftFireHq" class="rp-bnhq-select" style="flex:1"></select>
       <select id="cardCmShiftFireTarget" class="rp-bnhq-select" style="flex:1"></select>
       <button id="cardCmShiftFireBtn" style="flex:1;" title="l. Shift Fire（1コマンド・PDFは移動先で再設置）">Shift Fire</button>
+    </div>
+  </div>
+
+  <div class="cm-separator"></div>
+
+  <!-- §4.2.3i Reconstitute Squad -->
+  <div id="cardCmReconstituteSection" style="display:none">
+    <div style="padding:4px 12px 0; font-size:10px; color:#aaa;">🔄 §4.2.3i Reconstitute Squad</div>
+    <div class="vof-sub-row" style="gap:4px;">
+      <select id="cardCmReconstituteHq" class="rp-bnhq-select" style="flex:1"></select>
+      <select id="cardCmReconstituteSteps" class="rp-bnhq-select" style="flex:1"></select>
+      <button id="cardCmReconstituteBtn" style="flex:1;" title="§4.2.3i（1コマンド・2±発令者の練度枚引いてRallyを探す）">再編を試みる</button>
     </div>
   </div>
 
